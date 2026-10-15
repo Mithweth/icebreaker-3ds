@@ -19,48 +19,35 @@
 * Temple Place, Suite 330, Boston, MA 02111-1307 USA
 *
 */
+#pragma once
 
-#ifndef THEMES_H
-#define THEMES_H
+#include <3ds.h>
+#include <citro2d.h>
 
 typedef struct
 {
-	Uint32 background;
-	Uint32 normaltext;
-	Uint8  boardfillminr;
-	Uint8  boardfillming;
-	Uint8  boardfillminb;
-	Uint8  boardfillmaxr;
-	Uint8  boardfillmaxg;
-	Uint8  boardfillmaxb;
-	Uint32 gridline;
-	Uint32 gridhighlight;
-	Uint32 line1;
-	Uint32 line2;
-	Uint32 menuhighlight;
-	Uint32 gameovertext;
-	Uint32 scorescrolltext;
-	Uint32 bonusscrolltext;
-	Uint32 textentrybox;
-	Uint32 textentrytext;
-	Uint32 copyrighttext;
-	Uint32 spritetransparent; // fix -- this doesn't really belong here
-
+	u32 background;
+	u32 normaltext;
+	u8  boardfillminr;
+	u8  boardfillming;
+	u8  boardfillminb;
+	u8  boardfillmaxr;
+	u8  boardfillmaxg;
+	u8  boardfillmaxb;
+	u32 gridline;
+	u32 gridhighlight;
+	u32 line1;
+	u32 line2;
+	u32 menuhighlight;
+	u32 gameovertext;
+	u32 scorescrolltext;
+	u32 bonusscrolltext;
+	u32 textentrybox;
+	u32 textentrytext;
+	u32 copyrighttext;
 } ThemeColorsType;
 
 extern ThemeColorsType color;
+extern C2D_Image spriteimage;
 
-extern SDL_Surface * spriteimage;
-extern SDL_Surface * spritemirrorimage;
-
-
-
-// you might expect sounds to go here, but in the interest of keeping
-// SDL_mixer stuff confined to the sound module, it's done separately
-
-int themes_getthemenames(char*** themenamelist);
-void themes_freethemenames(char*** themenamelist,int numthemes);
-int themes_getthemenumber(char** themenamelist,int numthemes,char* themename);
 int themes_settheme(char* themename);
-
-#endif /* THEMES_H */

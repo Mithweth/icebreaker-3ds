@@ -1,3 +1,4 @@
+// line.h
 /*
 * IceBreaker
 * Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
@@ -19,20 +20,27 @@
 * Temple Place, Suite 330, Boston, MA 02111-1307 USA
 *
 */
+#pragma once
 
-#ifndef LINE_H
-#define LINE_H
+#include <3ds.h>
 
 typedef enum { UP, DOWN, LEFT, RIGHT } LineDir;	
 typedef enum { HORIZONTAL, VERTICAL } LineType;
 
+typedef struct {
+	int x;
+	int y;
+	int w;
+	int h;
+} Coordinate;
+
 typedef struct
 {
 	int on;
-	SDL_Rect geom;
-	SDL_Rect mark;
+	Coordinate geom;
+	Coordinate mark;
 	LineDir dir;
-	Uint32* colorpointer;  // to match the sprite pointer
+	u32 color;
 	char id;
 	int dead;
 	int speedslower;
@@ -40,10 +48,12 @@ typedef struct
 } Line;
 
 
-extern Line line_create(int linenum);
-extern void line_start(Line * l, LineDir d, int x, int y);
-extern int line_move(Line * l);
-extern void line_finish(Line * l);
-extern void line_kill(Line * l);
-
-#endif /* LINE_H */
+//extern Line line_create(int linenum);
+void line_start(Line * l, LineDir d, int x, int y);
+Line line_create(int linenum);
+int line_move(Line * l);
+void line_draw(const Line *l, u32 color);
+void line_kill(Line * l);
+// extern int line_move(Line * l);
+// extern void line_finish(Line * l);
+// extern void line_kill(Line * l);

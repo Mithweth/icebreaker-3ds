@@ -1,46 +1,14 @@
-/*
-* IceBreaker
-* Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
-*
-* <http://www.mattdm.org/icebreaker/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc., 59
-* Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*
-*/
+// grid.h
+#pragma once
 
-#ifndef GRID_H
-#define GRID_H
+#include "constants.h"
 
-extern SDL_Surface* gridsave;
+void grid_mark(int x, int y, int w, int h, char fillchar);
+void grid_drawblocks(void);
+void grid_generate_colors(void);
+void grid_checkempty(int x, int y);
+char grid_at(int x, int y);
+void grid_reset(char c);
+
 extern char grid[WIDTH][HEIGHT];
-
-
-extern int grid_init(void);
-extern void grid_quit(void);
-
-extern void grid_drawblocks(void);
-
-extern void grid_printboard(void);
-extern void grid_printwhole(void);
-extern void grid_printwholemask();
-
-extern void grid_mark(int x, int y, int w, int h, char fillchar);
-extern long countcleared(void);
-extern void grid_checkempty(int x, int y);
-extern int grid_penguinsearch(int i, int j);
-extern void grid_floodfill(int x, int y);
-extern void grid_squarefill(int x, int y);
-
-#endif /* GRID_H */
+extern char maskgrid[WIDTH][HEIGHT];

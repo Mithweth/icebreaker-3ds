@@ -1,3 +1,4 @@
+// penguin.h
 /*
 * IceBreaker
 * Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
@@ -19,29 +20,33 @@
 * Temple Place, Suite 330, Boston, MA 02111-1307 USA
 *
 */
+#pragma once
 
-#ifndef PENGUIN_H
-#define PENGUIN_H
+#include <citro2d.h>
 
 typedef struct
 {
-	SDL_Surface *image;  // having this here will make future animation easier
-	SDL_Surface *bgsave;
-	SDL_Rect geom;
+	C2D_Image image;
+	int x;
+	int y;
 	int xdelta;
 	int ydelta;
 	int speedslower;
 } Penguin;
 
+Penguin penguin_create(void);
+Penguin penguin_createxy(int x, int y);
+// extern void penguin_resetimage(Penguin* p);
+// extern void penguin_delete(Penguin* p);
+// extern void penguin_savebehind(Penguin* p);
+void penguin_draw(Penguin* p);
+// extern void penguin_erase(Penguin* p);
+// What penguin_move() bumped into on its way.
+typedef enum {
+	PENGUIN_HIT_NONE,
+	PENGUIN_HIT_LINE1,
+	PENGUIN_HIT_LINE2,
+	PENGUIN_HIT_BOTH   // one line on each axis in the same move
+} PenguinHit;
 
-
-extern Penguin createpenguin();
-extern Penguin createpenguinxy(int x, int y);
-extern void penguin_resetimage(Penguin* p);
-extern void penguin_delete(Penguin* p);
-extern void penguin_savebehind(Penguin* p);
-extern void penguin_draw(Penguin* p);
-extern void penguin_erase(Penguin* p);
-extern void penguin_move(Penguin* p);
-
-#endif /* PENGUIN_H */
+PenguinHit penguin_move(Penguin* p);

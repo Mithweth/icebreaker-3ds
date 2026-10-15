@@ -1,68 +1,38 @@
-/*
-* IceBreaker
-* Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
-*
-* <http://www.mattdm.org/icebreaker/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-*
-*/
+// penguin.c
 
-#include <SDL.h>
 #include <stdlib.h>
-#include "icebreaker.h"
-#include "globals.h"
+#include "constants.h"
 #include "penguin.h"
-#include "grid.h"
-#include "line.h"
-#include "level.h"
-#include "options.h"
 #include "themes.h"
+#include "grid.h"
+#include "options.h"
 
-static int penguin_createbgsave(Penguin* p);
-
-Penguin createpenguin()
+Penguin penguin_create(void)
 {
-	return(createpenguinxy(BORDERLEFT + (random() % (PLAYWIDTH-BLOCKWIDTH)),BORDERTOP + (random() % (PLAYHEIGHT-BLOCKWIDTH))));
+	return penguin_createxy(BORDERLEFT + (random() % (PLAYWIDTH-BLOCKWIDTH)),BORDERTOP + (random() % (PLAYHEIGHT-BLOCKWIDTH)));
 }
 
-Penguin createpenguinxy(int x, int y)
+Penguin penguin_createxy(int x, int y)
 {
 	Penguin p;
+	p.image = spriteimage;
 
 	switch (random() % 4)
 	{
 		case 0:
 			p.xdelta= PENGUINSPEED;p.ydelta= PENGUINSPEED;
-			p.image = spritemirrorimage;
 		break;
 		case 1:
 			p.xdelta= PENGUINSPEED;p.ydelta=-PENGUINSPEED;
-			p.image = spritemirrorimage;
 		break;
 		case 2:
 			p.xdelta=-PENGUINSPEED;p.ydelta= PENGUINSPEED;
-			p.image = spriteimage;
 		break;
 		case 3:
 			p.xdelta=-PENGUINSPEED;p.ydelta=-PENGUINSPEED;
-			p.image = spriteimage;
 		break;
 		default: // this won't happen, but it shuts up the warning.
 			p.xdelta=-PENGUINSPEED;p.ydelta=-PENGUINSPEED;
-			p.image = spriteimage;
 		break;
 	}
 	
@@ -70,145 +40,103 @@ Penguin createpenguinxy(int x, int y)
 	//p.xdelta=0; p.ydelta=0;
 	
 	p.speedslower=0;
-			
-	p.geom.w=p.image->w;
-	p.geom.h=p.image->h;	
-			
-	//p.geom.x=BORDERLEFT + (PLAYWIDTH +BLOCKWIDTH )/2;
-	//p.geom.y=BORDERTOP  + (PLAYHEIGHT+BLOCKHEIGHT)/2;
-			
-	p.geom.x=x;
-	p.geom.y=y;
+	p.x=x;
+	p.y=y;
 
-	penguin_createbgsave(&p);
-
-	return(p);
+	return p;
 }
-
-void penguin_delete(Penguin* p)
-{
-	SDL_FreeSurface(p->bgsave);
-}
-
-void penguin_resetimage(Penguin* p)
-{
-	SDL_FreeSurface(p->bgsave);	
-	
-	if (p->xdelta>0)
-		p->image=spritemirrorimage;
-	else
-		p->image=spriteimage;
-	
-	p->geom.w=p->image->w;
-        p->geom.h=p->image->h;
-        
-        
-	penguin_createbgsave(p);
-}
-
-
-void penguin_savebehind(Penguin* p)
-{
-	SDL_BlitSurface(screen, &(p->geom), p->bgsave, NULL);
-}	
 
 void penguin_draw(Penguin* p)
 {
-	SDL_BlitSurface(p->image, NULL, screen, &(p->geom));
+	C2D_DrawImageAt(p->image, p->x, p->y, 0.5f, NULL, SPRITE_SIZE, SPRITE_SIZE);
 }
 
-void penguin_erase(Penguin* p)
+PenguinHit penguin_move(Penguin* p)
 {
-	SDL_BlitSurface(p->bgsave, NULL, screen, &(p->geom));
-}
-
-void penguin_move(Penguin* p)
-{
+	bool hitline1=false;
+	bool hitline2=false;
 	int newx, newy;
 	int checkx,checky;
 	int movex=0,movey=0;
 
 	switch (options.difficulty)
 	{
-		case NORMAL:
+		case DIFFICULTY_NORMAL:
 			if (p->speedslower)
 				{ movex=p->xdelta/2; movey=p->ydelta/2; }
 			else
 				{ movex=p->xdelta; movey=p->ydelta; }
 			p->speedslower=!p->speedslower;
 		break;
-		case HARD:
+		case DIFFICULTY_HARD:
 			movex=p->xdelta; movey=p->ydelta;
 		break;
-		case EASY:
+		case DIFFICULTY_EASY:
 			movex=p->xdelta/2; movey=p->ydelta/2;
 		break;
 	}
 		
-	newx=p->geom.x+movex;
-	newy=p->geom.y+movey;
+	newx=p->x+movex;
+	newy=p->y+movey;
 
 	
-	grid_mark(p->geom.x,p->geom.y,BLOCKWIDTH,BLOCKHEIGHT,' ');
+	grid_mark(p->x,p->y,BLOCKWIDTH,BLOCKHEIGHT,' ');
 	
 	if (movex>0) checkx = newx+BLOCKWIDTH;
 	else checkx = newx;
 
-	if (grid[checkx][p->geom.y]==' ' && grid[checkx][p->geom.y+BLOCKHEIGHT-1]==' ')
+	if (grid_at(checkx,p->y)==' ' && grid_at(checkx,p->y+BLOCKHEIGHT-1)==' ')
 	{
-		p->geom.x+=movex;
+		p->x+=movex;
 	}
-	else if (grid[checkx][p->geom.y]=='1' || grid[checkx][p->geom.y+BLOCKHEIGHT-1]=='1')
+	else if (grid_at(checkx,p->y)=='1' || grid_at(checkx,p->y+BLOCKHEIGHT-1)=='1')
 	{
-		line1.dead=true;
-		p->geom.x+=movex;	
+		hitline1=true;
+		p->x+=movex;	
 	}
-	else if (grid[checkx][p->geom.y]=='2' || grid[checkx][p->geom.y+BLOCKHEIGHT-1]=='2')
+	else if (grid_at(checkx,p->y)=='2' || grid_at(checkx,p->y+BLOCKHEIGHT-1)=='2')
 	{
-		line2.dead=true;
-		p->geom.x+=movex;	
+		hitline2=true;
+		p->x+=movex;	
 	}
-	else if ((grid[checkx][p->geom.y]=='w' || grid[checkx][p->geom.y]==' ' ) 
-	      && (grid[checkx][p->geom.y+BLOCKHEIGHT-1]=='w' || grid[checkx][p->geom.y+BLOCKHEIGHT-1]==' '))
+	else if ((grid_at(checkx,p->y)=='w' || grid_at(checkx,p->y)==' ' ) 
+	      && (grid_at(checkx,p->y+BLOCKHEIGHT-1)=='w' || grid_at(checkx,p->y+BLOCKHEIGHT-1)==' '))
 	{
 		// this is used in the intro. maybe some place else too in the future.
 		// should it be merged into the first line above? maybe.
-		p->geom.x+=movex;
+		p->x+=movex;
 	}
 	else
 	{
 		p->xdelta=-p->xdelta;
-		if (p->image==spriteimage)
-			p->image=spritemirrorimage;
-		else
-			p->image=spriteimage;
+		p->image=spriteimage;
 	}
 
 	if (movey>0) checky = newy+BLOCKHEIGHT;
 	else checky = newy;
 	
-	if (grid[p->geom.x][checky]==' ' && grid[p->geom.x+BLOCKWIDTH-1][checky]==' ')
+	if (grid_at(p->x,checky)==' ' && grid_at(p->x+BLOCKWIDTH-1,checky)==' ')
 	{
-		p->geom.y+=movey;
+		p->y+=movey;
 	}
-	else if (grid[p->geom.x][checky]=='1' || grid[p->geom.x+BLOCKWIDTH-1][checky]=='1')
+	else if (grid_at(p->x,checky)=='1' || grid_at(p->x+BLOCKWIDTH-1,checky)=='1')
 	{
 		//printf("Hit 1\n");
-		line1.dead=true;
-		p->geom.y+=movey;		
+		hitline1=true;
+		p->y+=movey;		
 	}
-	else if (grid[p->geom.x][checky]=='2' || grid[p->geom.x+BLOCKWIDTH-1][checky]=='2')
+	else if (grid_at(p->x,checky)=='2' || grid_at(p->x+BLOCKWIDTH-1,checky)=='2')
 	{
 		//printf("Hit 2\n");
-		line2.dead=true;
-		p->geom.y+=movey;		
+		hitline2=true;
+		p->y+=movey;		
 	}
-	else if ((grid[p->geom.x][checky]=='w' || grid[p->geom.x][checky]==' ') 
-	      && (grid[p->geom.x+BLOCKWIDTH-1][checky]=='w' || grid[p->geom.x+BLOCKWIDTH-1][checky]==' '))
+	else if ((grid_at(p->x,checky)=='w' || grid_at(p->x,checky)==' ') 
+	      && (grid_at(p->x+BLOCKWIDTH-1,checky)=='w' || grid_at(p->x+BLOCKWIDTH-1,checky)==' '))
 	{
 		// this is used in the intro. maybe some place else too in the future.
 		// should it be merged into the first line above? maybe.
-		p->geom.y+=movey;
+		p->y+=movey;
 	}
 
 	else
@@ -216,21 +144,10 @@ void penguin_move(Penguin* p)
 		p->ydelta=-p->ydelta;
 	}
 
-	grid_mark(p->geom.x,p->geom.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
+	grid_mark(p->x,p->y,BLOCKWIDTH,BLOCKHEIGHT,'*');
+
+	if (hitline1 && hitline2) return PENGUIN_HIT_BOTH;
+	if (hitline1) return PENGUIN_HIT_LINE1;
+	if (hitline2) return PENGUIN_HIT_LINE2;
+	return PENGUIN_HIT_NONE;
 }
-
-int penguin_createbgsave(Penguin* p)
-{	
-	SDL_Surface* tmpsurface;	
-		
-	tmpsurface = SDL_CreateRGBSurface(SDL_SWSURFACE,p->geom.w,p->geom.h,screen->format->BitsPerPixel,0,0,0,0);
-	// fix -- add error checking
-	p->bgsave = SDL_DisplayFormat(tmpsurface);
-	if (p->bgsave==NULL)
-		p->bgsave=tmpsurface;
-	else
-		SDL_FreeSurface(tmpsurface);
-
-	return 0;
-}
-

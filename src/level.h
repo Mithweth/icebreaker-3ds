@@ -20,8 +20,7 @@
 *
 */
 
-#ifndef LEVEL_H
-#define LEVEL_H
+#pragma once
 
 #include "line.h"
 #include "penguin.h"
@@ -36,16 +35,7 @@ typedef struct
 } ScoreSheet;
 
 
-extern LevelExitType playlevel(int level, long oldscore, ScoreSheet * score);
-
-extern void level_redrawwhole(void);
-extern int level_checkifatstart(void);
-
-// FIX -- these shouldn't need to be globals
-extern Line line1;
-extern Line line2;
-extern Penguin flock[MAXPENGUINS];
-extern int penguincount;
-
-
-#endif /* LEVEL_H */
+bool level_init(size_t level, ScoreSheet *levelscore);
+void level_draw(void);
+bool level_update(u32 keys, touchPosition touch);
+void level_close(void);

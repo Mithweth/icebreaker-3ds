@@ -1,115 +1,51 @@
-/*
-* IceBreaker
-* Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
-*
-* <http://www.mattdm.org/icebreaker/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-*
-*/
+// grid.c
 
-#include <SDL.h>
-#include <string.h>
+#include <3ds.h>
+#include <citro2d.h>
 #include <stdlib.h>
-#include "icebreaker.h"
-#include "laundry.h"
 #include "grid.h"
-#include "penguin.h"
-#include "globals.h"
+#include "constants.h"
 #include "themes.h"
+#include "line.h"
 
-SDL_Surface* gridsave;
-char grid[WIDTH][HEIGHT];
-
-
-static char maskgrid[WIDTH][HEIGHT];
-
-// kludge-o-rama
 static long rcount;
 #define MAXRCOUNT 80000
 
+char grid[WIDTH][HEIGHT];
+char maskgrid[WIDTH][HEIGHT];
+static u32 block_colors[COLS][ROWS];
 
-int grid_init()
-{
-	// fix -- add error checking	
-	gridsave = SDL_CreateRGBSurface(SDL_SWSURFACE,WIDTH,HEIGHT,screen->format->BitsPerPixel,0,0,0,0);
-	return 0;
+char grid_at(int x, int y) {
+	if (x < BORDERLEFT || x >= BORDERRIGHT || y < BORDERTOP || y >= BORDERBOTTOM)
+		return 'X';
+	return grid[x][y];
 }
 
-void grid_quit()
+static void grid_squarefill(int x, int y)
 {
-	SDL_FreeSurface(gridsave);
+	// x and y must be the top left corner of a square, or else this
+	// will look silly. and there's no bounds checking!
+
+	if (grid_at(x,y)==' ' || grid_at(x,y)=='1' || grid_at(x,y)=='2' || grid_at(x,y)=='w')
+	{
+		grid_mark(x,y,BLOCKWIDTH,BLOCKHEIGHT,'.');
+		grid_squarefill(x+BLOCKWIDTH, y);
+		grid_squarefill(x-BLOCKWIDTH, y);
+		grid_squarefill(x, y+BLOCKHEIGHT);
+		grid_squarefill(x, y-BLOCKHEIGHT);
+	}
 }
 
-void grid_drawblocks()
-{
-	int r,g,b;
-	SDL_Rect tmprect;
-
-	SDL_FillRect(gridsave,NULL,color.background);
-
-
-	for (tmprect.x=BORDERLEFT;tmprect.x<BORDERRIGHT;tmprect.x+=BLOCKWIDTH)
-		for (tmprect.y=BORDERTOP;tmprect.y<BORDERBOTTOM;tmprect.y+=BLOCKHEIGHT)
+void grid_reset(char c) {
+	for (int x=0;x<WIDTH;x++) {
+		for (int y=0;y<HEIGHT;y++)
 		{
-			r = (random() % (color.boardfillmaxr-color.boardfillminr+1))+color.boardfillminr;
-
-			if (color.boardfillminr == color.boardfillming && color.boardfillmaxr == color.boardfillmaxg)
-				g=r;
-			else
-				g = (random() % (color.boardfillmaxg-color.boardfillming+1))+color.boardfillming;
-
-			if (color.boardfillminr == color.boardfillminb && color.boardfillmaxr == color.boardfillmaxb)
-				b=r;		
-			else if (color.boardfillming == color.boardfillminb && color.boardfillmaxg == color.boardfillmaxb)
-				b=g;
-			else
-				b = (random() % (color.boardfillmaxb-color.boardfillminb+1))+color.boardfillminb; 
-		
-			//if (grid[tmprect.x][tmprect.y]==' ' || grid[tmprect.x][tmprect.y]=='w')
-			if (grid[tmprect.x][tmprect.y]!='.' && grid[tmprect.x][tmprect.y]!='-' && grid[tmprect.x][tmprect.y]!='|')
-			{
-				tmprect.w=BLOCKWIDTH; tmprect.h=BLOCKHEIGHT;
-				SDL_FillRect(gridsave,&tmprect,color.gridline);
-				if (color.gridhighlight==color.gridline)
-				{
-					tmprect.w=BLOCKWIDTH-1; tmprect.h=BLOCKHEIGHT-1; // this makes the gridline show up
-					SDL_FillRect(gridsave,&tmprect,SDL_MapRGB(screen->format, r, g, b));
-				}
-				else
-				{
-					tmprect.w=BLOCKWIDTH-1; tmprect.h=BLOCKHEIGHT-1;
-					SDL_FillRect(gridsave,&tmprect,color.gridhighlight);
-
-					tmprect.w=BLOCKWIDTH-2; tmprect.h=BLOCKHEIGHT-2;
-					// FIX! this is kludgy! changing the index variable on the fly bad bad bad. (even if I do put it back!)
-					tmprect.x++; tmprect.y++;
-					SDL_FillRect(gridsave,&tmprect,SDL_MapRGB(screen->format, r, g, b));
-					tmprect.x--; tmprect.y--;
-				
-				}
-			}
+			grid[x][y]=c;
 		}
-	
-	tmprect.x=BORDERLEFT; tmprect.y=BORDERTOP;
-	tmprect.w=PLAYWIDTH; tmprect.h=PLAYHEIGHT;
-	SDL_BlitSurface(gridsave, &tmprect, screen, &tmprect);
+	}
 }
 
-void grid_mark(int x, int y, int w, int h, char fillchar)
-{
+void grid_mark(int x, int y, int w, int h, char fillchar) {
 	int i;
 	
 	// Optimizing this routine much further seems about impossible to me
@@ -118,143 +54,65 @@ void grid_mark(int x, int y, int w, int h, char fillchar)
 	// rethinking the collision detection -- which could stand a rethink
 	// anyway -- there's not much that can be done.
 	
+	if (x < BORDERLEFT) { w -= BORDERLEFT - x; x = BORDERLEFT; }
+	if (y < BORDERTOP)  { h -= BORDERTOP - y;  y = BORDERTOP; }
+	if (x + w > BORDERRIGHT)  w = BORDERRIGHT - x;
+	if (y + h > BORDERBOTTOM) h = BORDERBOTTOM - y;
+	if (w <= 0 || h <= 0) return;
 	for (i=x;i<x+w;i++)
 		memset(&grid[i][y],fillchar,h);
-	
-	/*
-	int i, j;
-	for (j=y;j<y+h;j++)
-		for (i=x;i<x+w;i++)
-			grid[i][j]=fillchar;		
-	*/	
 }
 
-long countcleared()
-{
-	int i, j;
-	long c;
-	c=0;
-	for (i=BORDERLEFT;i<BORDERRIGHT;i++)
-		for (j=BORDERTOP;j<BORDERBOTTOM;j++)
-			if (grid[i][j] == ' ' || grid[i][j] == '*')
-				c++;
-	//return(100-(c*100/(PLAYWIDTH*PLAYHEIGHT)));
-	return(c);
-	
-}
+void grid_generate_colors(void) {
+	for (int x = 0; x < COLS; x++) {
+		for (int y = 0; y < ROWS; y++) {
+			int r = (random() % (color.boardfillmaxr - color.boardfillminr + 1)) + color.boardfillminr;
+			int g, b;
 
-#ifdef DEBUG
-void grid_printboard()
-{
-	int i, j;
-	
-	for (j=BLOCKWIDTH/2;j<HEIGHT;j+=BLOCKHEIGHT)
-	{
-		for (i=BLOCKWIDTH/2;i<WIDTH;i+=BLOCKWIDTH)
-		{
-			printf("%c ",grid[i][j]);
+			if (color.boardfillminr == color.boardfillming && color.boardfillmaxr == color.boardfillmaxg)
+				g = r;
+			else
+				g = (random() % (color.boardfillmaxg - color.boardfillming + 1)) + color.boardfillming;
+
+			if (color.boardfillminr == color.boardfillminb && color.boardfillmaxr == color.boardfillmaxb)
+				b = r;
+			else if (color.boardfillming == color.boardfillminb && color.boardfillmaxg == color.boardfillmaxb)
+				b = g;
+			else
+				b = (random() % (color.boardfillmaxb - color.boardfillminb + 1)) + color.boardfillminb;
+
+			block_colors[x][y] = C2D_Color32(r, g, b, 255);
 		}
-		printf("\n");
 	}
 }
-#endif
 
-#ifdef DEBUG
-void grid_printwhole()
-{
-	int i, j;
-	
-	printf ("grid:\n");
-	for (j=0;j<HEIGHT;j++)
-	{
-		for (i=0;i<WIDTH;i++)
-		{
-			printf("%c ",grid[i][j]);
+void grid_drawblocks(void) {
+	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.0f, PLAYWIDTH, PLAYHEIGHT, color.background);
+
+	for (int bx = 0; bx < COLS; bx++) {
+		for (int by = 0; by < ROWS; by++) {
+			int x = BORDERLEFT + bx * BLOCKWIDTH;
+			int y = BORDERTOP + by * BLOCKHEIGHT;
+
+			if (grid_at(x,y) == '.' || grid_at(x,y) == '-' || grid_at(x,y) == '|')
+				continue;
+			C2D_DrawRectSolid(x, y, 0.1f, BLOCKWIDTH, BLOCKHEIGHT, color.gridline);
+
+			if (color.gridhighlight == color.gridline) {
+				C2D_DrawRectSolid(x, y, 0.2f, BLOCKWIDTH - 1, BLOCKHEIGHT - 1, block_colors[bx][by]);
+			} else {
+				C2D_DrawRectSolid(x, y, 0.2f, BLOCKWIDTH - 1, BLOCKHEIGHT - 1, color.gridhighlight);
+				C2D_DrawRectSolid(x + 1, y + 1, 0.3f, BLOCKWIDTH - 2, BLOCKHEIGHT - 2, block_colors[bx][by]);
+			}
 		}
-		printf("\n");
 	}
 }
-#endif
 
-#ifdef DEBUG
-void grid_printwholemask()
-{
-	int i, j;
-	
-	printf ("maskgrid:\n");
-	for (j=0;j<HEIGHT;j++)
-	{
-		for (i=0;i<WIDTH;i++)
-		{
-			printf("%c ",maskgrid[i][j]);
-		}
-		printf("\n");
-	}
-}
-#endif
-
-void grid_checkempty(int x, int y)
-{
-	//int i,j;
-	
-	// for debugging...
-	
-	SDL_Rect tmprect;
-	
-
-	// if square isn't empty, just return....
-	if (grid[x][y]!=' ') {  return; }
-
-
-	// it'd be nice to find a way to keep this longer...
-	memcpy(maskgrid,grid,WIDTH*HEIGHT);
-	
-
-	// grid_penguinsearch at that spot...
-	rcount=0;
-	if (!grid_penguinsearch(x,y)) // area is clear!
-	{
-		//grid_printwholemask();
-		
-
-		
-		//grid_floodfill(x,y);
-		
-		// this makes sure x and y are the top left corners of blocks.
-		// since the area is empty of penguins, it should be completely
-		// safe to use this isntead of grid_floodfill here. really. :)
-		grid_squarefill( (((x-BORDERLEFT)/BLOCKWIDTH ) * BLOCKWIDTH ) +BORDERLEFT, (((y-BORDERTOP)/BLOCKHEIGHT) * BLOCKHEIGHT) +BORDERTOP);
-
-		tmprect.w=BLOCKWIDTH; tmprect.h=BLOCKHEIGHT;
-		for (tmprect.x=BORDERLEFT;tmprect.x<BORDERRIGHT;tmprect.x+=BLOCKWIDTH)
-			for (tmprect.y=BORDERTOP;tmprect.y<BORDERBOTTOM;tmprect.y+=BLOCKHEIGHT)
-				if (grid[tmprect.x][tmprect.y]=='.') // clear it!)
-				{
-					SDL_FillRect(screen,&tmprect,color.background);
-					laundry_soil(tmprect);
-				}
-		//grid_printwhole();
-	}
-	/* printf("Search took %ld recursions.\n",rcount); */
-
-	/*
-	for (j=0;j<HEIGHT;j+=BLOCKHEIGHT)
-	{
-		for (i=0;i<WIDTH;i+=BLOCKWIDTH)
-		{
-			printf("%c ",maskgrid[i][j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
-	*/
-}
-
-
-int grid_penguinsearch(int i, int j)
+static int grid_penguinsearch(int i, int j)
 {
 	int searchval=0;
-
+	if (i < BORDERLEFT || i >= BORDERRIGHT || j < BORDERTOP || j >= BORDERBOTTOM)
+		return 0;
 	rcount++; 
 	// kludge! FIX! BAD!
 	if (rcount>MAXRCOUNT) // bail
@@ -262,20 +120,10 @@ int grid_penguinsearch(int i, int j)
 		fprintf(stderr,"Damn. Ran out of recursions.\n");
 		return(2);
 	}
-	
-	
-	// shouldn't need to check bounds because we're only painting in the
-	// middle. and we call this function so much that the time saved
-	// is worth it
-	//if (i<0 || j<0 || i>=WIDTH || j>=HEIGHT)
-	//{
-	//	fprintf(stderr,"That shouldn't have happened (grid_penguinsearch)! (%d,%d)\n",i,j);
-	//	exit(1);
-	//}
 
-          
+		  
 	if (maskgrid[i][j]==' '
-	    || maskgrid[i][j]=='1' || maskgrid[i][j]=='2' || maskgrid[i][j]=='w')  // Ah ha! The nefarious "instant melting ice" bug solved!  NOTE: if more lines are added to the game, add them here too!
+		|| maskgrid[i][j]=='1' || maskgrid[i][j]=='2' || maskgrid[i][j]=='w')  // Ah ha! The nefarious "instant melting ice" bug solved!  NOTE: if more lines are added to the game, add them here too!
 	{
 		maskgrid[i][j]=',';
 		
@@ -291,36 +139,24 @@ int grid_penguinsearch(int i, int j)
 	{
 		searchval=1;	
 	}
-	return(searchval);
+	return searchval;
 }
 
-
-void grid_floodfill(int x, int y)
+void grid_checkempty(int x, int y)
 {
-	// shouldn't need to check bounds because we're only painting in the
-	// middle. ie (x<0 || y<0 || x>WIDTH || y>HEIGHT) is always false.
-	if (grid[x][y]==' ' || grid[x][y]=='1' || grid[x][y]=='2' || grid[x][y]=='w')
+	// if square isn't empty, just return....
+	if (grid_at(x,y)!=' ') return;
+
+	// it'd be nice to find a way to keep this longer...
+	memcpy(maskgrid,grid,WIDTH*HEIGHT);
+	
+	// grid_penguinsearch at that spot...
+	rcount=0;
+	if (!grid_penguinsearch(x,y)) // area is clear!
 	{
-		grid[x][y]='.';
-		grid_floodfill(x+1, y);
-		grid_floodfill(x-1, y);
-		grid_floodfill(x, y+1);
-		grid_floodfill(x, y-1);
+		// this makes sure x and y are the top left corners of blocks.
+		// since the area is empty of penguins, it should be completely
+		// safe to use this isntead of grid_floodfill here. really. :)
+		grid_squarefill( (((x-BORDERLEFT)/BLOCKWIDTH ) * BLOCKWIDTH ) +BORDERLEFT, (((y-BORDERTOP)/BLOCKHEIGHT) * BLOCKHEIGHT) +BORDERTOP);
 	}
 }
-
-void grid_squarefill(int x, int y)
-{
-	// x and y must be the top left corner of a square, or else this
-	// will look silly. and there's no bounds checking!
-
-	if (grid[x][y]==' ' || grid[x][y]=='1' || grid[x][y]=='2' || grid[x][y]=='w')
-	{
-		grid_mark(x,y,BLOCKWIDTH,BLOCKHEIGHT,'.');
-		grid_squarefill(x+BLOCKWIDTH, y);
-		grid_squarefill(x-BLOCKWIDTH, y);
-		grid_squarefill(x, y+BLOCKHEIGHT);
-		grid_squarefill(x, y-BLOCKHEIGHT);
-	}
-}
-
