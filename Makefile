@@ -1,211 +1,199 @@
-CC=gcc
+#---------------------------------------------------------------------------------
+.SUFFIXES:
+.DEFAULT_GOAL := all
+#---------------------------------------------------------------------------------
 
-PKG_CONFIG ?= pkg-config
-
-ifndef prefix
-  prefix=/usr/local
-  #prefix=/usr
+ifeq ($(strip $(DEVKITARM)),)
+$(error Please set DEVKITARM in your environment)
 endif
 
-ifndef datadir
-  datadir=$(prefix)/share
+TOPDIR ?= $(CURDIR)
+DEBUG ?= 0
+include $(DEVKITARM)/3ds_rules
+
+#---------------------------------------------------------------------------------
+# Project configuration
+#---------------------------------------------------------------------------------
+BUILD               := build
+SOURCES             := src
+INCLUDES            := include src
+
+TARGET              := icebreaker-3ds
+APP_TITLE           := Icebreaker
+APP_DESCRIPTION     := Icebreaker 3DS port
+APP_AUTHOR          := Jean-Baptiste Langlois
+APP_PRODUCT_CODE    := CTR-H-ICEB
+APP_UNIQUE_ID       := 0xFAA72
+APP_VERSION         ?= 1.0.0
+
+ASSETS              := assets
+GRAPHICS            := $(ASSETS)/bitmaps
+SOUNDS              := $(ASSETS)/sounds
+THEMES              := $(ASSETS)/themes
+ROMFS               := romfs
+CIA                 := $(ASSETS)/cia
+
+ICON                := $(CIA)/icon.png
+CIA_RSF             := $(CIA)/app.rsf
+CIA_BANNER          := $(CIA)/banner.bnr
+CIA_BANNER_PNG      := $(CIA)/banner.png
+CIA_BANNER_WAV      := $(CIA)/banner.wav
+
+VERSION_PARTS       := $(subst ., ,$(APP_VERSION))
+APP_VERSION_MAJOR   := $(word 1,$(VERSION_PARTS))
+APP_VERSION_MINOR   := $(word 2,$(VERSION_PARTS))
+APP_VERSION_MICRO   := $(word 3,$(VERSION_PARTS))
+
+# One spritesheet, loaded at runtime with C2D_SpriteSheetLoad("romfs:/gfx.t3x").
+GFX_T3S             := $(ASSETS)/bitmaps/gfx.t3s
+GFX_T3X             := $(ROMFS)/bitmaps/gfx.t3x
+GFX_H               := $(BUILD)/gfx.h
+GFX_ROMFS_H := $(ROMFS)/bitmaps/gfx.h
+GFX_IMAGES          := $(shell find $(GRAPHICS) -type f -name '*.png' 2>/dev/null)
+
+# Copy sounds and theme descriptions to RomFS without converting them.
+RAW_ASSET_DIRS      := $(SOUNDS) $(THEMES)
+RAW_ASSETS          := $(foreach dir,$(RAW_ASSET_DIRS),$(shell find $(dir) -type f 2>/dev/null))
+ROMFS_ASSETS        := $(patsubst $(ASSETS)/%,$(ROMFS)/%,$(RAW_ASSETS))
+
+#---------------------------------------------------------------------------------
+# Compiler / linker
+#---------------------------------------------------------------------------------
+ARCH                := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
+LIBDIRS             := $(CTRULIB) $(DEVKITPRO)/portlibs/3ds
+
+INCLUDE             := $(foreach dir,$(INCLUDES),-I$(TOPDIR)/$(dir)) \
+                       $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+                       -I$(TOPDIR)/$(BUILD)
+
+CFLAGS              := -g -Wall -O2 -mword-relocations -ffunction-sections $(ARCH) \
+                       $(INCLUDE) -D__3DS__ -DVERSION=\"$(APP_VERSION)\"
+ifeq ($(DEBUG),1)
+CFLAGS              += -DDEBUG
 endif
 
-ifndef mandir
-  mandir=$(prefix)/share/man
+CXXFLAGS            := $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
+ASFLAGS             := -g $(ARCH)
+LDFLAGS             = -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LIBS                := -lcitro2d -lcitro3d -lctru -lm -lvorbisidec -logg
+
+#---------------------------------------------------------------------------------
+# Outer make: prepare RomFS, then compile from build/
+#---------------------------------------------------------------------------------
+ifneq ($(BUILD),$(notdir $(CURDIR)))
+
+export TOPDIR        := $(CURDIR)
+export OUTPUT        := $(TOPDIR)/$(TARGET)
+export DEPSDIR       := $(TOPDIR)/$(BUILD)
+
+CFILES              := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CPPFILES            := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+SFILES              := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+
+export VPATH         := $(foreach dir,$(SOURCES),$(TOPDIR)/$(dir))
+export OFILES        := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES_SOURCES := $(OFILES)
+export HFILES        := $(TOPDIR)/$(GFX_H)
+export LIBPATHS      := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+export LD := $(CC)
+
+# The 3DSX must be repackaged when RomFS contents change, even if C code doesn't.
+export ROMFS_DEPS    := $(addprefix $(TOPDIR)/,$(GFX_T3X) $(GFX_ROMFS_H) $(ROMFS_ASSETS))
+export _3DSXDEPS     := $(if $(NO_SMDH),,$(OUTPUT).smdh)
+export _3DSXFLAGS    += --romfs=$(TOPDIR)/$(ROMFS)
+export APP_ICON      := $(TOPDIR)/$(ICON)
+ifeq ($(strip $(NO_SMDH)),)
+export _3DSXFLAGS    += --smdh=$(OUTPUT).smdh
 endif
 
-ifndef bindir
-  bindir=$(prefix)/bin
-endif
+.PHONY: all build-project banner cia clean lint run
 
+all: build-project
 
-CFLAGS+=-Wall -Werror $(OPTIMIZE) $(SDL_CFLAGS) -DDATAPREFIX=\"$(datadir)/icebreaker\"
+build-project: $(GFX_T3X) $(GFX_H) $(GFX_ROMFS_H) $(ROMFS_ASSETS)
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(TOPDIR)/Makefile
 
-SRC=icebreaker.c cursor.c grid.c laundry.c line.c penguin.c sound.c \
-    level.c intro.c text.c status.c transition.c hiscore.c dialog.c \
-    menu.c options.c fullscreen.c themes.c event.c titlebar.c benchmark.c \
-    misc.c lock.c delay.c
+$(BUILD) $(ROMFS):
+	@mkdir -p $@
 
-DISTFILES=$(wildcard *.c *.h *.bmp *.png *.ibt *.wav *.sh *.rc *.ico *.desktop *.man.in *.nsi.in *.spec README* TODO LICENSE INSTALL ChangeLog Makefile*)
+# tex3ds generates both the texture and its index header in one invocation.
+$(GFX_T3X) $(GFX_H) &: $(GFX_T3S) $(GFX_IMAGES) | $(BUILD) $(ROMFS)
+	@echo tex3ds ... $(GFX_T3S)
+	@mkdir -p $(dir $(GFX_T3X))
+	@tex3ds -i $(GFX_T3S) -H $(GFX_H) -o $(GFX_T3X)
 
-SDL_MIXER := $(shell $(PKG_CONFIG) SDL_mixer --libs)
-SDL_LIB=$(SDL_MIXER) $(SDL_LDFLAGS)
-SDL_CFLAGS := $(shell $(PKG_CONFIG) sdl --cflags)
-SDL_LDFLAGS := $(shell $(PKG_CONFIG) sdl --libs)
-VERSION := $(shell awk '/^#define VERSION/ { print $$3 }' icebreaker.h)
-VERDATE := $(shell LC_ALL=C date -u -r icebreaker.h +"%d %B %Y")
+# assets/sounds/foo.wav -> romfs/sounds/foo.wav (same for themes).
+$(ROMFS)/%: $(ASSETS)/%
+	@mkdir -p $(dir $@)
+	@cp $< $@
 
-WINARCH=i686
-CROSSTOOLSPATH=/usr/$(WINARCH)-w64-mingw32
-UNIX2DOS=unix2dos
-MAKENSIS=makensis
-WINDLLS=SDL.dll SDL_mixer.dll libgcc_s_dw2-1.dll libvorbisfile-3.dll libvorbis-0.dll libogg-0.dll libssp-0.dll libwinpthread-1.dll
-export WINARCH
+$(GFX_ROMFS_H): $(GFX_H)
+	@mkdir -p $(dir $@)
+	@cp $< $@
 
-RPMARCH := $(shell  rpm --eval %{_arch} )
-RPMOPTS=
-RPMCRAZYDEFINES := --define "_topdir %(pwd)/rpmbuild" --define "_sourcedir %(pwd)" --define "_specdir %(pwd)"  --define "_tmppath %(pwd)/rpmbuild/tmp/"  --define "_builddir %(pwd)/rpmbuild/build/" --define "_rpmdir %(pwd)" --define "_srcrpmdir %(pwd)" --define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"
+banner:
+	@bannertool makebanner -i $(CIA_BANNER_PNG) -a $(CIA_BANNER_WAV) -o $(CIA_BANNER)
+	@echo built ... $(CIA_BANNER)
 
-ifneq ($(VERSION),$(shell awk '/^Version:/ { print $$2 }' icebreaker.spec))
-  $(error Version in spec file doesn't match version in icebreaker.h! )
-endif
+cia: $(TARGET).elf $(TARGET).smdh
+	@test -f "$(CIA_BANNER)" || { \
+		echo "Missing $(CIA_BANNER). Run 'make banner' first."; exit 1; \
+	}
+	@command -v makerom >/dev/null 2>&1 || { echo "makerom not found in PATH"; exit 1; }
+	@makerom -f cia \
+		-o $(TARGET).cia \
+		-target t \
+		-exefslogo \
+		-elf $(TARGET).elf \
+		-icon $(TARGET).smdh \
+		-banner $(CIA_BANNER) \
+		-rsf $(CIA_RSF) \
+		-major $(APP_VERSION_MAJOR) \
+		-minor $(APP_VERSION_MINOR) \
+		-micro $(APP_VERSION_MICRO) \
+		-DAPP_TITLE="$(APP_TITLE)" \
+		-DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" \
+		-DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)" \
+		-DAPP_ROMFS="$(TOPDIR)/$(ROMFS)" \
+		-DAPP_CATEGORY="Application" \
+		-DAPP_USE_ON_SD="true" \
+		-DAPP_ENCRYPTED="false" \
+		-DAPP_MEMORY_TYPE="Application" \
+		-DAPP_SYSTEM_MODE="64MB" \
+		-DAPP_SYSTEM_MODE_EXT="Legacy" \
+		-DAPP_CPU_SPEED="268MHz" \
+		-DAPP_ENABLE_L2_CACHE="false" \
+		-DAPP_VERSION_MAJOR="$(APP_VERSION_MAJOR)"
+	@echo built ... $(TARGET).cia
 
-RPMRELEASE := $(shell awk '/^Release:/ { print $$2 }' icebreaker.spec)
-PRERELEASE := $(shell awk '/^Release:/ { print $$2 }' icebreaker.spec | grep pre)
-
-ifneq ($(strip $(PRERELEASE)),)
-  ifeq ($(shell awk '/^%define.*isprerelease/ { print $$3 }' icebreaker.spec),0)
-    $(error .spec file has -pre release tag, but sets "isprerelease" to 0.  Fix that)
-  endif
-  ifndef OPTIMIZE
-    OPTIMIZE=-g
-  endif
-  VERSIONSTRING := $(VERSION)-$(PRERELEASE)
-  $(warning Building prerelease version.)
-else
-  ifeq ($(shell awk '/^%define.*isprerelease/ { print $$3 }' icebreaker.spec),1)
-    $(error .spec file has final release tag, but sets "isprerelease" to 1.  Fix that)
-  endif
-  ifndef OPTIMIZE
-    OPTIMIZE=-O2
-  endif
-  VERSIONSTRING := $(VERSION)
-endif
-
-
-all:	icebreaker man
-
-.PHONY: clean
 clean:
-	[ -d icebreaker-$(VERSIONSTRING) ] && rm -rf icebreaker-$(VERSIONSTRING) || true
-	[ -d rpmbuild ] && rm -rf rpmbuild || true
-	[ -d win32.build ] && rm -rf win32.build || true
-	-rm -f icebreaker
-	-rm -f icebreaker.6
-	-rm -f icebreaker.nsi
-	-rm -f *.o
-	-rm -f *.d
-	-rm -f *.tar.xz
-	-rm -f *.zip
-	-rm -f *.exe
-	-rm -f *.rpm
+	@echo clean ...
+	@rm -rf $(BUILD) $(ROMFS)
+	@rm -f $(TARGET).3dsx $(TARGET).smdh $(TARGET).elf $(TARGET).cia PRN
 
-dist: tgz win32 rpm
-	ls -lh --color=yes icebreaker-$(VERSION)*
+lint:
+	@$(MAKE) --no-print-directory CFLAGS="$(CFLAGS) -fanalyzer" build-project
 
-tgz: icebreaker-$(VERSIONSTRING).tar.xz
+run: $(TARGET).3dsx
+	@flatpak info org.azahar_emu.Azahar &>/dev/null || { \
+		echo "Azahar flatpak install is missing"; exit 1; \
+	}
+	@flatpak run --filesystem="$(TOPDIR):ro" org.azahar_emu.Azahar "$(TARGET).3dsx"
 
-icebreaker-$(VERSIONSTRING).tar.xz: $(DISTFILES)
-	[ -d icebreaker-$(VERSIONSTRING) ] && rm -rf icebreaker-$(VERSIONSTRING) || true
-	mkdir icebreaker-$(VERSIONSTRING)
-	cp -p * icebreaker-$(VERSIONSTRING) || true
-	(cd icebreaker-$(VERSIONSTRING); make clean)
-	tar cJf icebreaker-$(VERSIONSTRING).tar.xz icebreaker-$(VERSIONSTRING)
-	[ -d icebreaker-$(VERSIONSTRING) ] && rm -rf icebreaker-$(VERSIONSTRING) || true
-	tar tf icebreaker-$(VERSIONSTRING).tar.xz
+#---------------------------------------------------------------------------------
+# Inner make: compile and link from build/
+#---------------------------------------------------------------------------------
+else
 
-rpm: srcrpm binrpm
+.PHONY: all
+all: $(OUTPUT).3dsx
 
-srcrpm: icebreaker-$(VERSION)-$(RPMRELEASE).src.rpm 
-binrpm: $(RPMARCH)rpm
-$(RPMARCH)rpm: icebreaker-$(VERSION)-$(RPMRELEASE).$(RPMARCH).rpm
+# These files already exist: the outer make generated/copied them first.
+$(OFILES_SOURCES): $(HFILES)
+$(OUTPUT).elf: $(OFILES)
+$(OUTPUT).3dsx: $(OUTPUT).elf $(_3DSXDEPS) $(ROMFS_DEPS)
 
-icebreaker-$(VERSION)-$(RPMRELEASE).src.rpm: icebreaker-$(VERSIONSTRING).tar.xz icebreaker.spec
-	[ -d rpmbuild ] && rm -rf rpmbuild || true
-	mkdir -p rpmbuild/tmp
-	rpmbuild $(RPMCRAZYDEFINES) -bs icebreaker.spec
-	[ -d rpmbuild ] && rm -rf rpmbuild || true
+-include $(DEPSDIR)/*.d
 
-icebreaker-$(VERSION)-$(RPMRELEASE).$(RPMARCH).rpm: icebreaker-$(VERSIONSTRING).tar.xz icebreaker.spec
-	[ -d rpmbuild ] && rm -rf rpmbuild || true
-	mkdir -p rpmbuild/tmp; mkdir -p rpmbuild/build
-	rpmbuild $(RPMCRAZYDEFINES) -bb icebreaker.spec
-	[ -d rpmbuild ] && rm -rf rpmbuild || true
-
-win32: icebreaker-$(VERSIONSTRING).exe
-
-icebreaker-$(VERSIONSTRING).exe: icebreaker.nsi icebreaker-$(VERSIONSTRING).zip
-	[ -d icebreaker-$(VERSIONSTRING) ] && rm -rf icebreaker-$(VERSIONSTRING) || true
-	unzip -b icebreaker-$(VERSIONSTRING).zip
-	touch icebreaker-$(VERSIONSTRING)/lockhelper.lck
-	(cd icebreaker-$(VERSIONSTRING); \
-	   $(MAKENSIS) -NOCD -INPUTCHARSET UTF8 ../icebreaker.nsi; \
-	   test -f icebreaker-$(VERSIONSTRING).exe)
-	mv -f icebreaker-$(VERSIONSTRING)/icebreaker-$(VERSIONSTRING).exe icebreaker-$(VERSIONSTRING).exe
-	[ -d icebreaker-$(VERSIONSTRING) ] && rm -rf icebreaker-$(VERSIONSTRING) || true	
-	ls -l icebreaker-$(VERSIONSTRING).exe
-
-zip: icebreaker-$(VERSIONSTRING).zip
-
-icebreaker-$(VERSIONSTRING).zip: icebreaker.exe icebreaker-$(VERSIONSTRING).tar.xz
-	[ -d icebreaker-$(VERSIONSTRING) ] && rm -rf icebreaker-$(VERSIONSTRING) || true
-	mkdir icebreaker-$(VERSIONSTRING)
-	cp icebreaker.exe icebreaker-$(VERSIONSTRING)
-	cp icebreaker-$(VERSIONSTRING).tar.xz icebreaker-$(VERSIONSTRING)/icebreaker-$(VERSIONSTRING)-src.tar.xz
-	for dll in $(WINDLLS); do cp $(CROSSTOOLSPATH)/sys-root/mingw/bin/$$dll icebreaker-$(VERSIONSTRING); done
-	cp *.wav icebreaker-$(VERSIONSTRING)
-	cp *.bmp icebreaker-$(VERSIONSTRING)
-	cp *.png icebreaker-$(VERSIONSTRING)
-	for i in *.ibt; do $(UNIX2DOS) -n $$i icebreaker-$(VERSIONSTRING)/$$i; done
-	$(UNIX2DOS) -n ChangeLog icebreaker-$(VERSIONSTRING)/ChangeLog.txt
-	$(UNIX2DOS) -n LICENSE icebreaker-$(VERSIONSTRING)/LICENSE.txt
-	$(UNIX2DOS) -n README icebreaker-$(VERSIONSTRING)/README.txt
-	$(UNIX2DOS) -n README.SDL icebreaker-$(VERSIONSTRING)/README-SDL.txt
-	$(UNIX2DOS) -n README.themes icebreaker-$(VERSIONSTRING)/README-themes.txt
-	$(UNIX2DOS) -n TODO icebreaker-$(VERSIONSTRING)/TODO.txt
-	zip -r icebreaker-$(VERSIONSTRING).zip icebreaker-$(VERSIONSTRING)
-	[ -d icebreaker-$(VERSIONSTRING) ] && rm -rf icebreaker-$(VERSIONSTRING) || true
-	unzip -t icebreaker-$(VERSIONSTRING).zip
-
-beos:
-	make -f Makefile.beos
-
-osx:
-	make -f Makefile.osx
-
-icebreaker.exe: $(DISTFILES)
-	[ -f $(CROSSTOOLSPATH)/sys-root/mingw/bin/SDL.dll ]
-	[ -d win32.build ] && rm -rf win32.build || true
-	mkdir win32.build
-	cp -p * win32.build || true
-	(cd win32.build; make clean; make -f Makefile.w32; mv icebreaker.exe ..)
-	[ -d win32.build ] && rm -rf win32.build || true
-
-icebreaker:	$(SRC:.c=.o)
-	$(CC) $(CFLAGS) $^ -o icebreaker $(SDL_LIB) $(LDFLAGS)
-
-man: icebreaker.6
-
-%.nsi: %.nsi.in icebreaker.spec icebreaker.h
-	sed 's/\%ICEBREAKERVERSION/$(VERSIONSTRING)/' $< > $@
-
-%.6: %.man.in
-	sed 's/\$$VERSION/$(VERSION)/' $< | \
-	   sed 's/\$$VERDATE/$(VERDATE)/' > $@
-
-install-mkdirs:
-	install -m 755 -d $(datadir)/icebreaker
-	install -m 755 -d $(bindir)
-	install -m 755 -d $(mandir)/man6
-
-themes-install: install-themes
-
-install-themes: install-mkdirs
-	install -m 644 *.ibt $(datadir)/icebreaker
-	install -m 644 *.wav *.bmp *.png $(datadir)/icebreaker
-
-install-bin: install-mkdirs icebreaker
-	install -m 755 icebreaker $(bindir)
-
-install-man: install-mkdirs icebreaker.6
-	install -m 644 icebreaker.6 $(mandir)/man6
-
-install: all install-mkdirs install-themes install-bin install-man
-
-%.d: %.c
-	set -e; $(CC) -M $(CFLAGS) $< \
-           | sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
-           [ -s $@ ] || rm -f $@
-
-include $(SRC:.c=.d)
+endif
+#---------------------------------------------------------------------------------

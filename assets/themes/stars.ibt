@@ -13,7 +13,9 @@ BonusscrollText		160  160  192
 TextentryBox		  0    0    0
 TextentryText		255  255  255
 CopyrightText		160  160  192
-SpriteTransparent	  0  0    0
-SpriteBitmap		star.bmp
-SoundOuch		nbwoanp.wav
-SoundCrash		scrunch.wav
+ProgressbarOutline  255  255  255
+ProgressbarInner    0  0  48
+ProgressbarFill     34  80  172
+SpriteBitmap		star
+SoundOuch		nbwoanp
+SoundCrash		scrunch

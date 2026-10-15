@@ -1,38 +1,45 @@
 /*
-* IceBreaker
-* Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org> 
-*
-* <http://www.mattdm.org/icebreaker/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc., 59
-* Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*
-*/
+ * IceBreaker
+ * Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
+ * Copyright (c) 2026 Jean-Baptiste Langlois
+ *
+ * Original game by Matthew Miller.
+ * Nintendo 3DS port by Jean-Baptiste Langlois (2026).
+ *
+ * <http://www.mattdm.org/icebreaker/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see <https://www.gnu.org/licenses/>.
+ */
 
-#ifndef HISCORE_H
-#define HISCORE_H
+#pragma once
 
-extern void hiscore_inits(void);
-extern void hiscore_reads(void);
-extern int  hiscore_check(long thisgamescore);
-extern int  hiscore_add(char* username, long finalscore, int candelay);
-extern void hiscore_writedelayeds(void);
+#define HISCORENUM 5
 
-#define HISCORENUM 10
+#include <3ds.h>
+#include "game.h"
 
+typedef struct {
+	char name[50];
+	long score;
+} HighScore;
 
-extern char hiscorename[HISCORENUM][50];
-extern long hiscoreval[HISCORENUM];
+void hiscore_read(void);
+bool hiscore_check_high(long thisgamescore);
+HighScore* hiscore_get(int id);
+void hiscore_add(const char* name, long score);
+void hiscore_write(void);
+void hiscore_dialog_init(void);
+void hiscore_dialog_draw(void);
+bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats);
 
-#endif /* HISCORE_H */

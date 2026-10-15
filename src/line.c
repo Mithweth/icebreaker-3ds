@@ -1,53 +1,110 @@
 /*
-* IceBreaker
-* Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
-*   http://www.mattdm.org/
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-*
-*/
+ * IceBreaker
+ * Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
+ * Copyright (c) 2026 Jean-Baptiste Langlois
+ *
+ * Original game by Matthew Miller.
+ * Nintendo 3DS port by Jean-Baptiste Langlois (2026).
+ *
+ * <http://www.mattdm.org/icebreaker/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see <https://www.gnu.org/licenses/>.
+ */
 
-
-#include <SDL.h>
-#include "icebreaker.h"
-#include "globals.h"
+#include <citro2d.h>
+#include "game.h"
 #include "line.h"
-#include "laundry.h"
 #include "grid.h"
 #include "themes.h"
+
+void line_draw(const Line *l, u32 color) {
+    if (!l->on) return;
+    C2D_DrawRectSolid(l->geom.x, l->geom.y, 0.4f, l->geom.w, l->geom.h, color);
+}
+
+static void line_finish(Line * l)
+{
+	int i;
+	int quick1=false;
+	int quick2=false;
+	
+	l->on=false;	
+	
+	//grid_printwhole();
+	
+	switch (l->dir)
+  	{
+  		case DOWN:
+  		// falls through.
+  		case UP:
+  			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'|');
+  			line_draw(l,theme.color.background);
+  				
+  			// scan along edges to quickly determine if this
+  			// is going to be complicated.
+  			quick1=true; quick2=true;
+  			for (i=l->geom.y+BLOCKHEIGHT/2;i<l->geom.y+l->geom.h;i++)
+  			{
+  				if (grid_at(l->geom.x-1,i) != ' ' && grid_at(l->geom.x-1,i) != '*') quick1=false;
+  				if (grid_at(l->geom.x+BLOCKWIDTH,i) != ' ' && grid_at(l->geom.x+BLOCKWIDTH,i) != '*') quick2=false;
+  			}
+  				
+  			//printf("Quick %d %d\n",quick1,quick2);
+  				
+  			grid_checkempty(l->geom.x-BLOCKWIDTH/2,l->geom.y+BLOCKHEIGHT/2);
+  			grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2/2,l->geom.y+BLOCKHEIGHT/2);
+  		
+  			if (!quick1)
+  				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
+  					grid_checkempty(l->geom.x-BLOCKWIDTH/2,i);
+  			if (!quick2)
+  				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
+  					grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2,i);
+  		break;
+  		case RIGHT:
+  		// falls through
+  		case LEFT:
+  			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'-');
+  			line_draw(l,theme.color.background);
+	
+  			// scan along edges to quickly determine if this
+  			// is going to be complicated.
+  			quick1=true; quick2=true;
+  			for (i=l->geom.x+BLOCKWIDTH/2;i<l->geom.x+l->geom.w;i++)
+  			{
+  				if (grid_at(i,l->geom.y-1) != ' ' && grid_at(i,l->geom.y-1) != '*') quick1=false;
+  				if (grid_at(i,l->geom.y+BLOCKHEIGHT) != ' ' && grid_at(i,l->geom.y+BLOCKHEIGHT) != '*') quick2=false;
+  			}
+
+	  		grid_checkempty(l->geom.x+BLOCKWIDTH/2,l->geom.y-BLOCKHEIGHT/2);
+	  		grid_checkempty(l->geom.x+BLOCKWIDTH/2,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
+	  			
+	  		if (!quick1)
+	  			for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
+		  			grid_checkempty(i,l->geom.y-BLOCKHEIGHT/2);
+	  			
+	  		if (!quick2)
+	  			for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
+		  			grid_checkempty(i,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
+		break;
+	}
+}
 
 Line line_create(int linenum)
 {
 	Line l;
-
-	switch (linenum)
-	{
-		case 1: 
-			l.id='1';
-			l.colorpointer=&(color.line1);
-		break;
-		case 2:
-			l.id='2'; 
-			l.colorpointer=&(color.line2);
-		break;
-		default: 
-			l.id='L';
-			l.colorpointer=&(color.background);
-		break;
-	}
-		
+	l.id = '0' + linenum;
 	l.on=false;
 	l.dir=UP;
 	l.geom.x=0;
@@ -94,7 +151,7 @@ void line_start(Line * l, LineDir d, int x, int y)
 			l->geom.y=y;
 		break;
 	}
-	l->mark=l->geom;
+	l->mark = l->geom;
 }
 
 
@@ -105,26 +162,24 @@ int line_move(Line * l)
 	char check2;
 
 	grid_mark(l->mark.x,l->mark.y,l->mark.w,l->mark.h,l->id);
-	SDL_FillRect(screen,&(l->mark),*(l->colorpointer));
-	laundry_soil(l->mark);
-
+	
 	switch (l->dir)
 	{
 		case UP:
-			check1=grid[l->geom.x][l->geom.y-1];
-			check2=grid[l->geom.x+BLOCKWIDTH-1][l->geom.y-1];
+			check1=grid_at(l->geom.x,l->geom.y-1);
+			check2=grid_at(l->geom.x+BLOCKWIDTH-1,l->geom.y-1);
 		break;
 		case DOWN:
-			check1=grid[l->geom.x][l->geom.y+l->geom.h];
-			check2=grid[l->geom.x+BLOCKWIDTH-1][l->geom.y+l->geom.h];
+			check1=grid_at(l->geom.x,l->geom.y+l->geom.h);
+			check2=grid_at(l->geom.x+BLOCKWIDTH-1,l->geom.y+l->geom.h);
 		break;
 		case LEFT:
-			check1=grid[l->geom.x-1][l->geom.y];
-			check2=grid[l->geom.x-1][l->geom.y+BLOCKHEIGHT-1];
+			check1=grid_at(l->geom.x-1,l->geom.y);
+			check2=grid_at(l->geom.x-1,l->geom.y+BLOCKHEIGHT-1);
 		break;
 		case RIGHT:
-			check1=grid[l->geom.x+l->geom.w][l->geom.y];
-			check2=grid[l->geom.x+l->geom.w][l->geom.y+BLOCKHEIGHT-1];
+			check1=grid_at(l->geom.x+l->geom.w,l->geom.y);
+			check2=grid_at(l->geom.x+l->geom.w,l->geom.y+BLOCKHEIGHT-1);
 		break;
 		default: // this will never happen. really.
 			fprintf(stderr,"Line has no direction. That shouldn't have happened.\n");
@@ -132,7 +187,6 @@ int line_move(Line * l)
 			check2='!';
 		break;
 	}
-	
 
 	if (check1 == ' ' && check2 == ' ')
 	{ // next space is empty
@@ -193,87 +247,11 @@ int line_move(Line * l)
 	if (finish)
 	{
 		grid_mark(l->mark.x,l->mark.y,l->mark.w,l->mark.h,l->id);
-		SDL_FillRect(screen,&(l->mark),*(l->colorpointer));
-		laundry_soil(l->mark);
 		line_finish(l);
-		return(1);
+		return 1;
 	}
 	
-	return(0);
-}
-
-void line_finish(Line * l)
-{
-	int i;
-	int quick1=false;
-	int quick2=false;
-	
-	l->on=false;	
-	
-	//grid_printwhole();
-	
-	switch (l->dir)
-  	{
-  		case DOWN:
-  		// falls through.
-  		case UP:
-  			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'|');
-  			SDL_FillRect(screen,&l->geom,color.background);
-  			laundry_soil(l->geom);		
-  				
-  			// scan along edges to quickly determine if this
-  			// is going to be complicated.
-  			quick1=true; quick2=true;
-  			for (i=l->geom.y+BLOCKHEIGHT/2;i<l->geom.y+l->geom.h;i++)
-  			{
-  				if (grid[l->geom.x-1][i] != ' ' && grid[l->geom.x-1][i] != '*') quick1=false;
-  				if (grid[l->geom.x+BLOCKWIDTH][i] != ' ' && grid[l->geom.x+BLOCKWIDTH][i] != '*') quick2=false;
-  			}
-  				
-  			//printf("Quick %d %d\n",quick1,quick2);
-  				
-  			grid_checkempty(l->geom.x-BLOCKWIDTH/2,l->geom.y+BLOCKHEIGHT/2);
-  			grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2/2,l->geom.y+BLOCKHEIGHT/2);
-  		
-  			if (!quick1)
-  				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
-  					grid_checkempty(l->geom.x-BLOCKWIDTH/2,i);
-  			if (!quick2)
-  				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
-  					grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2,i);
-  		break;
-  		case RIGHT:
-  		// falls through
-  		case LEFT:
-  			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'-');
-  			SDL_FillRect(screen,&l->geom,color.background);
-  			laundry_soil(l->geom);		
-	
-  			// scan along edges to quickly determine if this
-  			// is going to be complicated.
-  			quick1=true; quick2=true;
-  			for (i=l->geom.x+BLOCKWIDTH/2;i<l->geom.x+l->geom.w;i++)
-  			{
-  				if (grid[i][l->geom.y-1] != ' ' && grid[i][l->geom.y-1] != '*') quick1=false;
-  				if (grid[i][l->geom.y+BLOCKHEIGHT] != ' ' && grid[i][l->geom.y+BLOCKHEIGHT] != '*') quick2=false;
-  			}
-  				
-  			//printf("Quick %d %d\n",quick1,quick2);
-	  			
-	  		grid_checkempty(l->geom.x+BLOCKWIDTH/2,l->geom.y-BLOCKHEIGHT/2);
-	  		grid_checkempty(l->geom.x+BLOCKWIDTH/2,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
-	  			
-	  		if (!quick1)
-	  			for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
-		  			grid_checkempty(i,l->geom.y-BLOCKHEIGHT/2);
-	  			
-	  		if (!quick2)
-	  			for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
-		  			grid_checkempty(i,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
-	  		
-		break;
-	}
-	
+	return 0;
 }
 
 
@@ -288,17 +266,11 @@ void line_kill(Line * l)
 		// falls through.
   		case UP:
   			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,' ');
-  			// FIXORAMA
-  			SDL_BlitSurface(gridsave,&l->geom, screen, &l->geom);
-  			laundry_soil(l->geom);		
   		break;
   		case RIGHT:
   		// falls through
   		case LEFT:
   			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,' ');
-  			// FIXORAMA
-  			SDL_BlitSurface(gridsave,&l->geom, screen, &l->geom);
-  			laundry_soil(l->geom);		
 	  	break;
 	}
 }

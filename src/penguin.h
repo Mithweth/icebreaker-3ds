@@ -1,47 +1,48 @@
 /*
-* IceBreaker
-* Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
-*
-* <http://www.mattdm.org/icebreaker/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc., 59
-* Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*
-*/
+ * IceBreaker
+ * Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
+ * Copyright (c) 2026 Jean-Baptiste Langlois
+ *
+ * Original game by Matthew Miller.
+ * Nintendo 3DS port by Jean-Baptiste Langlois (2026).
+ *
+ * <http://www.mattdm.org/icebreaker/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see <https://www.gnu.org/licenses/>.
+ */
 
-#ifndef PENGUIN_H
-#define PENGUIN_H
+#pragma once
+
+#include <citro2d.h>
 
 typedef struct
 {
-	SDL_Surface *image;  // having this here will make future animation easier
-	SDL_Surface *bgsave;
-	SDL_Rect geom;
+	int x;
+	int y;
 	int xdelta;
 	int ydelta;
 	int speedslower;
 } Penguin;
 
+typedef enum {
+	NONE,
+	LINE1,
+	LINE2,
+	BOTH 
+} PenguinHit;
 
-
-extern Penguin createpenguin();
-extern Penguin createpenguinxy(int x, int y);
-extern void penguin_resetimage(Penguin* p);
-extern void penguin_delete(Penguin* p);
-extern void penguin_savebehind(Penguin* p);
-extern void penguin_draw(Penguin* p);
-extern void penguin_erase(Penguin* p);
-extern void penguin_move(Penguin* p);
-
-#endif /* PENGUIN_H */
+Penguin penguin_create(void);
+Penguin penguin_createxy(int x, int y);
+void penguin_draw(Penguin* p);
+PenguinHit penguin_move(Penguin* p);
