@@ -41,12 +41,12 @@ Penguin penguin_createxy(int x, int y);
 // extern void penguin_savebehind(Penguin* p);
 void penguin_draw(Penguin* p);
 // extern void penguin_erase(Penguin* p);
-// What penguin_move() bumped into on its way.
+
 typedef enum {
-	PENGUIN_HIT_NONE,
-	PENGUIN_HIT_LINE1,
-	PENGUIN_HIT_LINE2,
-	PENGUIN_HIT_BOTH   // one line on each axis in the same move
+	NONE,
+	LINE1,
+	LINE2,
+	BOTH 
 } PenguinHit;
 
 PenguinHit penguin_move(Penguin* p);

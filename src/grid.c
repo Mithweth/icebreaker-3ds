@@ -36,6 +36,17 @@ static void grid_squarefill(int x, int y)
 	}
 }
 
+long grid_countcleared(void) {
+	int i, j;
+	long c;
+	c=0;
+	for (i=BORDERLEFT;i<BORDERRIGHT;i++)
+		for (j=BORDERTOP;j<BORDERBOTTOM;j++)
+			if (grid_at(i,j) == ' ' || grid_at(i,j) == '*')
+				c++;
+	return c;
+}
+
 void grid_reset(char c) {
 	for (int x=0;x<WIDTH;x++) {
 		for (int y=0;y<HEIGHT;y++)

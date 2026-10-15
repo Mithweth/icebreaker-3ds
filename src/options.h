@@ -2,7 +2,7 @@
 #pragma once
 
 
-typedef enum { DIFFICULTY_NORMAL, DIFFICULTY_EASY, DIFFICULTY_HARD } GameDifficultyType;
+typedef enum { NORMAL, EASY, HARD } GameDifficultyType;
 
 
 typedef struct

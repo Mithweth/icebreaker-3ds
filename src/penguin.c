@@ -61,17 +61,17 @@ PenguinHit penguin_move(Penguin* p)
 
 	switch (options.difficulty)
 	{
-		case DIFFICULTY_NORMAL:
+		case NORMAL:
 			if (p->speedslower)
 				{ movex=p->xdelta/2; movey=p->ydelta/2; }
 			else
 				{ movex=p->xdelta; movey=p->ydelta; }
 			p->speedslower=!p->speedslower;
 		break;
-		case DIFFICULTY_HARD:
+		case HARD:
 			movex=p->xdelta; movey=p->ydelta;
 		break;
-		case DIFFICULTY_EASY:
+		case EASY:
 			movex=p->xdelta/2; movey=p->ydelta/2;
 		break;
 	}
@@ -146,8 +146,8 @@ PenguinHit penguin_move(Penguin* p)
 
 	grid_mark(p->x,p->y,BLOCKWIDTH,BLOCKHEIGHT,'*');
 
-	if (hitline1 && hitline2) return PENGUIN_HIT_BOTH;
-	if (hitline1) return PENGUIN_HIT_LINE1;
-	if (hitline2) return PENGUIN_HIT_LINE2;
-	return PENGUIN_HIT_NONE;
+	if (hitline1 && hitline2) return BOTH;
+	if (hitline1) return LINE1;
+	if (hitline2) return LINE2;
+	return NONE;
 }

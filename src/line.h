@@ -25,7 +25,6 @@
 #include <3ds.h>
 
 typedef enum { UP, DOWN, LEFT, RIGHT } LineDir;	
-typedef enum { HORIZONTAL, VERTICAL } LineType;
 
 typedef struct {
 	int x;

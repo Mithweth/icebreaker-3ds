@@ -30,6 +30,8 @@
 // #include "cursor.h"
 // #include "penguin.h"
 #include <3ds.h>
+#include <stdlib.h>
+#include "constants.h"
 #include "line.h"
 #include "grid.h"
 // #include "laundry.h"
@@ -45,39 +47,66 @@
 // #include "event.h"
 // #include "delay.h"
 
+#define GESTURE_THRESHOLD 12
+
 static Line line1;
 static Line line2;
 static size_t current_level;
 static int penguincount=0;
-
+static Penguin flock[MAXPENGUINS];
+static bool gesture_active = false;
+static touchPosition gesture_start;
+static touchPosition gesture_last;
 static int lives=0;
 static int clear=0;
 static long score=0;
+static long previous_score;
+static int timepenalty;
+static float scoremod;
+static float bonusmod;
+static ScoreSheet levelscore;
 
-bool level_init(size_t level, ScoreSheet *levelscore) {
+static void level_action_startclick(int mousex, int mousey, bool vertical)
+{
+	int x,y,xdif,ydif;
+
+	x=(((mousex-BORDERLEFT)/BLOCKWIDTH ) * BLOCKWIDTH ) +BORDERLEFT;
+	y=(((mousey-BORDERTOP)/BLOCKHEIGHT) * BLOCKHEIGHT) +BORDERTOP;
+	xdif=mousex-x; ydif=mousey-y;
+
+	if (grid[x][y] == '*' || grid[mousex][mousey] == '*') 
+	{ // a little bit of grace if the player clicks directly on the penguin
+		//sound_play(SNDOUCH);
+	}
+	else if (grid[x][y] == ' ')
+	{
+		if (vertical)
+		{
+			if (!line1.on)
+				(ydif<BLOCKHEIGHT/2) ? line_start(&line1,UP,x,y) : line_start(&line1,UP,x,y+BLOCKHEIGHT);
+			if (!line2.on)
+				(ydif<BLOCKHEIGHT/2) ? line_start(&line2,DOWN,x,y) : line_start(&line2,DOWN,x,y+BLOCKHEIGHT);
+		} else {
+			if (!line1.on) 
+				(xdif<BLOCKWIDTH/2) ? line_start(&line1,LEFT,x,y) : line_start(&line1,LEFT,x+BLOCKWIDTH,y);
+			if (!line2.on)
+				(xdif<BLOCKWIDTH/2) ? line_start(&line2,RIGHT,x,y) : line_start(&line2,RIGHT,x+BLOCKWIDTH,y);
+		}
+	}
+}
+
+bool level_init(size_t level, long oldscore) {
 	grid_generate_colors();
 	grid_reset(' ');
-	LevelExitType returncode=ERROR;
-	int i,mx,my;
+	//LevelExitType returncode=ERROR;
+	//int i,mx,my;
 
-	float scoremod=1.0f;
-	float bonusmod=1.0f;
+	scoremod=1.0f;
+	bonusmod=1.0f;
 	int percentextrabonus=PERCENTEXTRABONUS-(level-1)/5; // this needs to decrease, or else the bonus disintegrates as the space required to actually trap penguins increases
 					
-	int tick=0;
-	int timepenalty=0;
+	timepenalty=0;
 	int timepenaltyinterval=0;
-	
-	int domenuflag = false;
-	
-	int movecursorleftflag = false;
-	int movecursorrightflag = false;
-	int movecursorupflag = false;
-	int movecursordownflag = false;
-	int keyboardcounter=0;
-	int keyboarddelay=0;
-	
-	u32 loopstartticks;
 	
 	int done = false;
 
@@ -85,20 +114,22 @@ bool level_init(size_t level, ScoreSheet *levelscore) {
 	penguincount=level+1;
 	lives=level+1;
 	clear=0;
+	score = oldscore;
+	previous_score=score;
 
 	switch(options.difficulty)
 	{
-		case DIFFICULTY_NORMAL:
+		case NORMAL:
 			scoremod=(level+1)/2.0f;
 			bonusmod=(level+1)/2.0f;
 			timepenaltyinterval=100;
 		break;
-		case DIFFICULTY_EASY:
+		case EASY:
 			scoremod=(level+2)/6.0f;
 			bonusmod=(level+1)/9.0f;
 			timepenaltyinterval=200;
 		break;
-		case DIFFICULTY_HARD:
+		case HARD:
 			scoremod=(level+1)/1.75f;
 			bonusmod=(level+1)/1.5f;
 			timepenaltyinterval=75;
@@ -109,161 +140,140 @@ bool level_init(size_t level, ScoreSheet *levelscore) {
 		break;
 	}
 
-	levelscore->basescore=0;
-	levelscore->clearbonus=0;
-	levelscore->lifebonus=0;
+	levelscore.basescore=0;
+	levelscore.clearbonus=0;
+	levelscore.lifebonus=0;
 	current_level = level;
+	line1=line_create(1);
+	line2=line_create(2);
+
+	for (int i=0;i<penguincount;i++)
+	{
+		flock[i] = penguin_create();
+	}
+
 	return true;
 }
 
 void level_draw(void) {
 	grid_drawblocks();
+	if (line1.on) {
+		line_draw(&line1, line1.color);
+	}
+	if (line2.on) {
+    	line_draw(&line2, line2.color);
+	}
+	for (int i=0;i<penguincount;i++) {
+		penguin_draw(&flock[i]);
+	}
 }
+
 bool level_update(u32 keys, touchPosition touch) {
-	return true;
+    if (keys & KEY_TOUCH) {
+        gesture_start = touch;
+        gesture_last = touch;
+        gesture_active = true;
+    }
+
+    if (gesture_active && (hidKeysHeld() & KEY_TOUCH)) {
+        gesture_last = touch;
+    }
+
+    if (gesture_active && (hidKeysUp() & KEY_TOUCH)) {
+        int dx = (int)gesture_last.px - (int)gesture_start.px;
+        int dy = (int)gesture_last.py - (int)gesture_start.py;
+
+        if (abs(dx) >= GESTURE_THRESHOLD || abs(dy) >= GESTURE_THRESHOLD) {
+            bool vertical = abs(dy) > abs(dx);
+
+            level_action_startclick(gesture_start.px, gesture_start.py, vertical);
+        }
+
+        gesture_active = false;
+    }
+
+	if (line1.on)
+	{
+		// kludgy crap to implement speed = 1 1/2
+		bool linedoneflag=line_move(&line1);
+		if (!linedoneflag && line1.speedslower)
+		{
+			line1.speedslower=false;
+			linedoneflag=line_move(&line1);
+		}
+		else
+		{
+			line1.speedslower=true;
+		}
+			
+		if (linedoneflag)
+		{
+			clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
+			levelscore.basescore=(int)(clear*scoremod)-timepenalty;
+			score=previous_score+levelscore.basescore;
+			//tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+			
+			//status_updatecleared(clear);
+			//status_updatescore(score);			
+		}
+
+		if (line1.dead) 
+		{
+			//sound_play(SNDBREAK);
+			line_kill(&line1);
+			lives--;
+			if (lives<0) lives=0;
+			//status_updatelives(lives);
+		}
+	}
+	if (line2.on)
+	{
+		bool linedoneflag=line_move(&line2);
+		if (!linedoneflag && line2.speedslower)
+		{
+			line2.speedslower=false;
+			linedoneflag=line_move(&line2);
+		}
+		else
+		{
+			line2.speedslower=true;
+		}
+
+		if (linedoneflag)
+		{
+			clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
+			levelscore.basescore=(int)(clear*scoremod)-timepenalty;
+			score=previous_score+levelscore.basescore;
+			//tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+
+			//status_updatecleared(clear);
+			//status_updatescore(score);
+		}
+
+		if (line2.dead)
+		{ 
+			//sound_play(SNDBREAK);
+			line_kill(&line2);
+			lives--;
+			if (lives<0) lives=0;
+			//status_updatelives(lives);
+
+		}
+	}
+	for (int i=0;i<penguincount;i++)
+	{
+		PenguinHit hit = penguin_move(&flock[i]);
+		if (hit == LINE1 || hit == BOTH) line1.dead=true;
+		if (hit == LINE2 || hit == BOTH) line2.dead=true;
+	}
+    return true;
 }
+
 void level_close(void) {
 	return;
 }
 
 
-// // fix -- good candidate for dynamic memory allocation
-// Penguin flock[MAXPENGUINS];
-// int penguincount=0;
-
-// static int lives=0;
-// static int clear=0;
-// static long score=0;
-
-// static void level_setup(void);
-
-// static void level_action_startclick(int mousex, int mousey, LineType linetype);
-// static void level_action_switchclick(LineType* linetypepointer);
-
-// void level_setup()
-// {
-// 	int x,y;
-
-// 	cursor_set(CURSORARROW);
-// 	SDL_FillRect(screen,NULL,color.background);
-
-// 	for (x=0;x<WIDTH;x++)
-// 		for (y=0;y<HEIGHT;y++)
-// 		{
-// 			if (x<BORDERLEFT || x>=BORDERRIGHT || y <BORDERTOP || y>=BORDERBOTTOM) 	
-// 				grid[x][y]='X';
-// 			else
-// 				grid[x][y]=' ';
-// 		}
-
-// 	grid_drawblocks();	
-	
-// 	laundry_updateall();
-
-// }
-
-
-
-// LevelExitType playlevel(int level, long oldscore, ScoreSheet * levelscore)
-// {
-// 	LevelExitType returncode=ERROR;
-// 	int i,mx,my;
-
-// 	SDL_Rect menubuttonrect;
-// 	int menubuttonglow=false;
-// 	int menubuttonpressed=false;
-// 	int paused=false;
-
-// 	int linedoneflag=false;
-// 	LineType linetype;
-// 	float scoremod=1;
-// 	float bonusmod=1;
-
-// 	int percentbonus=PERCENTBONUS; // right now, there's really no point in making this a variable but it doesn't hurt, and keeps things consistant
-// 	int percentextrabonus=PERCENTEXTRABONUS-(level-1)/5; // this needs to decrease, or else the bonus disintegrates as the space required to actually trap penguins increases
-					
-// 	int tick=0;
-// 	int timepenalty=0;
-// 	int timepenaltyinterval=0;
-	
-// 	int domenuflag = false;
-	
-// 	int movecursorleftflag = false;
-// 	int movecursorrightflag = false;
-// 	int movecursorupflag = false;
-// 	int movecursordownflag = false;
-// 	int keyboardcounter=0;
-// 	int keyboarddelay=0;
-	
-// 	Uint32 loopstartticks;
-	
-// 	int done = false;
-	
-// 	SDL_Event event;
-
-
-// 	penguincount=level+1;
-// 	lives=level+1;
-// 	clear=0;
-// 	score=oldscore;
-
-// 	switch(options.difficulty)
-// 	{
-// 		case NORMAL:
-// 			scoremod=(level+1)/2.0;
-// 			bonusmod=(level+1)/2.0;
-// 			timepenaltyinterval=100;
-// 		break;
-// 		case EASY:
-// 			scoremod=(level+2)/6.0;
-// 			bonusmod=(level+1)/9.0;
-// 			timepenaltyinterval=200;
-// 		break;
-// 		case HARD:
-// 			scoremod=(level+1)/1.75;
-// 			bonusmod=(level+1)/1.5;
-// 			timepenaltyinterval=75;
-// 		break;
-// 		default:
-// 			fprintf(stderr,"Unknown difficulty -- that can't happen!\n");
-// 		break;
-// 	}
-
-// 	levelscore->basescore=0;
-// 	levelscore->clearbonus=0;
-// 	levelscore->lifebonus=0;
-	
-// 	level_setup();
-	
-// 	cursor_set(CURSORVERTICAL); linetype=VERTICAL; 
-
-// /*	printf("===========================================================\n"
-// 	       "Starting level %d.\n"
-// 	       "Lives: %d\n",
-// 	       level,lives);
-// */	       
-
-// 	menubuttonrect.x=WIDTH-(CHARWIDTH*2*4)-MARGINRIGHT-4;
-// 	menubuttonrect.y=BOTTOMSTATUSY;
-// 	menubuttonrect.w=CHARWIDTH*2*4+3;
-// 	menubuttonrect.h=CHARHEIGHT*2+3;
-// 	menu_drawbutton(&menubuttonrect,false);
-
-// 	line1=line_create(1);
-// 	line2=line_create(2);
-
-// 	for (i=0;i<penguincount;i++)
-// 	{
-// 		flock[i] = createpenguin();
-// 	}
-
-// 	status_updatelives(lives);
-// 	status_updatecleared(clear);
-// 	status_updatescore(score);
-// 	updatehiscorebox();	
-
-// 	laundry_clean();
-	
 // 	do 
 // 	{
 // 		loopstartticks = SDL_GetTicks();
@@ -545,9 +555,9 @@ void level_close(void) {
 				
 // 			if (linedoneflag)
 // 			{
-// 				clear=(100-(countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
-// 				levelscore->basescore=(int)(clear*scoremod)-timepenalty;
-// 				score=oldscore+levelscore->basescore;
+// 				clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
+// 				levelscore.basescore=(int)(clear*scoremod)-timepenalty;
+// 				score=oldscore+levelscore.basescore;
 // 				tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 				
 // 				status_updatecleared(clear);
@@ -580,9 +590,9 @@ void level_close(void) {
 
 // 			if (linedoneflag)
 // 			{
-// 				clear=(100-(countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
-// 				levelscore->basescore=(int)(clear*scoremod)-timepenalty;
-// 				score=oldscore+levelscore->basescore;
+// 				clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
+// 				levelscore.basescore=(int)(clear*scoremod)-timepenalty;
+// 				score=oldscore+levelscore.basescore;
 // 				tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 
 // 				status_updatecleared(clear);
@@ -653,11 +663,11 @@ void level_close(void) {
 // 		if (tick>timepenaltyinterval)
 // 		{
 // 			tick=0;
-// 			if (levelscore->basescore>0)
+// 			if (levelscore.basescore>0)
 // 			{
 // 				timepenalty++;
-// 				levelscore->basescore--;
-// 				score=oldscore+levelscore->basescore;
+// 				levelscore.basescore--;
+// 				score=oldscore+levelscore.basescore;
 // 				status_updatescore(score);
 // 			}
 // 		}
@@ -685,19 +695,19 @@ void level_close(void) {
 // 		else if (!line1.on && !line2.on && clear>=PERCENTREQUIRED) // success!
 // 		{ 
 // 			done = true;
-// 			levelscore->basescore=(int)(clear*scoremod)-timepenalty;
+// 			levelscore.basescore=(int)(clear*scoremod)-timepenalty;
 // 			returncode=PASS;
 
 
-// 			levelscore->clearbonus=0;
+// 			levelscore.clearbonus=0;
 // 			// bonuses for clearing lots
 // 			if (clear>percentbonus)
-// 				levelscore->clearbonus+=(int)((clear-percentbonus)*bonusmod);
+// 				levelscore.clearbonus+=(int)((clear-percentbonus)*bonusmod);
 // 			if (clear>percentextrabonus)
-// 				levelscore->clearbonus+=(int)((clear-percentextrabonus)*(clear-percentextrabonus)*bonusmod);
+// 				levelscore.clearbonus+=(int)((clear-percentextrabonus)*(clear-percentextrabonus)*bonusmod);
 				
 // 			// bonuses for leftover lives
-// 			levelscore->lifebonus=(int)((lives-1)*3*bonusmod);
+// 			levelscore.lifebonus=(int)((lives-1)*3*bonusmod);
 // 		} 
 
 // 		//grid_printboard();

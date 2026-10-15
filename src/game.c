@@ -35,7 +35,7 @@ bool game_init(void) {
 static bool game_start(void) {
 	intro_close();
 	level_close();
-	if (!level_init(++level, &levelscore)) {
+	if (!level_init(++level, 0)) {
 		return false;
 	}
 	game_mode = GAME_LEVEL;

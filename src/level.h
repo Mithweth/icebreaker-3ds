@@ -35,7 +35,7 @@ typedef struct
 } ScoreSheet;
 
 
-bool level_init(size_t level, ScoreSheet *levelscore);
+bool level_init(size_t level, long oldscore);
 void level_draw(void);
 bool level_update(u32 keys, touchPosition touch);
 void level_close(void);

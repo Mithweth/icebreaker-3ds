@@ -355,14 +355,14 @@ void intro_draw(void) {
 		for (int i=0;i<penguincount;i++)
 		{
 			PenguinHit hit = penguin_move(&flock[i]);
-			if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead=true;
-			if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead=true;
+			if (hit == LINE1 || hit == BOTH) line1.dead=true;
+			if (hit == LINE2 || hit == BOTH) line2.dead=true;
 			penguin_draw(&flock[i]);
 		}
 	}
 	PenguinHit hit = penguin_move(&tux);
-	if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead=true;
-	if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead=true;
+	if (hit == LINE1 || hit == BOTH) line1.dead=true;
+	if (hit == LINE2 || hit == BOTH) line2.dead=true;
 	penguin_draw(&tux);
 
     line_draw(&line1, line1.color);
