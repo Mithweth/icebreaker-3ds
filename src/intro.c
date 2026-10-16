@@ -7,6 +7,7 @@
 #include "grid.h"
 #include "penguin.h"
 #include "line.h"
+#include "themes.h"
 
 #define LXPOS(x) (BORDERLEFT+(BLOCKWIDTH*(x)))
 #define LYPOS(y) (BORDERTOP+(BLOCKHEIGHT*(y)))
@@ -188,8 +189,8 @@ void intro_draw(void) {
 		}
 	}
 	penguin_draw(&tux);
-    line_draw(&line1, line1.color);
-    line_draw(&line2, line2.color);
+    line_draw(&line1, theme.color.line1);
+    line_draw(&line2, theme.color.line2);
 }
 
 bool intro_update(u32 keys, touchPosition touch) {

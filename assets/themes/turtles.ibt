@@ -13,7 +13,9 @@ BonusscrollText		128   32    0
 TextentryBox		  0    0    0
 TextentryText		255  255  255
 CopyrightText		192  192  192
-SpriteTransparent	  0    0  128
-SpriteBitmap		turtle.bmp
-SoundOuch		ouch.wav
-SoundCrash		splash.wav
+ProgressbarOutline  255  250  192
+ProgressbarInner    0  92  48
+ProgressbarFill     182  204  134
+SpriteBitmap		turtle
+SoundOuch		ouch
+SoundCrash		splash

@@ -29,8 +29,16 @@
 #include <ctype.h>
 #include "themes.h"
 #include "gfxmap.h"
+#include "game.h"
 
 Theme theme;
+static char* themes[MAX_THEMES];
+static size_t theme_count;
+static size_t current_theme;
+
+static int alphasortstringarray(const void *a, const void *b) {
+    return strcmp(*(const char *const *)a, *(const char *const *)b);
+}
 
 static void themes_setdefaultcolors(void)
 {
@@ -49,6 +57,7 @@ static void themes_setdefaultcolors(void)
 	theme.color.copyrighttext   = C2D_Color32(192,192,192,255);
 	theme.color.progressbaroutline = C2D_Color32(180, 225, 245, 255);
 	theme.color.progressbarinner = C2D_Color32(100, 200, 240, 255);
+	theme.color.progressbarfill = C2D_Color32(20, 50, 75, 255);
 	theme.color.boardfillminr = 224;
  	theme.color.boardfillming = 224;
 	theme.color.boardfillminb = 224;
@@ -57,8 +66,22 @@ static void themes_setdefaultcolors(void)
 	theme.color.boardfillmaxb = 255;
 }
 
+bool themes_exists(const char* name) {
+	for(size_t i = 0; i < theme_count; i++) {
+		if (strcmp(themes[i], name) == 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
 int themes_settheme(char* themename)
 {
+	for(size_t i = 0; i < theme_count; i++) {
+		if (strcmp(themes[i], themename) == 0) {
+			current_theme = i;
+		}
+	}
 	int rc=0;
 	int i;
 	FILE* themefile;
@@ -69,11 +92,6 @@ int themes_settheme(char* themename)
 	snprintf(theme.name, 64, "%s", themename);
 	int r,g,b;
 	ThemeColorsType foundcolor;
-	
-	// if (!strcmp(themename,"random"))
-	// {
-	// 	return themes_setrandomtheme(); // whooo recursion!
-	// }
 	
 	themes_setdefaultcolors();
 	if (theme.spriteimage.tex)
@@ -96,6 +114,7 @@ int themes_settheme(char* themename)
 	foundcolor.copyrighttext   = 0;
 	foundcolor.progressbaroutline = 0;
 	foundcolor.progressbarinner = 0;
+	foundcolor.progressbarfill = 0;
 	foundcolor.boardfillminr = 0;
  	foundcolor.boardfillming = 0;
 	foundcolor.boardfillminb = 0;
@@ -238,6 +257,11 @@ int themes_settheme(char* themename)
 					theme.color.progressbarinner=C2D_Color32(r,g,b,255);
 					foundcolor.progressbarinner++;
 				}
+				else if (!strcmp(optbuf,"progressbarfill"))
+				{
+					theme.color.progressbarfill=C2D_Color32(r,g,b,255);
+					foundcolor.progressbarfill++;
+				}
 			}
 			else if (sscanf(linebuf,"%20s %255s",optbuf,valbuf)==2)
 			{
@@ -330,6 +354,60 @@ int themes_settheme(char* themename)
 	{
 		rc=-255;
 	}
-	printf("Theme loading return code: %d\n", rc);
+	printf("%s: theme return code: %d\n", themename, rc);
 	return rc;
+}
+
+
+bool themes_load(const char *directory) {
+    DIR *dir = opendir(directory);
+    if (!dir) return false;
+
+    for (size_t i = 0; i < theme_count; i++) free(themes[i]);
+    theme_count = 0;
+    current_theme = 0;
+
+    struct dirent *entry;
+    while ((entry = readdir(dir))) {
+        size_t len = strlen(entry->d_name);
+        if (len <= 4 || strcmp(entry->d_name + len - 4, ".ibt") != 0) {
+        	continue;
+        }
+
+        if (theme_count >= MAX_THEMES) {
+            printf("Too many themes in %s (max %d)\n", directory, MAX_THEMES);
+            break;
+        }
+
+        char *theme_name = malloc(len - 3);
+        if (!theme_name) {
+            closedir(dir);
+            return false;
+        }
+
+        memcpy(theme_name, entry->d_name, len - 4);
+        theme_name[len - 4] = '\0';
+        themes[theme_count++] = theme_name;
+        printf("Found theme: %s\n", theme_name);
+    }
+
+    closedir(dir);
+    qsort(themes, theme_count, sizeof(themes[0]), alphasortstringarray);
+    printf("%s: Found %d themes\n", directory, theme_count);
+    return true;
+}
+
+void themes_next(void) {
+	if (theme_count == 0) {
+		return;
+	}
+	current_theme++;
+	if (current_theme == theme_count) {
+		current_theme = 0;
+	}
+	themes_settheme(themes[current_theme]);
+}
+
+char* themes_current_name(void) {
+	return themes[current_theme];
 }

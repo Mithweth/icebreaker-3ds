@@ -47,6 +47,7 @@ typedef struct
 	u32 copyrighttext;
 	u32 progressbaroutline;
 	u32 progressbarinner;
+	u32 progressbarfill;
 } ThemeColorsType;
 
 typedef struct {
@@ -56,4 +57,9 @@ typedef struct {
 } Theme;
 
 extern Theme theme;
+
+bool themes_exists(const char* name);
 int themes_settheme(char* themename);
+bool themes_load(const char *directory);
+void themes_next(void);
+char* themes_current_name(void);

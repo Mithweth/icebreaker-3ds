@@ -36,6 +36,7 @@
 #include "grid.h"
 #include "level.h"
 #include "options.h"
+#include "themes.h"
 
 #define GESTURE_THRESHOLD 12
 
@@ -138,10 +139,10 @@ void level_init(GameStats *stats) {
 void level_draw(void) {
 	grid_drawblocks();
 	if (line1.on) {
-		line_draw(&line1, line1.color);
+		line_draw(&line1, theme.color.line1);
 	}
 	if (line2.on) {
-    	line_draw(&line2, line2.color);
+    	line_draw(&line2, theme.color.line2);
 	}
 	for (int i=0;i<penguincount;i++) {
 		penguin_draw(&flock[i]);

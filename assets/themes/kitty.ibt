@@ -13,7 +13,9 @@ BonusscrollText		255  204   51
 TextentryBox		 96   96  255
 TextentryText		255  204   51
 CopyrightText		255  204   51
-SpriteTransparent	  0  255    0
-SpriteBitmap		kitty.bmp
-SoundOuch		ewww.wav
-SoundCrash		pop.wav
+ProgressbarOutline  255  102  153
+ProgressbarInner    255  255  255
+ProgressbarFill     255 159 205
+SpriteBitmap		kitty
+SoundOuch		ewww
+SoundCrash		pop

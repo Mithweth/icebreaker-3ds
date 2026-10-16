@@ -15,7 +15,6 @@ Penguin penguin_create(void)
 Penguin penguin_createxy(int x, int y)
 {
 	Penguin p;
-	p.image = theme.spriteimage;
 
 	switch (random() % 4)
 	{
@@ -48,7 +47,7 @@ Penguin penguin_createxy(int x, int y)
 
 void penguin_draw(Penguin* p)
 {
-	C2D_DrawImageAt(p->image, p->x, p->y, 0.3f, NULL, SPRITE_SIZE, SPRITE_SIZE);
+	C2D_DrawImageAt(theme.spriteimage, p->x, p->y, 0.3f, NULL, SPRITE_SIZE, SPRITE_SIZE);
 }
 
 PenguinHit penguin_move(Penguin* p)
@@ -109,7 +108,6 @@ PenguinHit penguin_move(Penguin* p)
 	else
 	{
 		p->xdelta=-p->xdelta;
-		p->image=theme.spriteimage;
 	}
 
 	if (movey>0) checky = newy+BLOCKHEIGHT;

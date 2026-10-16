@@ -9,6 +9,7 @@
 #include "game.h"
 #include "text.h"
 #include "options.h"
+#include "grid.h"
 
 static const char *logo_chars = "ICEBRAK";
 static size_t selected;
@@ -74,8 +75,8 @@ static void progress_bar_draw(int pct) {
     if (pct < 0) pct = 0;
     if (pct > 100) pct = 100;
     menu_draw_rounded_rect(10.0f, 220.0f, 380.0f, 14.0f, theme.color.progressbaroutline);
-    menu_draw_rounded_rect(12.0f, 222.0f, 376.0f, 10.0f, C2D_Color32(20, 50, 75, 255));
-    menu_draw_rounded_rect(12.0f, 222.0f, (376.0f) * pct / 100.0f, 10.0f, theme.color.progressbarinner);
+    menu_draw_rounded_rect(12.0f, 222.0f, 376.0f, 10.0f, theme.color.progressbarinner);
+    menu_draw_rounded_rect(12.0f, 222.0f, (376.0f) * pct / 100.0f, 10.0f, theme.color.progressbarfill);
 }
 
 void menu_init(void) {
@@ -99,7 +100,7 @@ void menu_draw(bool pause, const GameStats *stats) {
 	snprintf(tmptext,30,"%d %%",stats->clear);
 	text_rput(390, 200, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->score + stats->basescore);
-	text_cput(200, 0.3f, 25, 2, theme.color.normaltext, tmptext);
+	text_cput(200, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->level);
 	text_put(20, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->highscore);
@@ -126,6 +127,9 @@ void menu_draw(bool pause, const GameStats *stats) {
 		if (i == 1) {
 			text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, levels[options.difficulty]);
 		}
+		if (i == 2) {
+			text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, themes_current_name());
+		}
 	}
 }
 bool menu_update(u32 keys) {
@@ -134,6 +138,13 @@ bool menu_update(u32 keys) {
 	}
 	if ((keys & KEY_DOWN) && (selected < (sizeof(choices) / sizeof(choices[0])) - 1)) {
 		selected++;
+	}
+	if (keys & KEY_A) {
+		printf("Selected option: %zu\n", selected);
+		if (selected == 2) {
+			themes_next();
+			grid_generate_colors();
+		}
 	}
 	return true;
 }

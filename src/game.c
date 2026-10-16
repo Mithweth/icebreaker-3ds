@@ -28,6 +28,12 @@ bool game_init(void) {
 	if (!gfxmap_init()) {
 		return false;
 	}
+	if (!themes_load("romfs:/themes")) {
+		return false;
+	}
+	if (!themes_exists("linux")) {
+		return false;
+	}
 	themes_settheme("linux");
 	intro_init();
 	menu_init();

@@ -39,7 +39,6 @@ typedef struct
 	Coordinate geom;
 	Coordinate mark;
 	LineDir dir;
-	u32 color;
 	char id;
 	int dead;
 	int speedslower;

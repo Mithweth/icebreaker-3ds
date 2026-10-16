@@ -26,7 +26,6 @@
 
 typedef struct
 {
-	C2D_Image image;
 	int x;
 	int y;
 	int xdelta;

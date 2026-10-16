@@ -13,7 +13,9 @@ BonusscrollText		192  192  192
 TextentryBox		  0    0    0
 TextentryText		226  123   40
 CopyrightText		192  192  192
-SpriteTransparent	255    0    0
-SpriteBitmap		woodblock.bmp
-SoundOuch		scrunch.wav
-SoundCrash		tap.wav
+ProgressbarOutline  255 255 255
+ProgressbarInner    80 0 90
+ProgressbarFill     156  41  175
+SpriteBitmap		woodblock
+SoundOuch		scrunch
+SoundCrash		tap

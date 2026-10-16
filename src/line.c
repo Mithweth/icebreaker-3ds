@@ -102,23 +102,7 @@ static void line_finish(Line * l)
 Line line_create(int linenum)
 {
 	Line l;
-
-	switch (linenum)
-	{
-		case 1: 
-			l.id='1';
-			l.color=theme.color.line1;
-		break;
-		case 2:
-			l.id='2'; 
-			l.color=theme.color.line2;
-		break;
-		default: 
-			l.id='L';
-			l.color=theme.color.background;
-		break;
-	}
-		
+	l.id = '0' + linenum;
 	l.on=false;
 	l.dir=UP;
 	l.geom.x=0;

@@ -40,6 +40,7 @@
 #define PERCENTBONUS 80
 #define PERCENTEXTRABONUS 85
 
+#define MAX_THEMES	16
 
 typedef struct {
     int basescore;
