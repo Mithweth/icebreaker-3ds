@@ -28,7 +28,6 @@ void intro_init(void) {
 	line1=line_create(1);
 	line2=line_create(2);
 	tux = penguin_create();
-	int x,y;
 	penguincount = 0;
 	frozen=true;
 	/// Here's the fun part where we set up the letters.

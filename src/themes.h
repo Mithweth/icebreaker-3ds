@@ -45,6 +45,8 @@ typedef struct
 	u32 textentrybox;
 	u32 textentrytext;
 	u32 copyrighttext;
+	u32 progressbaroutline;
+	u32 progressbarinner;
 } ThemeColorsType;
 
 extern ThemeColorsType color;

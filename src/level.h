@@ -24,6 +24,7 @@
 
 #include "line.h"
 #include "penguin.h"
+#include "game.h"
 
 typedef enum { ERROR, PASS, DEAD, ZERO, QUIT } LevelExitType;
 
@@ -35,7 +36,7 @@ typedef struct
 } ScoreSheet;
 
 
-bool level_init(size_t level, long oldscore);
+bool level_init(GameStats *stats);
 void level_draw(void);
-bool level_update(u32 keys, touchPosition touch);
+bool level_update(u32 keys, touchPosition touch, GameStats *stats);
 void level_close(void);

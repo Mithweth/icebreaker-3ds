@@ -51,20 +51,18 @@
 
 static Line line1;
 static Line line2;
-static size_t current_level;
 static int penguincount=0;
 static Penguin flock[MAXPENGUINS];
 static bool gesture_active = false;
 static touchPosition gesture_start;
 static touchPosition gesture_last;
-static int lives=0;
 static int clear=0;
-static long score=0;
-static long previous_score;
 static int timepenalty;
 static float scoremod;
 static float bonusmod;
-static ScoreSheet levelscore;
+static bool done;
+static int percentextrabonus;
+static int percentbonus;
 
 static void level_action_startclick(int mousex, int mousey, bool vertical)
 {
@@ -95,7 +93,7 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 	}
 }
 
-bool level_init(size_t level, long oldscore) {
+bool level_init(GameStats *stats) {
 	grid_generate_colors();
 	grid_reset(' ');
 	//LevelExitType returncode=ERROR;
@@ -103,35 +101,32 @@ bool level_init(size_t level, long oldscore) {
 
 	scoremod=1.0f;
 	bonusmod=1.0f;
-	int percentextrabonus=PERCENTEXTRABONUS-(level-1)/5; // this needs to decrease, or else the bonus disintegrates as the space required to actually trap penguins increases
-					
+	percentextrabonus=PERCENTEXTRABONUS-(stats->level-1)/5; // this needs to decrease, or else the bonus disintegrates as the space required to actually trap penguins increases
+	percentbonus=PERCENTBONUS; // right now, there's really no point in making this a variable but it doesn't hurt, and keeps things consistant
 	timepenalty=0;
 	int timepenaltyinterval=0;
-	
-	int done = false;
+	done = false;
 
-
-	penguincount=level+1;
-	lives=level+1;
+	penguincount=stats->level+1;
+	stats->lives=stats->level+1;
 	clear=0;
-	score = oldscore;
-	previous_score=score;
-
+	//stats->currentscore = stats->basescore;
+	
 	switch(options.difficulty)
 	{
 		case NORMAL:
-			scoremod=(level+1)/2.0f;
-			bonusmod=(level+1)/2.0f;
+			scoremod=(stats->level+1)/2.0f;
+			bonusmod=(stats->level+1)/2.0f;
 			timepenaltyinterval=100;
 		break;
 		case EASY:
-			scoremod=(level+2)/6.0f;
-			bonusmod=(level+1)/9.0f;
+			scoremod=(stats->level+2)/6.0f;
+			bonusmod=(stats->level+1)/9.0f;
 			timepenaltyinterval=200;
 		break;
 		case HARD:
-			scoremod=(level+1)/1.75f;
-			bonusmod=(level+1)/1.5f;
+			scoremod=(stats->level+1)/1.75f;
+			bonusmod=(stats->level+1)/1.5f;
 			timepenaltyinterval=75;
 		break;
 		default:
@@ -139,11 +134,9 @@ bool level_init(size_t level, long oldscore) {
 			return false;
 		break;
 	}
-
-	levelscore.basescore=0;
-	levelscore.clearbonus=0;
-	levelscore.lifebonus=0;
-	current_level = level;
+	stats->basescore = 0;
+	stats->clearbonus=0;
+	stats->lifebonus=0;
 	line1=line_create(1);
 	line2=line_create(2);
 
@@ -168,7 +161,10 @@ void level_draw(void) {
 	}
 }
 
-bool level_update(u32 keys, touchPosition touch) {
+bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
+	if (done) {
+		return false;
+	}
     if (keys & KEY_TOUCH) {
         gesture_start = touch;
         gesture_last = touch;
@@ -208,22 +204,18 @@ bool level_update(u32 keys, touchPosition touch) {
 			
 		if (linedoneflag)
 		{
-			clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
-			levelscore.basescore=(int)(clear*scoremod)-timepenalty;
-			score=previous_score+levelscore.basescore;
+			stats->clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
+			stats->basescore=stats->previousscore+(int)(stats->clear*scoremod)-timepenalty;
 			//tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
-			
-			//status_updatecleared(clear);
-			//status_updatescore(score);			
 		}
 
 		if (line1.dead) 
 		{
 			//sound_play(SNDBREAK);
 			line_kill(&line1);
-			lives--;
-			if (lives<0) lives=0;
-			//status_updatelives(lives);
+			stats->lives--;
+			if (stats->lives<0) stats->lives=0;
+			//status_updatestats->lives(stats->lives);
 		}
 	}
 	if (line2.on)
@@ -241,22 +233,18 @@ bool level_update(u32 keys, touchPosition touch) {
 
 		if (linedoneflag)
 		{
-			clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
-			levelscore.basescore=(int)(clear*scoremod)-timepenalty;
-			score=previous_score+levelscore.basescore;
+			stats->clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
+			stats->basescore=stats->previousscore+(int)(stats->clear*scoremod)-timepenalty;
 			//tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
-
-			//status_updatecleared(clear);
-			//status_updatescore(score);
 		}
 
 		if (line2.dead)
 		{ 
 			//sound_play(SNDBREAK);
 			line_kill(&line2);
-			lives--;
-			if (lives<0) lives=0;
-			//status_updatelives(lives);
+			stats->lives--;
+			if (stats->lives<0) stats->lives=0;
+			//status_updatestats->lives(stats->lives);
 
 		}
 	}
@@ -266,7 +254,28 @@ bool level_update(u32 keys, touchPosition touch) {
 		if (hit == LINE1 || hit == BOTH) line1.dead=true;
 		if (hit == LINE2 || hit == BOTH) line2.dead=true;
 	}
-    return true;
+
+	if (!line1.on && !line2.on && stats->clear>=PERCENTREQUIRED) // success!
+	{ 
+		done = true;
+		stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
+		//returncode=PASS;
+
+
+		stats->clearbonus=0;
+		// bonuses for clearing lots
+		if (stats->clear>PERCENTBONUS)
+			stats->clearbonus+=(int)((stats->clear-percentbonus)*bonusmod);
+		if (stats->clear>PERCENTEXTRABONUS)
+			stats->clearbonus+=(int)((stats->clear-percentextrabonus)*(stats->clear-percentextrabonus)*bonusmod);
+			
+		// bonuses for leftover stats->lives
+		stats->lifebonus=(int)((stats->lives-1)*3*bonusmod);
+		//stats->score = stats->previousscore + stats->basescore + stats->clearbonus + stats->lifebonus;
+		//stats->basescore = 0;
+	} 
+
+	return true;
 }
 
 void level_close(void) {
@@ -284,7 +293,7 @@ void level_close(void) {
 // 		{
 // 			if (event.type == SDL_QUIT)
 // 			{
-// 				lives=0; // is this the right way?
+// 				stats->lives=0; // is this the right way?
 // 				done = true;
 // 				// fix -- should delete penguins, etc. here
 // 				return QUIT;
@@ -377,7 +386,7 @@ void level_close(void) {
 // 						cursor_set(CURSORARROW);
 // 						if (dialog_popuphelp()==POPUPQUITGAME)
 // 						{
-// 							lives=0; // is this the right way?
+// 							stats->lives=0; // is this the right way?
 // 							done = true;
 // 							return QUIT;
 // 						}
@@ -569,10 +578,10 @@ void level_close(void) {
 // 			{
 // 				sound_play(SNDBREAK);
 // 				line_kill(&line1);
-// 				lives--;
-// 				if (lives<0) lives=0;
-// 				status_updatelives(lives);
-// 				//printf("Lives: %d\n",lives); 
+// 				stats->lives--;
+// 				if (stats->lives<0) stats->lives=0;
+// 				status_updatestats->lives(stats->lives);
+// 				//printf("Lives: %d\n",stats->lives); 
 // 			}
 // 		}
 // 		if (line2.on)
@@ -604,10 +613,10 @@ void level_close(void) {
 // 			{ 
 // 				sound_play(SNDBREAK);
 // 				line_kill(&line2);
-// 				lives--;
-// 				if (lives<0) lives=0;
-// 				status_updatelives(lives);
-// 				//printf("Lives: %d\n",lives);
+// 				stats->lives--;
+// 				if (stats->lives<0) stats->lives=0;
+// 				status_updatestats->lives(stats->lives);
+// 				//printf("Lives: %d\n",stats->lives);
 				
 // 			}
 // 		}
@@ -637,7 +646,7 @@ void level_close(void) {
 // 			switch (menu_popuplevel())
 // 			{
 // 				case POPUPQUITGAME:
-// 					lives=0; // is this the right way?
+// 					stats->lives=0; // is this the right way?
 // 					done = true;
 // 					return QUIT;
 // 				break;
@@ -687,7 +696,7 @@ void level_close(void) {
 // 			penguin_erase(&flock[i]);
 // 		}
 		
-// 		if (lives<=0) // game over
+// 		if (stats->lives<=0) // game over
 // 		{
 // 			done = true;
 // 			returncode=DEAD;
@@ -706,8 +715,8 @@ void level_close(void) {
 // 			if (clear>percentextrabonus)
 // 				levelscore.clearbonus+=(int)((clear-percentextrabonus)*(clear-percentextrabonus)*bonusmod);
 				
-// 			// bonuses for leftover lives
-// 			levelscore.lifebonus=(int)((lives-1)*3*bonusmod);
+// 			// bonuses for leftover stats->lives
+// 			levelscore.lifebonus=(int)((stats->lives-1)*3*bonusmod);
 // 		} 
 
 // 		//grid_printboard();
@@ -741,7 +750,7 @@ void level_close(void) {
 
 // 	updatehiscorebox();
 // 	status_updatescore(score);
-// 	status_updatelives(lives);
+// 	status_updatestats->lives(stats->lives);
 // 	status_updatecleared(clear);
 	
 // 	// FIX -- changing theme makes line appear to grow

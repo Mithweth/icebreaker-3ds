@@ -48,7 +48,8 @@ static void themes_setdefaultcolors(void)
 	color.textentrybox    = C2D_Color32(  0,  0,  0,255);
 	color.textentrytext   = C2D_Color32(255,255,255,255);
 	color.copyrighttext   = C2D_Color32(192,192,192,255);
-
+	color.progressbaroutline = C2D_Color32(180, 225, 245, 255);
+	color.progressbarinner = C2D_Color32(100, 200, 240, 255);
 	color.boardfillminr = 224;
  	color.boardfillming = 224;
 	color.boardfillminb = 224;
@@ -93,7 +94,8 @@ int themes_settheme(char* themename)
 	foundcolor.textentrybox    = 0;
 	foundcolor.textentrytext   = 0;
 	foundcolor.copyrighttext   = 0;
-
+	foundcolor.progressbaroutline = 0;
+	foundcolor.progressbarinner = 0;
 	foundcolor.boardfillminr = 0;
  	foundcolor.boardfillming = 0;
 	foundcolor.boardfillminb = 0;
@@ -125,8 +127,6 @@ int themes_settheme(char* themename)
 			
 			if (sscanf(linebuf,"%20s %5d %5d %5d",optbuf,&r,&g,&b)==4)
 			{
-				//printf("N: %s = %d,%d,%d\n",optbuf,r,g,b);
-				
 				if (r<0 || r>255)
 				{
 					fprintf(stderr,"Warning: invalid red value for %s in theme %s\n",optbuf,themename);
@@ -196,7 +196,6 @@ int themes_settheme(char* themename)
 				{
 					color.menuhighlight=C2D_Color32(r,g,b,255);
 					foundcolor.menuhighlight++;
-
 				}
 				else if (!strcmp(optbuf,"gameovertext"))
 				{
@@ -228,7 +227,16 @@ int themes_settheme(char* themename)
 				{
 					color.copyrighttext=C2D_Color32(r,g,b,255);
 					foundcolor.copyrighttext++;
-
+				}
+				else if (!strcmp(optbuf,"progressbaroutline"))
+				{
+					color.progressbaroutline=C2D_Color32(r,g,b,255);
+					foundcolor.progressbaroutline++;
+				}
+				else if (!strcmp(optbuf,"progressbarinner"))
+				{
+					color.progressbarinner=C2D_Color32(r,g,b,255);
+					foundcolor.progressbarinner++;
 				}
 			}
 			else if (sscanf(linebuf,"%20s %255s",optbuf,valbuf)==2)
@@ -297,6 +305,10 @@ int themes_settheme(char* themename)
 		{ rc--; fprintf(stderr,"Warning: TextentryText not correctly defined in theme %s. Using default.\n",themename); }
 	if (foundcolor.copyrighttext == 0)
 		{ rc--; fprintf(stderr,"Warning: CopyrightText not correctly defined in theme %s. Using default.\n",themename); }
+	if (foundcolor.progressbaroutline == 0)
+		{ rc--; fprintf(stderr,"Warning: ProgressbarOutline not correctly defined in theme %s. Using default.\n",themename); }
+	if (foundcolor.progressbarinner == 0)
+		{ rc--; fprintf(stderr,"Warning: ProgressbarInner not correctly defined in theme %s. Using default.\n",themename); }
 	
 	if (color.boardfillmaxr<color.boardfillminr)
 	{
@@ -314,11 +326,10 @@ int themes_settheme(char* themename)
 		fprintf(stderr,"Warning: max blue value less than min value in theme %s\n",themename);
 	}
 	
-
 	if (!spriteimage.tex)
 	{
 		rc=-255;
 	}
-		
+	printf("Theme loading return code: %d\n", rc);
 	return rc;
 }

@@ -6,6 +6,18 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+typedef struct {
+	int previousscore;
+    int basescore;
+    int highscore;
+    int score;
+    int level;
+    int clearbonus;
+    int lifebonus;
+    int lives;
+    int clear;
+} GameStats;
+
 bool game_init(void);
 bool game_update(u32 keys, touchPosition touch);
 void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom);

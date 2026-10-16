@@ -8,6 +8,7 @@
 #include "intro.h"
 #include "themes.h"
 #include "level.h"
+#include "menu.h"
 
 typedef enum {
     GAME_INTRO,
@@ -18,8 +19,7 @@ typedef enum {
 } GameMode;
 
 static GameMode game_mode;
-static ScoreSheet levelscore;
-static size_t level;
+static GameStats stats;
 
 bool game_init(void) {
 	game_mode = GAME_INTRO;
@@ -28,14 +28,18 @@ bool game_init(void) {
 	}
 	themes_settheme("linux");
 	intro_init();
-	level = 0;
+	menu_init();
+	stats.score = 0;
+	stats.level = 0;
 	return true;
 }
 
 static bool game_start(void) {
 	intro_close();
 	level_close();
-	if (!level_init(++level, 0)) {
+	stats.level++;
+	stats.previousscore = stats.score;
+	if (!level_init(&stats)) {
 		return false;
 	}
 	game_mode = GAME_LEVEL;
@@ -53,7 +57,7 @@ bool game_update(u32 keys, touchPosition touch) {
 			return game_start();
 		}
 	case GAME_LEVEL:
-		return level_update(keys, touch);
+		level_update(keys, touch, &stats);
 	default:
 		break;
 	}
@@ -73,9 +77,12 @@ void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom) {
 	default:
 		break;
 	}
+	C2D_SceneBegin(top);
+	menu_draw(&stats);
 	return;
 }
 
 void game_close(void) {
 	gfxmap_close();
+	menu_close();
 }
