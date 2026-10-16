@@ -72,9 +72,6 @@ int main(int argc, char **argv) {
 		u32 keys = hidKeysDown();
 		touchPosition touch;
 		hidTouchRead(&touch);
-		if (keys & KEY_START) {
-			break;
-		}
 		if (!game_update(keys, touch)) {
 			ret = 1;
 		}

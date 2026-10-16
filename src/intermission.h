@@ -7,4 +7,3 @@
 bool intermission_init(const GameStats *stats);
 void intermission_draw(void);
 bool intermission_update(u32 keys);
-void intermission_close(void);

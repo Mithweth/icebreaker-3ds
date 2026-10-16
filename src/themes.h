@@ -49,7 +49,11 @@ typedef struct
 	u32 progressbarinner;
 } ThemeColorsType;
 
-extern ThemeColorsType color;
-extern C2D_Image spriteimage;
+typedef struct {
+	char name[64];
+	ThemeColorsType color;
+	C2D_Image spriteimage;
+} Theme;
 
+extern Theme theme;
 int themes_settheme(char* themename);

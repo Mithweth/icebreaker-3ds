@@ -4,7 +4,7 @@
 #include <citro2d.h>
 #include <stdlib.h>
 #include "grid.h"
-#include "constants.h"
+#include "game.h"
 #include "themes.h"
 #include "line.h"
 
@@ -77,20 +77,20 @@ void grid_mark(int x, int y, int w, int h, char fillchar) {
 void grid_generate_colors(void) {
 	for (int x = 0; x < COLS; x++) {
 		for (int y = 0; y < ROWS; y++) {
-			int r = (random() % (color.boardfillmaxr - color.boardfillminr + 1)) + color.boardfillminr;
+			int r = (random() % (theme.color.boardfillmaxr - theme.color.boardfillminr + 1)) + theme.color.boardfillminr;
 			int g, b;
 
-			if (color.boardfillminr == color.boardfillming && color.boardfillmaxr == color.boardfillmaxg)
+			if (theme.color.boardfillminr == theme.color.boardfillming && theme.color.boardfillmaxr == theme.color.boardfillmaxg)
 				g = r;
 			else
-				g = (random() % (color.boardfillmaxg - color.boardfillming + 1)) + color.boardfillming;
+				g = (random() % (theme.color.boardfillmaxg - theme.color.boardfillming + 1)) + theme.color.boardfillming;
 
-			if (color.boardfillminr == color.boardfillminb && color.boardfillmaxr == color.boardfillmaxb)
+			if (theme.color.boardfillminr == theme.color.boardfillminb && theme.color.boardfillmaxr == theme.color.boardfillmaxb)
 				b = r;
-			else if (color.boardfillming == color.boardfillminb && color.boardfillmaxg == color.boardfillmaxb)
+			else if (theme.color.boardfillming == theme.color.boardfillminb && theme.color.boardfillmaxg == theme.color.boardfillmaxb)
 				b = g;
 			else
-				b = (random() % (color.boardfillmaxb - color.boardfillminb + 1)) + color.boardfillminb;
+				b = (random() % (theme.color.boardfillmaxb - theme.color.boardfillminb + 1)) + theme.color.boardfillminb;
 
 			block_colors[x][y] = C2D_Color32(r, g, b, 255);
 		}
@@ -98,7 +98,7 @@ void grid_generate_colors(void) {
 }
 
 void grid_drawblocks(void) {
-	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.0f, PLAYWIDTH, PLAYHEIGHT, color.background);
+	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.0f, PLAYWIDTH, PLAYHEIGHT, theme.color.background);
 
 	for (int bx = 0; bx < COLS; bx++) {
 		for (int by = 0; by < ROWS; by++) {
@@ -107,12 +107,12 @@ void grid_drawblocks(void) {
 
 			if (grid_at(x,y) == '.' || grid_at(x,y) == '-' || grid_at(x,y) == '|')
 				continue;
-			C2D_DrawRectSolid(x, y, 0.1f, BLOCKWIDTH, BLOCKHEIGHT, color.gridline);
+			C2D_DrawRectSolid(x, y, 0.1f, BLOCKWIDTH, BLOCKHEIGHT, theme.color.gridline);
 
-			if (color.gridhighlight == color.gridline) {
+			if (theme.color.gridhighlight == theme.color.gridline) {
 				C2D_DrawRectSolid(x, y, 0.2f, BLOCKWIDTH - 1, BLOCKHEIGHT - 1, block_colors[bx][by]);
 			} else {
-				C2D_DrawRectSolid(x, y, 0.2f, BLOCKWIDTH - 1, BLOCKHEIGHT - 1, color.gridhighlight);
+				C2D_DrawRectSolid(x, y, 0.2f, BLOCKWIDTH - 1, BLOCKHEIGHT - 1, theme.color.gridhighlight);
 				C2D_DrawRectSolid(x + 1, y + 1, 0.3f, BLOCKWIDTH - 2, BLOCKHEIGHT - 2, block_colors[bx][by]);
 			}
 		}

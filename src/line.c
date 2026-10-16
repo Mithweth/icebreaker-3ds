@@ -21,10 +21,8 @@
 
 
 #include <citro2d.h>
-#include "constants.h"
+#include "game.h"
 #include "line.h"
-// #include "globals.h"
-// #include "laundry.h"
 #include "grid.h"
 #include "themes.h"
 
@@ -49,7 +47,7 @@ static void line_finish(Line * l)
   		// falls through.
   		case UP:
   			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'|');
-  			line_draw(l,color.background);
+  			line_draw(l,theme.color.background);
   				
   			// scan along edges to quickly determine if this
   			// is going to be complicated.
@@ -76,7 +74,7 @@ static void line_finish(Line * l)
   		// falls through
   		case LEFT:
   			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'-');
-  			line_draw(l,color.background);
+  			line_draw(l,theme.color.background);
 	
   			// scan along edges to quickly determine if this
   			// is going to be complicated.
@@ -109,15 +107,15 @@ Line line_create(int linenum)
 	{
 		case 1: 
 			l.id='1';
-			l.color=color.line1;
+			l.color=theme.color.line1;
 		break;
 		case 2:
 			l.id='2'; 
-			l.color=color.line2;
+			l.color=theme.color.line2;
 		break;
 		default: 
 			l.id='L';
-			l.color=color.background;
+			l.color=theme.color.background;
 		break;
 	}
 		

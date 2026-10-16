@@ -3,7 +3,7 @@
 #include <3ds.h>
 #include <citro2d.h>
 #include <stdlib.h>
-#include "constants.h"
+#include "game.h"
 #include "grid.h"
 #include "penguin.h"
 #include "line.h"
@@ -182,6 +182,20 @@ void intro_init(void) {
 
 void intro_draw(void) {
 	grid_drawblocks();
+	if (letterstep>11 || !frozen) {
+		for (int i=0;i<penguincount;i++) {
+			penguin_draw(&flock[i]);
+		}
+	}
+	penguin_draw(&tux);
+    line_draw(&line1, line1.color);
+    line_draw(&line2, line2.color);
+}
+
+bool intro_update(u32 keys, touchPosition touch) {
+	if (keys & KEY_TOUCH) {
+		return false;
+	}
 	if (letterstep < 10)
 	{	
 		switch (letterstep)
@@ -314,12 +328,9 @@ void intro_draw(void) {
 		for (int i=0;i<penguincount;i++)
 		{
 			grid_mark(flock[i].x,flock[i].y,BLOCKWIDTH,BLOCKHEIGHT,'*');	
-			penguin_draw(&flock[i]);
 		}
 
-	// move split-lines
-	if (line1.on) 
-	{
+	if (line1.on) {
 		if (line_move(&line1))
 		{
 			linedone1=true;
@@ -332,8 +343,7 @@ void intro_draw(void) {
 			linedone1=false;
 		}
 	}
-	if (line2.on)
-	{
+	if (line2.on) {
 	
 		if (line_move(&line2))
 		{
@@ -347,31 +357,20 @@ void intro_draw(void) {
 			linedone2=false;
 		}
 	}
+	
+
 	if (linedone1 && linedone2) { letterstep++; linedone1=false; linedone2=false; }
 	
-	if (!frozen)
-	{
-		for (int i=0;i<penguincount;i++)
-		{
+	if (!frozen) {
+		for (int i=0;i<penguincount;i++) {
 			PenguinHit hit = penguin_move(&flock[i]);
 			if (hit == LINE1 || hit == BOTH) line1.dead=true;
 			if (hit == LINE2 || hit == BOTH) line2.dead=true;
-			penguin_draw(&flock[i]);
 		}
 	}
 	PenguinHit hit = penguin_move(&tux);
 	if (hit == LINE1 || hit == BOTH) line1.dead=true;
 	if (hit == LINE2 || hit == BOTH) line2.dead=true;
-	penguin_draw(&tux);
-
-    line_draw(&line1, line1.color);
-    line_draw(&line2, line2.color);
-}
-
-bool intro_update(u32 keys, touchPosition touch) {
-	if (keys & KEY_TOUCH) {
-		return false;
-	}
 	return true;
 }
 

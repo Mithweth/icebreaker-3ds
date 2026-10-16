@@ -1,7 +1,7 @@
 // grid.h
 #pragma once
 
-#include "constants.h"
+#include "game.h"
 
 void grid_mark(int x, int y, int w, int h, char fillchar);
 void grid_drawblocks(void);

@@ -30,32 +30,31 @@
 #include "themes.h"
 #include "gfxmap.h"
 
-ThemeColorsType color;
-C2D_Image spriteimage;
+Theme theme;
 
 static void themes_setdefaultcolors(void)
 {
-	color.background      = C2D_Color32(  0, 64,128,255);
-	color.normaltext      = C2D_Color32(255,255,255,255);
-	color.gridline        = C2D_Color32(192,192,192,255);
-	color.gridhighlight   = C2D_Color32(192,192,192,255);
-	color.line1           = C2D_Color32(  0,  0,  0,255);
-	color.line2           = C2D_Color32(192,  0, 64,255);
-	color.menuhighlight   = C2D_Color32(240,240,240,255);
-	color.gameovertext    = C2D_Color32(192,  0, 64,255);
-	color.scorescrolltext = C2D_Color32(  0,  0,  0,255);
-	color.bonusscrolltext = C2D_Color32(192,  0, 64,255);
-	color.textentrybox    = C2D_Color32(  0,  0,  0,255);
-	color.textentrytext   = C2D_Color32(255,255,255,255);
-	color.copyrighttext   = C2D_Color32(192,192,192,255);
-	color.progressbaroutline = C2D_Color32(180, 225, 245, 255);
-	color.progressbarinner = C2D_Color32(100, 200, 240, 255);
-	color.boardfillminr = 224;
- 	color.boardfillming = 224;
-	color.boardfillminb = 224;
-	color.boardfillmaxr = 255;
-	color.boardfillmaxg = 255;
-	color.boardfillmaxb = 255;
+	theme.color.background      = C2D_Color32(  0, 64,128,255);
+	theme.color.normaltext      = C2D_Color32(255,255,255,255);
+	theme.color.gridline        = C2D_Color32(192,192,192,255);
+	theme.color.gridhighlight   = C2D_Color32(192,192,192,255);
+	theme.color.line1           = C2D_Color32(  0,  0,  0,255);
+	theme.color.line2           = C2D_Color32(192,  0, 64,255);
+	theme.color.menuhighlight   = C2D_Color32(240,240,240,255);
+	theme.color.gameovertext    = C2D_Color32(192,  0, 64,255);
+	theme.color.scorescrolltext = C2D_Color32(  0,  0,  0,255);
+	theme.color.bonusscrolltext = C2D_Color32(192,  0, 64,255);
+	theme.color.textentrybox    = C2D_Color32(  0,  0,  0,255);
+	theme.color.textentrytext   = C2D_Color32(255,255,255,255);
+	theme.color.copyrighttext   = C2D_Color32(192,192,192,255);
+	theme.color.progressbaroutline = C2D_Color32(180, 225, 245, 255);
+	theme.color.progressbarinner = C2D_Color32(100, 200, 240, 255);
+	theme.color.boardfillminr = 224;
+ 	theme.color.boardfillming = 224;
+	theme.color.boardfillminb = 224;
+	theme.color.boardfillmaxr = 255;
+	theme.color.boardfillmaxg = 255;
+	theme.color.boardfillmaxb = 255;
 }
 
 int themes_settheme(char* themename)
@@ -67,6 +66,7 @@ int themes_settheme(char* themename)
 	char themefilename[256]; // fix -- use defined OS constant (here and throughout this function)
 	char optbuf[21];
 	char valbuf[256];
+	snprintf(theme.name, 64, "%s", themename);
 	int r,g,b;
 	ThemeColorsType foundcolor;
 	
@@ -76,9 +76,9 @@ int themes_settheme(char* themename)
 	// }
 	
 	themes_setdefaultcolors();
-	if (spriteimage.tex)
+	if (theme.spriteimage.tex)
 	{
-		spriteimage=(C2D_Image){0};
+		theme.spriteimage=(C2D_Image){0};
 	}
 	
 	foundcolor.background      = 0;
@@ -145,19 +145,19 @@ int themes_settheme(char* themename)
 				
 				if (!strcmp(optbuf,"background"))
 				{
-					color.background=C2D_Color32(r,g,b,255);
+					theme.color.background=C2D_Color32(r,g,b,255);
 					foundcolor.background++;
 				}
 				else if (!strcmp(optbuf,"normaltext"))
 				{
-					color.normaltext=C2D_Color32(r,g,b,255);
+					theme.color.normaltext=C2D_Color32(r,g,b,255);
 					foundcolor.normaltext++;
 				}
 				else if (!strcmp(optbuf,"boardfillmin"))
 				{
-					color.boardfillminr=r;
-					color.boardfillming=g;
-					color.boardfillminb=b;
+					theme.color.boardfillminr=r;
+					theme.color.boardfillming=g;
+					theme.color.boardfillminb=b;
 					foundcolor.boardfillminr++;
 					foundcolor.boardfillming++;
 					foundcolor.boardfillminb++;
@@ -165,77 +165,77 @@ int themes_settheme(char* themename)
 				}
 				else if (!strcmp(optbuf,"boardfillmax"))
 				{
-					color.boardfillmaxr=r;
-					color.boardfillmaxg=g;
-					color.boardfillmaxb=b;
+					theme.color.boardfillmaxr=r;
+					theme.color.boardfillmaxg=g;
+					theme.color.boardfillmaxb=b;
 					foundcolor.boardfillmaxr++;
 					foundcolor.boardfillmaxg++;
 					foundcolor.boardfillmaxb++;
 				}
 				else if (!strcmp(optbuf,"gridline"))
 				{
-					color.gridline=C2D_Color32(r,g,b,255);
+					theme.color.gridline=C2D_Color32(r,g,b,255);
 					foundcolor.gridline++;
 				}
 				else if (!strcmp(optbuf,"gridhighlight"))
 				{
-					color.gridhighlight=C2D_Color32(r,g,b,255);
+					theme.color.gridhighlight=C2D_Color32(r,g,b,255);
 					foundcolor.gridhighlight++;
 				}
 				else if (!strcmp(optbuf,"line1"))
 				{
-					color.line1=C2D_Color32(r,g,b,255);
+					theme.color.line1=C2D_Color32(r,g,b,255);
 					foundcolor.line1++;
 				}
 				else if (!strcmp(optbuf,"line2"))
 				{
-					color.line2=C2D_Color32(r,g,b,255);
+					theme.color.line2=C2D_Color32(r,g,b,255);
 					foundcolor.line2++;
 				}
 				else if (!strcmp(optbuf,"menuhighlight"))
 				{
-					color.menuhighlight=C2D_Color32(r,g,b,255);
+					theme.color.menuhighlight=C2D_Color32(r,g,b,255);
 					foundcolor.menuhighlight++;
 				}
 				else if (!strcmp(optbuf,"gameovertext"))
 				{
-					color.gameovertext=C2D_Color32(r,g,b,255);
+					theme.color.gameovertext=C2D_Color32(r,g,b,255);
 					foundcolor.gameovertext++;
 				}
 				else if (!strcmp(optbuf,"scorescrolltext"))
 				{
-					color.scorescrolltext=C2D_Color32(r,g,b,255);
+					theme.color.scorescrolltext=C2D_Color32(r,g,b,255);
 					foundcolor.scorescrolltext++;
 				}
 				else if (!strcmp(optbuf,"bonusscrolltext"))
 				{
-					color.bonusscrolltext=C2D_Color32(r,g,b,255);
+					theme.color.bonusscrolltext=C2D_Color32(r,g,b,255);
 					foundcolor.bonusscrolltext++;
 				}
 				else if (!strcmp(optbuf,"textentrybox"))
 				{
-					color.textentrybox=C2D_Color32(r,g,b,255);
+					theme.color.textentrybox=C2D_Color32(r,g,b,255);
 					foundcolor.textentrybox++;
 
 				}
 				else if (!strcmp(optbuf,"textentrytext"))
 				{
-					color.textentrytext=C2D_Color32(r,g,b,255);
+					theme.color.textentrytext=C2D_Color32(r,g,b,255);
 					foundcolor.textentrytext++;
 				}
 				else if (!strcmp(optbuf,"copyrighttext"))
 				{
-					color.copyrighttext=C2D_Color32(r,g,b,255);
+					theme.color.copyrighttext=C2D_Color32(r,g,b,255);
 					foundcolor.copyrighttext++;
 				}
 				else if (!strcmp(optbuf,"progressbaroutline"))
 				{
-					color.progressbaroutline=C2D_Color32(r,g,b,255);
+					theme.color.progressbaroutline=C2D_Color32(r,g,b,255);
 					foundcolor.progressbaroutline++;
 				}
 				else if (!strcmp(optbuf,"progressbarinner"))
 				{
-					color.progressbarinner=C2D_Color32(r,g,b,255);
+					theme.color.progressbarinner=C2D_Color32(r,g,b,255);
 					foundcolor.progressbarinner++;
 				}
 			}
@@ -244,7 +244,7 @@ int themes_settheme(char* themename)
 				//printf("S: %s = %s\n",optbuf,valbuf);
 				if (!strcmp(optbuf,"spritebitmap"))
 				{
-					spriteimage=gfxmap_get_image(valbuf);
+					theme.spriteimage=gfxmap_get_image(valbuf);
 				}
 				// else if (!strcmp(optbuf,"soundouch"))
 				// {
@@ -310,23 +310,23 @@ int themes_settheme(char* themename)
 	if (foundcolor.progressbarinner == 0)
 		{ rc--; fprintf(stderr,"Warning: ProgressbarInner not correctly defined in theme %s. Using default.\n",themename); }
 	
-	if (color.boardfillmaxr<color.boardfillminr)
+	if (theme.color.boardfillmaxr<theme.color.boardfillminr)
 	{
-		color.boardfillmaxr=color.boardfillminr;
+		theme.color.boardfillmaxr=theme.color.boardfillminr;
 		fprintf(stderr,"Warning: max red value less than min value in theme %s\n",themename);
 	}
-	if (color.boardfillmaxg<color.boardfillming)
+	if (theme.color.boardfillmaxg<theme.color.boardfillming)
 	{
-		color.boardfillmaxg=color.boardfillming;
+		theme.color.boardfillmaxg=theme.color.boardfillming;
 		fprintf(stderr,"Warning: max green value less than min value in theme %s\n",themename);
 	}
-	if (color.boardfillmaxb<color.boardfillminb)
+	if (theme.color.boardfillmaxb<theme.color.boardfillminb)
 	{
-		color.boardfillmaxb=color.boardfillminb;
+		theme.color.boardfillmaxb=theme.color.boardfillminb;
 		fprintf(stderr,"Warning: max blue value less than min value in theme %s\n",themename);
 	}
 	
-	if (!spriteimage.tex)
+	if (!theme.spriteimage.tex)
 	{
 		rc=-255;
 	}

@@ -6,6 +6,7 @@
 #include "game.h"
 
 void menu_init(void);
-void menu_draw(const GameStats *stats);
-bool menu_update(u32 keys, touchPosition touch);
+void menu_draw(bool pause, const GameStats *stats);
+bool menu_update(u32 keys);
 void menu_close(void);
+void menu_bottom_draw(bool pause);

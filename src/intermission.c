@@ -1,7 +1,6 @@
 // intermission.c
 
 #include <3ds.h>
-#include "constants.h"
 #include "game.h"
 #include "themes.h"
 #include "text.h"
@@ -23,8 +22,8 @@ void intermission_init(const GameStats *stats) {
 		snprintf(first_line_text,30,"FINAL SCORE: %d",stats->basescore + stats->score);
 		snprintf(second_line_text,30, "GAME OVER");
 	}
-	int second_line_w = text_getwidth(4,first_line_text);
-	int first_line_w = text_getwidth(4,second_line_text);
+	int first_line_w = text_getwidth(4,first_line_text);
+	int second_line_w = text_getwidth(4,second_line_text);
 
 	first_line_x=(WIDTH - first_line_w) / 2;
 	first_line_y=HEIGHT;
@@ -35,9 +34,9 @@ void intermission_init(const GameStats *stats) {
 }
 
 void intermission_draw(void) {
-	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.8f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
-	text_put(first_line_x, first_line_y, 4, color.scorescrolltext, first_line_text);
-	text_put(second_line_x, second_line_y, 4, color.bonusscrolltext, second_line_text);
+	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.4f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
+	text_put(first_line_x, first_line_y, 0.5f, 4, theme.color.scorescrolltext, first_line_text);
+	text_put(second_line_x, second_line_y, 0.5f, 4, theme.color.bonusscrolltext, second_line_text);
 }
 
 bool intermission_update(u32 keys) {
@@ -51,8 +50,4 @@ bool intermission_update(u32 keys) {
 		second_line_y-=2;
 	}
 	return true;
-}
-
-void intermission_close(void) {
-
 }

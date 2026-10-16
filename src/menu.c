@@ -8,9 +8,11 @@
 #include "themes.h"
 #include "game.h"
 #include "text.h"
+#include "options.h"
 
 static const char *logo_chars = "ICEBRAK";
-
+static size_t selected;
+static char* choices[] = {"NEW GAME", "DIFFICULTY", "THEME", "HIGH SCORES", "HELP"};
 static const u8 logo_glyphs[][7] = {
 	{31,  4,  4,  4,  4,  4, 31}, // I
 	{15, 16, 16, 16, 16, 16, 15}, // C
@@ -49,10 +51,10 @@ static void logo_drawtext(const char *text, float x, float y, float scale) {
 				int start = col;
 				while (col < 5 && (logo_glyphs[glyph][row] & (1 << (4 - col)))) col++;
 
-				C2D_DrawRectangle(x + (i * 6 + start) * scale, y + row * scale, 0.5f, (col - start) * scale, scale, gradient[row], gradient[row], gradient[row + 1], gradient[row + 1]);
+				C2D_DrawRectangle(x + (i * 6 + start) * scale, y + row * scale, 0.3f, (col - start) * scale, scale, gradient[row], gradient[row], gradient[row + 1], gradient[row + 1]);
 				for (int c = start; c < col; c++) {
 				    if (row == 0 || !(logo_glyphs[glyph][row - 1] & (1 << (4 - c)))) {
-				        C2D_DrawRectSolid(x + (i * 6 + c) * scale, y + row * scale, 0.5f, scale, 1.5f, C2D_Color32(245, 252, 255, 230));
+				        C2D_DrawRectSolid(x + (i * 6 + c) * scale, y + row * scale, 0.3f, scale, 1.5f, C2D_Color32(245, 252, 255, 230));
 				    }
 				}
 			}
@@ -63,46 +65,77 @@ static void logo_drawtext(const char *text, float x, float y, float scale) {
 static void menu_draw_rounded_rect(float x, float y, float w, float h, u32 color) {
     if (w <= 0 || h <= 0) return;
     float r = fminf(w / 2.0f, h / 2.0f);
-    C2D_DrawRectSolid(x + r, y + h / 2.0f - r, 0.5f, w - 2.0f * r, 2.0f * r, color);
-    C2D_DrawCircleSolid(x + r, y + h / 2.0f, 0.5f, r, color);
-    C2D_DrawCircleSolid(x + w - r, y + h / 2.0f, 0.5f, r, color);
+    C2D_DrawRectSolid(x + r, y + h / 2.0f - r, 0.3f, w - 2.0f * r, 2.0f * r, color);
+    C2D_DrawCircleSolid(x + r, y + h / 2.0f, 0.3f, r, color);
+    C2D_DrawCircleSolid(x + w - r, y + h / 2.0f, 0.3f, r, color);
 }
 
 static void progress_bar_draw(int pct) {
     if (pct < 0) pct = 0;
     if (pct > 100) pct = 100;
-    menu_draw_rounded_rect(10.0f, 220.0f, 380.0f, 14.0f, color.progressbaroutline);
+    menu_draw_rounded_rect(10.0f, 220.0f, 380.0f, 14.0f, theme.color.progressbaroutline);
     menu_draw_rounded_rect(12.0f, 222.0f, 376.0f, 10.0f, C2D_Color32(20, 50, 75, 255));
-    menu_draw_rounded_rect(12.0f, 222.0f, (376.0f) * pct / 100.0f, 10.0f, color.progressbarinner);
+    menu_draw_rounded_rect(12.0f, 222.0f, (376.0f) * pct / 100.0f, 10.0f, theme.color.progressbarinner);
 }
 
 void menu_init(void) {
-	return;
+	selected = 0;
 }
-void menu_draw(const GameStats *stats) {
-	C2D_DrawRectSolid(0, 0, 0.0f, 400.0f, 240.0f, color.background);
-	logo_drawtext("ICE", 148, 55, 6);
-	logo_drawtext("BREAKER", 77, 110, 6);
+
+void menu_bottom_draw(bool pause) {
+	if (pause) {
+		C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.9f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
+		text_put(100, 110, 1.0f, 4, theme.color.normaltext, "PAUSE");
+	}
+}
+
+void menu_draw(bool pause, const GameStats *stats) {
+	C2D_DrawRectSolid(0, 0, 0.0f, 400.0f, 240.0f, theme.color.background);
 	char tmptext[30]; // should be plenty big.
-	text_put(175, 10, 2, color.normaltext, "SCORE");
-	text_put(10, 10, 2, color.normaltext, "LEVEL");
-	text_put(280, 10, 2, color.normaltext, "HIGH SCORE");
-	text_put(10, 200, 2, color.normaltext, "LIVES");
+	text_put(175, 10, 0.3f, 2, theme.color.normaltext, "SCORE");
+	text_put(10, 10, 0.3f, 2, theme.color.normaltext, "LEVEL");
+	text_put(280, 10, 0.3f, 2, theme.color.normaltext, "HIGH SCORE");
+	text_put(10, 200, 0.3f, 2, theme.color.normaltext, "LIVES");
 	snprintf(tmptext,30,"%d %%",stats->clear);
-	text_put(390 - text_getwidth(2,tmptext), 200, 2, color.normaltext, tmptext);
+	text_rput(390, 200, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->score + stats->basescore);
-	text_put(200 - (text_getwidth(2,tmptext) / 2), 25, 2, color.normaltext, tmptext);
+	text_cput(200, 0.3f, 25, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->level);
-	text_put(20, 25, 2, color.normaltext, tmptext);
+	text_put(20, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->highscore);
-	text_put(385 - text_getwidth(2,tmptext), 25, 2, color.normaltext, tmptext);
+	text_rput(385, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	for(int i = 0; i < stats->lives; i++) {
-		C2D_DrawImageAt(spriteimage, 80.0f + (16.0f * i), 195.0f, 0.5f, NULL, 1.0f, 1.0f);
+		C2D_DrawImageAt(theme.spriteimage, 80.0f + (16.0f * i), 195.0f, 0.3f, NULL, 1.0f, 1.0f);
 	}
 	progress_bar_draw(stats->clear);
+	if (!pause) {
+		logo_drawtext("ICE", 148, 55, 6);
+		logo_drawtext("BREAKER", 77, 110, 6);
+		return;
+	}
+	C2D_DrawRectSolid(50.0f, 50.0f, 0.3f, 300.0f, 140.0f, theme.color.menuhighlight);
+	C2D_DrawRectSolid(52.0f, 52.0f, 0.31f, 296.0f, 136.0f, theme.color.background);
+	char* levels[] = {"easy", "normal", "hard"};
+	for(size_t i = 0; i < sizeof(choices) / sizeof(choices[0]); i++) {
+		u32 option_color = theme.color.normaltext;
+		if (selected == i) {
+			C2D_DrawRectSolid(50.0f, 56 + 25 * i, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
+			option_color = theme.color.background;
+		}
+		text_put(60, 61 + 25 * i, 0.4f, 3, option_color, choices[i]);
+		if (i == 1) {
+			text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, levels[options.difficulty]);
+		}
+	}
 }
-bool menu_update(u32 keys, touchPosition touch) {
-
+bool menu_update(u32 keys) {
+	if ((keys & KEY_UP) && (selected > 0)) {
+		selected--;
+	}
+	if ((keys & KEY_DOWN) && (selected < (sizeof(choices) / sizeof(choices[0])) - 1)) {
+		selected++;
+	}
+	return true;
 }
 void menu_close(void) {
 	return;

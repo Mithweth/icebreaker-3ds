@@ -20,6 +20,7 @@ typedef enum {
 } GameMode;
 
 static GameMode game_mode;
+static bool pause;
 static GameStats stats;
 
 bool game_init(void) {
@@ -30,6 +31,7 @@ bool game_init(void) {
 	themes_settheme("linux");
 	intro_init();
 	menu_init();
+	pause = false;
 	return true;
 }
 
@@ -58,8 +60,15 @@ static void game_intermission_start(void) {
 }
 
 bool game_update(u32 keys, touchPosition touch) {
-	if (keys & KEY_START) {
+	if (keys & KEY_X) {
 		return false;
+	}
+	if (keys & KEY_START) {
+		pause = !pause;
+	}
+	if (pause) {
+		menu_update(keys);
+		return true;
 	}
 	switch(game_mode) {
 	case GAME_INTRO:
@@ -81,6 +90,9 @@ bool game_update(u32 keys, touchPosition touch) {
 			}
 		}
 		break;
+	case GAME_MENU:
+		menu_update(keys);
+		break;
 	default:
 		break;
 	}
@@ -90,25 +102,24 @@ bool game_update(u32 keys, touchPosition touch) {
 void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom) {
 	C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
 	C2D_TargetClear(bottom, C2D_Color32(0, 0, 0, 255));
+	C2D_SceneBegin(bottom);
 	switch(game_mode) {
 	case GAME_INTRO:
-		C2D_SceneBegin(bottom);
 		intro_draw();
 		break;
 	case GAME_LEVEL:
-		C2D_SceneBegin(bottom);
 		level_draw();
 		break;
 	case GAME_INTERMISSION:
-		C2D_SceneBegin(bottom);
 		level_draw();
 		intermission_draw();
 		break;
 	default:
 		break;
 	}
+	menu_bottom_draw(pause);
 	C2D_SceneBegin(top);
-	menu_draw(&stats);
+	menu_draw(pause, &stats);
 	return;
 }
 
