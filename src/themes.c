@@ -30,6 +30,7 @@
 #include "themes.h"
 #include "gfxmap.h"
 #include "game.h"
+#include "sound.h"
 
 Theme theme;
 static char* themes[MAX_THEMES];
@@ -121,6 +122,7 @@ int themes_settheme(char* themename)
 	foundcolor.boardfillmaxr = 0;
 	foundcolor.boardfillmaxg = 0;
 	foundcolor.boardfillmaxb = 0;
+	sound_reset();
 
 	snprintf(themefilename, 256,"romfs:/themes/%s.ibt",themename);
 	
@@ -270,28 +272,27 @@ int themes_settheme(char* themename)
 				{
 					theme.spriteimage=gfxmap_get_image(valbuf);
 				}
-				// else if (!strcmp(optbuf,"soundouch"))
-				// {
-				// 	if (strcasecmp( ".wav", valbuf+(strlen(valbuf)-strlen(".wav")) ))
-				// 	{
-				// 		fprintf(stderr,"Warning: Ouch sound file in theme %s does not end with '.wav'.\n"
-				// 		               "We'll try to load it anyway, but don't be surpised if there's a problem.\n"
-				// 		               "(Filename is %s)\n",themename,valbuf);
-				// 	}
-				// 	snprintf(loadfilebuf, 256,"%s/%s",DATAPREFIX,valbuf);
-				// 	sound_loads(themename,loadfilebuf,NULL);
-				// }
-				// else if (!strcmp(optbuf,"soundcrash"))
-				// {
-				// 	if (strcasecmp( ".wav", valbuf+(strlen(valbuf)-strlen(".wav")) ))
-				// 	{
-				// 		fprintf(stderr,"Warning: Crash sound file in theme %s does not end with '.wav'.\n"
-				// 		               "We'll try to load it anyway, but don't be surpised if there's a problem.\n"
-				// 		               "(Filename is %s)\n",themename,valbuf);
-				// 	}
-				// 	snprintf(loadfilebuf, 256,"%s/%s",DATAPREFIX,valbuf);
-				// 	sound_loads(themename,NULL,loadfilebuf);
-				// }
+				else if (!strcmp(optbuf,"soundouch"))
+				{
+					if (!sound_load(SNDOUCH, valbuf)) {
+						printf("Error while loading sound file: %s\n", valbuf);
+						rc = -10;
+					}
+				}
+				else if (!strcmp(optbuf,"soundcrash"))
+				{
+					if (!sound_load(SNDBREAK, valbuf)) {
+						printf("Error while loading sound file: %s\n", valbuf);
+						rc = -10;
+					}
+				}
+				else if (!strcmp(optbuf,"soundvictory"))
+				{
+					if (!sound_load(SNDVICTORY, valbuf)) {
+						printf("Error while loading sound file: %s\n", valbuf);
+						rc = -10;
+					}
+				}
 			}
 			
 		}	

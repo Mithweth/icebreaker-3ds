@@ -37,6 +37,7 @@
 #include "level.h"
 #include "options.h"
 #include "themes.h"
+#include "sound.h"
 
 #define GESTURE_THRESHOLD 12
 
@@ -66,7 +67,7 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 
 	if (grid[x][y] == '*' || grid[mousex][mousey] == '*') 
 	{ // a little bit of grace if the player clicks directly on the penguin
-		//sound_play(SNDOUCH);
+		sound_play(SNDOUCH);
 	}
 	else if (grid[x][y] == ' ')
 	{
@@ -199,7 +200,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 
 		if (line1.dead) 
 		{
-			//sound_play(SNDBREAK);
+			sound_play(SNDBREAK);
 			line_kill(&line1);
 			stats->lives--;
 			if (stats->lives < 0) {
@@ -227,16 +228,14 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		{
 			stats->clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
 			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
-			//tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 		}
 
 		if (line2.dead)
 		{ 
-			//sound_play(SNDBREAK);
+			sound_play(SNDBREAK);
 			line_kill(&line2);
 			stats->lives--;
 			if (stats->lives<0) stats->lives=0;
-			//status_updatestats->lives(stats->lives);
 
 		}
 	}

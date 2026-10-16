@@ -19,3 +19,4 @@ ProgressbarFill     100  200  240
 SpriteBitmap		penguin
 SoundOuch		ouch
 SoundCrash		crash
+SoundVictory	victory

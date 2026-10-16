@@ -10,6 +10,7 @@
 #include "level.h"
 #include "menu.h"
 #include "intermission.h"
+#include "sound.h"
 
 typedef enum {
     GAME_INTRO,
@@ -25,6 +26,7 @@ static GameStats stats;
 
 bool game_init(void) {
 	game_mode = GAME_INTRO;
+	sound_init();
 	if (!gfxmap_init()) {
 		return false;
 	}
@@ -132,4 +134,5 @@ void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom) {
 void game_close(void) {
 	gfxmap_close();
 	menu_close();
+	sound_close();
 }

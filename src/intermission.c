@@ -4,6 +4,7 @@
 #include "game.h"
 #include "themes.h"
 #include "text.h"
+#include "sound.h"
 
 static char first_line_text[30];
 static char second_line_text[30];
@@ -17,7 +18,7 @@ void intermission_init(const GameStats *stats) {
 	if (!stats->dead) {
 		snprintf(first_line_text,30,"SCORE: %d",stats->basescore);
 		snprintf(second_line_text,30, "BONUS: %d",stats->clearbonus + stats->lifebonus);
-		// FIX -- play some truimphant but not annoying sound
+		sound_play(SNDVICTORY);
 	} else {
 		snprintf(first_line_text,30,"FINAL SCORE: %d",stats->basescore + stats->score);
 		snprintf(second_line_text,30, "GAME OVER");
