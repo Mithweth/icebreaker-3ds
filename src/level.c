@@ -56,13 +56,14 @@ static Penguin flock[MAXPENGUINS];
 static bool gesture_active = false;
 static touchPosition gesture_start;
 static touchPosition gesture_last;
-static int clear=0;
 static int timepenalty;
+static int timepenaltyinterval;
 static float scoremod;
 static float bonusmod;
 static bool done;
 static int percentextrabonus;
 static int percentbonus;
+static u64 now;
 
 static void level_action_startclick(int mousex, int mousey, bool vertical)
 {
@@ -93,23 +94,19 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 	}
 }
 
-bool level_init(GameStats *stats) {
+void level_init(GameStats *stats) {
 	grid_generate_colors();
 	grid_reset(' ');
-	//LevelExitType returncode=ERROR;
-	//int i,mx,my;
 
 	scoremod=1.0f;
 	bonusmod=1.0f;
 	percentextrabonus=PERCENTEXTRABONUS-(stats->level-1)/5; // this needs to decrease, or else the bonus disintegrates as the space required to actually trap penguins increases
 	percentbonus=PERCENTBONUS; // right now, there's really no point in making this a variable but it doesn't hurt, and keeps things consistant
 	timepenalty=0;
-	int timepenaltyinterval=0;
 	done = false;
 
 	penguincount=stats->level+1;
 	stats->lives=stats->level+1;
-	clear=0;
 	//stats->currentscore = stats->basescore;
 	
 	switch(options.difficulty)
@@ -131,12 +128,13 @@ bool level_init(GameStats *stats) {
 		break;
 		default:
 			fprintf(stderr,"Unknown difficulty -- that can't happen!\n");
-			return false;
+			return;
 		break;
 	}
 	stats->basescore = 0;
 	stats->clearbonus=0;
 	stats->lifebonus=0;
+	stats->clear = 0;
 	line1=line_create(1);
 	line2=line_create(2);
 
@@ -144,8 +142,7 @@ bool level_init(GameStats *stats) {
 	{
 		flock[i] = penguin_create();
 	}
-
-	return true;
+	now = osGetTime();
 }
 
 void level_draw(void) {
@@ -205,7 +202,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if (linedoneflag)
 		{
 			stats->clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
-			stats->basescore=stats->previousscore+(int)(stats->clear*scoremod)-timepenalty;
+			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
 			//tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 		}
 
@@ -214,7 +211,11 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			//sound_play(SNDBREAK);
 			line_kill(&line1);
 			stats->lives--;
-			if (stats->lives<0) stats->lives=0;
+			if (stats->lives < 0) {
+				stats->lives = 0;
+				stats->dead = true;
+				done = true;
+			}
 			//status_updatestats->lives(stats->lives);
 		}
 	}
@@ -234,7 +235,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if (linedoneflag)
 		{
 			stats->clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
-			stats->basescore=stats->previousscore+(int)(stats->clear*scoremod)-timepenalty;
+			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
 			//tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 		}
 
@@ -259,8 +260,6 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	{ 
 		done = true;
 		stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
-		//returncode=PASS;
-
 
 		stats->clearbonus=0;
 		// bonuses for clearing lots
@@ -271,9 +270,17 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			
 		// bonuses for leftover stats->lives
 		stats->lifebonus=(int)((stats->lives-1)*3*bonusmod);
-		//stats->score = stats->previousscore + stats->basescore + stats->clearbonus + stats->lifebonus;
-		//stats->basescore = 0;
 	} 
+
+	u64 elapsed = osGetTime();
+	if (elapsed - now > timepenaltyinterval * 10) {
+		now += timepenaltyinterval * 10;
+		if (stats->basescore>0)
+		{
+			timepenalty++;
+			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
+		}
+	}
 
 	return true;
 }

@@ -7,7 +7,6 @@
 #include <stddef.h>
 
 typedef struct {
-	int previousscore;
     int basescore;
     int highscore;
     int score;
@@ -16,6 +15,7 @@ typedef struct {
     int lifebonus;
     int lives;
     int clear;
+    bool dead;
 } GameStats;
 
 bool game_init(void);

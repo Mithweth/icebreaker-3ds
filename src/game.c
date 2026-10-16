@@ -9,6 +9,7 @@
 #include "themes.h"
 #include "level.h"
 #include "menu.h"
+#include "intermission.h"
 
 typedef enum {
     GAME_INTRO,
@@ -29,21 +30,31 @@ bool game_init(void) {
 	themes_settheme("linux");
 	intro_init();
 	menu_init();
-	stats.score = 0;
-	stats.level = 0;
 	return true;
 }
 
-static bool game_start(void) {
+static void game_start(void) {
+	intro_close();
+	level_close();
+	stats.score = 0;
+	stats.level = 0;
+	stats.dead = false;
+	level_init(&stats);
+	game_mode = GAME_LEVEL;
+}
+
+static void game_continue(void) {
 	intro_close();
 	level_close();
 	stats.level++;
-	stats.previousscore = stats.score;
-	if (!level_init(&stats)) {
-		return false;
-	}
+	stats.score += stats.basescore + stats.clearbonus + stats.lifebonus;
+	level_init(&stats);
 	game_mode = GAME_LEVEL;
-	return true;
+}
+
+static void game_intermission_start(void) {
+	intermission_init(&stats);
+	game_mode = GAME_INTERMISSION;
 }
 
 bool game_update(u32 keys, touchPosition touch) {
@@ -52,12 +63,24 @@ bool game_update(u32 keys, touchPosition touch) {
 	}
 	switch(game_mode) {
 	case GAME_INTRO:
-		bool intro_running = intro_update(keys, touch);
-		if (!intro_running) {
-			return game_start();
+		if (!intro_update(keys, touch)) {
+			game_start();
 		}
+		break;
 	case GAME_LEVEL:
-		level_update(keys, touch, &stats);
+		if (!level_update(keys, touch, &stats)) {
+			game_intermission_start();
+		}
+		break;
+	case GAME_INTERMISSION:
+		if (!intermission_update(keys)) {
+			if (stats.dead) {
+				game_start();
+			} else {
+				game_continue();
+			}
+		}
+		break;
 	default:
 		break;
 	}
@@ -71,9 +94,16 @@ void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom) {
 	case GAME_INTRO:
 		C2D_SceneBegin(bottom);
 		intro_draw();
+		break;
 	case GAME_LEVEL:
 		C2D_SceneBegin(bottom);
 		level_draw();
+		break;
+	case GAME_INTERMISSION:
+		C2D_SceneBegin(bottom);
+		level_draw();
+		intermission_draw();
+		break;
 	default:
 		break;
 	}

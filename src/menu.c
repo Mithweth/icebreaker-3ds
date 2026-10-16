@@ -62,9 +62,7 @@ static void logo_drawtext(const char *text, float x, float y, float scale) {
 
 static void menu_draw_rounded_rect(float x, float y, float w, float h, u32 color) {
     if (w <= 0 || h <= 0) return;
-
     float r = fminf(w / 2.0f, h / 2.0f);
-
     C2D_DrawRectSolid(x + r, y + h / 2.0f - r, 0.5f, w - 2.0f * r, 2.0f * r, color);
     C2D_DrawCircleSolid(x + r, y + h / 2.0f, 0.5f, r, color);
     C2D_DrawCircleSolid(x + w - r, y + h / 2.0f, 0.5f, r, color);
@@ -90,14 +88,14 @@ void menu_draw(const GameStats *stats) {
 	text_put(10, 10, 2, color.normaltext, "LEVEL");
 	text_put(280, 10, 2, color.normaltext, "HIGH SCORE");
 	text_put(10, 200, 2, color.normaltext, "LIVES");
-	snprintf(tmptext,30,"%03d %%",stats->clear);
-	text_put(340, 200, 2, color.normaltext, tmptext);
-	snprintf(tmptext,30,"%05d",stats->score + stats->basescore);
-	text_put(175, 25, 2, color.normaltext, tmptext);
-	snprintf(tmptext,30,"%02d",stats->level);
-	text_put(10, 25, 2, color.normaltext, tmptext);
-	snprintf(tmptext,30,"%05d",stats->highscore);
-	text_put(330, 25, 2, color.normaltext, tmptext);
+	snprintf(tmptext,30,"%d %%",stats->clear);
+	text_put(390 - text_getwidth(2,tmptext), 200, 2, color.normaltext, tmptext);
+	snprintf(tmptext,30,"%d",stats->score + stats->basescore);
+	text_put(200 - (text_getwidth(2,tmptext) / 2), 25, 2, color.normaltext, tmptext);
+	snprintf(tmptext,30,"%d",stats->level);
+	text_put(20, 25, 2, color.normaltext, tmptext);
+	snprintf(tmptext,30,"%d",stats->highscore);
+	text_put(385 - text_getwidth(2,tmptext), 25, 2, color.normaltext, tmptext);
 	for(int i = 0; i < stats->lives; i++) {
 		C2D_DrawImageAt(spriteimage, 80.0f + (16.0f * i), 195.0f, 0.5f, NULL, 1.0f, 1.0f);
 	}

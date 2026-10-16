@@ -28,3 +28,4 @@
 #define CHARSPACE 2
 
 void text_put(int x, int y, int size, u32 color, char * text);
+int text_getwidth(int size, const char * text);

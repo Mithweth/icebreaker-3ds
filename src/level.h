@@ -36,7 +36,7 @@ typedef struct
 } ScoreSheet;
 
 
-bool level_init(GameStats *stats);
+void level_init(GameStats *stats);
 void level_draw(void);
 bool level_update(u32 keys, touchPosition touch, GameStats *stats);
 void level_close(void);

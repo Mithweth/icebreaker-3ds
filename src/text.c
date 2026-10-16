@@ -55,7 +55,7 @@ static int text_getletterwidth(int size, const char letter)
 	return width;
 }
 
-static int text_getwidth(int size, const char * text)
+int text_getwidth(int size, const char * text)
 {
 	unsigned int l;
 	int width=0;
@@ -105,7 +105,7 @@ void text_put(int x, int y, int size, u32 color, char * text)
 				{
 					if (*(letterdata[j]+i) != ' ') // hmm. maybe there's a better way to deal with spaces?
 					{
-						C2D_DrawRectSolid(startx+w, y+j*size, 0.5f, recth, rectw, color);
+						C2D_DrawRectSolid(startx+w, y+j*size, 0.9f, recth, rectw, color);
    
 					}	
 				}
