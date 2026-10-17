@@ -24,7 +24,6 @@
 #define HISCORENUM 10
 
 #include "game.h"
-#include "hiscore.h"
 
 typedef struct {
 	char name[50];

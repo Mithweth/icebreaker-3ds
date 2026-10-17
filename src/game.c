@@ -76,6 +76,9 @@ bool game_update(u32 keys, touchPosition touch) {
 	}
 	if (keys & KEY_START) {
 		pause = !pause;
+		if (pause) {
+			menu_init();
+		}
 	}
 	if (pause) {
 		menu_update(keys);

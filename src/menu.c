@@ -10,14 +10,29 @@
 #include "text.h"
 #include "options.h"
 #include "grid.h"
+#include "hiscore.h"
 
-typedef enum { MENU_NORMAL, MENU_CONFIRM, MENU_HIGHSCORES, MENU_HELP } MenuType;
+typedef enum { DIALOG_NORMAL, DIALOG_CONFIRM, DIALOG_HIGHSCORES, DIALOG_HELP } DialogType;
+typedef enum { MENU_NEW_GAME, MENU_DIFFICULTY, MENU_THEME, MENU_HIGHSCORES, MENU_HELP } MenuChoice;
 
-static MenuType menu_type;
+typedef struct {
+	const char *label;
+	MenuChoice choice;
+} MenuEntry;
+
+static DialogType dialog_type;
 static bool yes_selected;
 static const char *logo_chars = "ICEBRAK";
 static size_t selected;
-static char* choices[] = {"NEW GAME", "DIFFICULTY", "THEME", "HIGH SCORES", "HELP"};
+static int hiscore_scroll;
+static int hiscore_direction;
+static MenuEntry choices[] = {
+	{"NEW GAME", MENU_NEW_GAME},
+	{"DIFFICULTY", MENU_DIFFICULTY},
+	{"THEME", MENU_THEME},
+	{"HIGH SCORES", MENU_HIGHSCORES},
+	{"HELP", MENU_HELP},
+};
 static const u8 logo_glyphs[][7] = {
 	{31,  4,  4,  4,  4,  4, 31}, // I
 	{15, 16, 16, 16, 16, 16, 15}, // C
@@ -58,9 +73,9 @@ static void logo_drawtext(const char *text, float x, float y, float scale) {
 
 				C2D_DrawRectangle(x + (i * 6 + start) * scale, y + row * scale, 0.3f, (col - start) * scale, scale, gradient[row], gradient[row], gradient[row + 1], gradient[row + 1]);
 				for (int c = start; c < col; c++) {
-				    if (row == 0 || !(logo_glyphs[glyph][row - 1] & (1 << (4 - c)))) {
-				        C2D_DrawRectSolid(x + (i * 6 + c) * scale, y + row * scale, 0.3f, scale, 1.5f, C2D_Color32(245, 252, 255, 230));
-				    }
+					if (row == 0 || !(logo_glyphs[glyph][row - 1] & (1 << (4 - c)))) {
+						C2D_DrawRectSolid(x + (i * 6 + c) * scale, y + row * scale, 0.3f, scale, 1.5f, C2D_Color32(245, 252, 255, 230));
+					}
 				}
 			}
 		}
@@ -68,24 +83,24 @@ static void logo_drawtext(const char *text, float x, float y, float scale) {
 }
 
 static void menu_draw_rounded_rect(float x, float y, float w, float h, u32 color) {
-    if (w <= 0 || h <= 0) return;
-    float r = fminf(w / 2.0f, h / 2.0f);
-    C2D_DrawRectSolid(x + r, y + h / 2.0f - r, 0.3f, w - 2.0f * r, 2.0f * r, color);
-    C2D_DrawCircleSolid(x + r, y + h / 2.0f, 0.3f, r, color);
-    C2D_DrawCircleSolid(x + w - r, y + h / 2.0f, 0.3f, r, color);
+	if (w <= 0 || h <= 0) return;
+	float r = fminf(w / 2.0f, h / 2.0f);
+	C2D_DrawRectSolid(x + r, y + h / 2.0f - r, 0.3f, w - 2.0f * r, 2.0f * r, color);
+	C2D_DrawCircleSolid(x + r, y + h / 2.0f, 0.3f, r, color);
+	C2D_DrawCircleSolid(x + w - r, y + h / 2.0f, 0.3f, r, color);
 }
 
 static void progress_bar_draw(int pct) {
-    if (pct < 0) pct = 0;
-    if (pct > 100) pct = 100;
-    menu_draw_rounded_rect(10.0f, 220.0f, 380.0f, 14.0f, theme.color.progressbaroutline);
-    menu_draw_rounded_rect(12.0f, 222.0f, 376.0f, 10.0f, theme.color.progressbarinner);
-    menu_draw_rounded_rect(12.0f, 222.0f, (376.0f) * pct / 100.0f, 10.0f, theme.color.progressbarfill);
+	if (pct < 0) pct = 0;
+	if (pct > 100) pct = 100;
+	menu_draw_rounded_rect(10.0f, 220.0f, 380.0f, 14.0f, theme.color.progressbaroutline);
+	menu_draw_rounded_rect(12.0f, 222.0f, 376.0f, 10.0f, theme.color.progressbarinner);
+	menu_draw_rounded_rect(12.0f, 222.0f, (376.0f) * pct / 100.0f, 10.0f, theme.color.progressbarfill);
 }
 
 void menu_init(void) {
 	selected = 0;
-	menu_type = MENU_NORMAL;
+	dialog_type = DIALOG_NORMAL;
 }
 
 void menu_bottom_draw(bool pause) {
@@ -121,24 +136,24 @@ void menu_draw(bool pause, const GameStats *stats) {
 	}
 	C2D_DrawRectSolid(50.0f, 50.0f, 0.3f, 300.0f, 140.0f, theme.color.menuhighlight);
 	C2D_DrawRectSolid(52.0f, 52.0f, 0.31f, 296.0f, 136.0f, theme.color.background);
-	switch(menu_type) {
-	case MENU_NORMAL:
+	switch(dialog_type) {
+	case DIALOG_NORMAL:
 		for(size_t i = 0; i < sizeof(choices) / sizeof(choices[0]); i++) {
 			u32 option_color = theme.color.normaltext;
 			if (selected == i) {
 				C2D_DrawRectSolid(50.0f, 56 + 25 * i, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
 				option_color = theme.color.background;
 			}
-			text_put(60, 61 + 25 * i, 0.4f, 3, option_color, choices[i]);
-			if (i == 1) {
+			text_put(60, 61 + 25 * i, 0.4f, 3, option_color, choices[i].label);
+			if (choices[i].choice == MENU_DIFFICULTY) {
 				text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, options_difficulty_serialize(options_difficulty_selected()));
 			}
-			if (i == 2) {
+			if (choices[i].choice == MENU_THEME) {
 				text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, themes_current_name());
 			}
 		}
 		break;
-	case MENU_CONFIRM:
+	case DIALOG_CONFIRM:
 		text_put(60, 60, 0.4f, 3, theme.color.normaltext, "Changing difficulty");
 		text_put(60, 82, 0.4f, 3, theme.color.normaltext, "requires restart.");
 		text_put(60, 104, 0.4f, 3, theme.color.normaltext, "End this game?");
@@ -152,12 +167,36 @@ void menu_draw(bool pause, const GameStats *stats) {
 			text_put(275, 150, 0.4f, 3, theme.color.background, "NO");
 		}
 		break;
+	case DIALOG_HIGHSCORES:
+		text_cput(200, 60, 0.4f, 3, theme.color.bonusscrolltext, "HIGH SCORES");
+		C2D_Flush();
+		// C3D_* invert x and y axis and use the left bottom as the origin
+		// so 60 means Y from bottom, so (240 - 60) for C2D_*
+		// so 160 means Y from bottom, so (240 - 160) for C2D_*
+		// 0 and 400 are axis
+		C3D_SetScissor(GPU_SCISSOR_NORMAL, 60, 0, 160, 400);
+		for(int i = 0; i < HISCORENUM; i++) {
+			int y = 100 + 20 * i - hiscore_scroll;
+			HighScore* user = hiscore_get(i);
+			char nb[4];
+			snprintf(nb, 4, "%d.", i + 1);
+			char score[10];
+			snprintf(score, 10, "%ld", user->score);
+			text_put(60, y, 0.4f, 2, theme.color.normaltext, nb);
+			text_put(100, y, 0.4f, 2, theme.color.normaltext, user->name);
+			text_rput(340, y, 0.4f, 2, theme.color.normaltext, score);
+		}
+		C2D_Flush();
+		C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
+		break;
+	default:
+		break;
 	}
 }
 
 bool menu_update(u32 keys) {
-	switch(menu_type) {
-	case MENU_NORMAL:
+	switch(dialog_type) {
+	case DIALOG_NORMAL:
 		if ((keys & KEY_UP) && (selected > 0)) {
 			selected--;
 		}
@@ -166,10 +205,10 @@ bool menu_update(u32 keys) {
 		}
 		if (keys & KEY_LEFT) {
 			switch(selected) {
-			case 1:
+			case MENU_DIFFICULTY:
 				options_difficulty_prev();
 				break;
-			case 2:
+			case MENU_THEME:
 				themes_prev();
 				break;
 			default:
@@ -178,10 +217,10 @@ bool menu_update(u32 keys) {
 		}
 		if (keys & KEY_RIGHT) {
 			switch(selected) {
-			case 1:
+			case MENU_DIFFICULTY:
 				options_difficulty_next();
 				break;
-			case 2:
+			case MENU_THEME:
 				themes_next();
 				break;
 			default:
@@ -191,31 +230,50 @@ bool menu_update(u32 keys) {
 		if (keys & KEY_A) {
 			printf("Selected option: %zu\n", selected);
 			switch(selected) {
-			case 1:
-				menu_type = MENU_CONFIRM;
+			case MENU_DIFFICULTY:
+				dialog_type = DIALOG_CONFIRM;
 				yes_selected = false;
 				break;
-			case 2:
+			case MENU_THEME:
 				themes_apply();
 				grid_generate_colors();
+				break;
+			case MENU_HIGHSCORES:
+				dialog_type = DIALOG_HIGHSCORES;
+				hiscore_scroll = 0;
+				hiscore_direction = 1;
 				break;
 			default:
 				break;
 			}
 		}
 		break;
-	case MENU_CONFIRM:
+	case DIALOG_HIGHSCORES:
+		if (keys & KEY_A) {
+			dialog_type = DIALOG_NORMAL;
+		}
+		hiscore_scroll += hiscore_direction;
+
+		if (hiscore_scroll >= 140) {
+			hiscore_scroll = 140;
+			hiscore_direction = -1;
+		} else if (hiscore_scroll <= 0) {
+			hiscore_scroll = 0;
+			hiscore_direction = 1;
+		}
+		break;
+	case DIALOG_CONFIRM:
 		if (keys & (KEY_LEFT | KEY_RIGHT)) {
 			yes_selected = !yes_selected;
 		}
 		if (keys & KEY_A) {
 			if (yes_selected) {
-				menu_type = MENU_NORMAL;
+				dialog_type = DIALOG_NORMAL;
 				options_difficulty_apply();
 				game_start();
 				return true;
 			}
-			menu_type = MENU_NORMAL;
+			dialog_type = DIALOG_NORMAL;
 		}
 		break;
 	default:
