@@ -28,7 +28,7 @@
 #define BIGCHARWIDTH 35
 #define CHARSPACE 2
 
-void text_put(int x, int y, float z, int size, u32 color, char * text);
-void text_rput(int x, int y, float z, int size, u32 color, char * text);
-void text_cput(int x, int y, float z, int size, u32 color, char * text);
+void text_put(int x, int y, float z, int size, u32 color, const char * text);
+void text_rput(int x, int y, float z, int size, u32 color, const char * text);
+void text_cput(int x, int y, float z, int size, u32 color, const char * text);
 int text_getwidth(int size, const char * text);

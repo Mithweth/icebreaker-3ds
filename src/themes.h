@@ -59,7 +59,9 @@ typedef struct {
 extern Theme theme;
 
 bool themes_exists(const char* name);
-int themes_settheme(char* themename);
+int themes_settheme(const char* themename);
 bool themes_load(const char *directory);
 void themes_next(void);
-char* themes_current_name(void);
+void themes_prev(void);
+void themes_apply(void);
+const char* themes_current_name(void);

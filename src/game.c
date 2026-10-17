@@ -11,6 +11,7 @@
 #include "menu.h"
 #include "intermission.h"
 #include "sound.h"
+#include "hiscore.h"
 
 typedef enum {
     GAME_INTRO,
@@ -39,15 +40,17 @@ bool game_init(void) {
 	themes_settheme("linux");
 	intro_init();
 	menu_init();
+	hiscore_read();
 	pause = false;
 	return true;
 }
 
-static void game_start(void) {
+void game_start(void) {
+	pause = false;
 	intro_close();
 	level_close();
 	stats.score = 0;
-	stats.level = 0;
+	stats.level = 1;
 	stats.dead = false;
 	level_init(&stats);
 	game_mode = GAME_LEVEL;

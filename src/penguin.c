@@ -58,7 +58,7 @@ PenguinHit penguin_move(Penguin* p)
 	int checkx,checky;
 	int movex=0,movey=0;
 
-	switch (options.difficulty)
+	switch (options_difficulty_current())
 	{
 		case NORMAL:
 			if (p->speedslower)

@@ -42,6 +42,9 @@
 
 #define MAX_THEMES	16
 
+#define OPTIONFILE "sdmc:/.icebreaker"
+#define HISCOREFILE "sdmc:/.icebreaker.scores"
+
 typedef struct {
     int basescore;
     int highscore;
@@ -55,6 +58,7 @@ typedef struct {
 } GameStats;
 
 bool game_init(void);
+void game_start(void);
 bool game_update(u32 keys, touchPosition touch);
 void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom);
 void game_close(void);

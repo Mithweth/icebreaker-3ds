@@ -11,6 +11,10 @@
 #include "options.h"
 #include "grid.h"
 
+typedef enum { MENU_NORMAL, MENU_CONFIRM, MENU_HIGHSCORES, MENU_HELP } MenuType;
+
+static MenuType menu_type;
+static bool yes_selected;
 static const char *logo_chars = "ICEBRAK";
 static size_t selected;
 static char* choices[] = {"NEW GAME", "DIFFICULTY", "THEME", "HIGH SCORES", "HELP"};
@@ -81,6 +85,7 @@ static void progress_bar_draw(int pct) {
 
 void menu_init(void) {
 	selected = 0;
+	menu_type = MENU_NORMAL;
 }
 
 void menu_bottom_draw(bool pause) {
@@ -116,35 +121,105 @@ void menu_draw(bool pause, const GameStats *stats) {
 	}
 	C2D_DrawRectSolid(50.0f, 50.0f, 0.3f, 300.0f, 140.0f, theme.color.menuhighlight);
 	C2D_DrawRectSolid(52.0f, 52.0f, 0.31f, 296.0f, 136.0f, theme.color.background);
-	char* levels[] = {"easy", "normal", "hard"};
-	for(size_t i = 0; i < sizeof(choices) / sizeof(choices[0]); i++) {
-		u32 option_color = theme.color.normaltext;
-		if (selected == i) {
-			C2D_DrawRectSolid(50.0f, 56 + 25 * i, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
-			option_color = theme.color.background;
+	switch(menu_type) {
+	case MENU_NORMAL:
+		for(size_t i = 0; i < sizeof(choices) / sizeof(choices[0]); i++) {
+			u32 option_color = theme.color.normaltext;
+			if (selected == i) {
+				C2D_DrawRectSolid(50.0f, 56 + 25 * i, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
+				option_color = theme.color.background;
+			}
+			text_put(60, 61 + 25 * i, 0.4f, 3, option_color, choices[i]);
+			if (i == 1) {
+				text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, options_difficulty_serialize(options_difficulty_selected()));
+			}
+			if (i == 2) {
+				text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, themes_current_name());
+			}
 		}
-		text_put(60, 61 + 25 * i, 0.4f, 3, option_color, choices[i]);
-		if (i == 1) {
-			text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, levels[options.difficulty]);
+		break;
+	case MENU_CONFIRM:
+		text_put(60, 60, 0.4f, 3, theme.color.normaltext, "Changing difficulty");
+		text_put(60, 82, 0.4f, 3, theme.color.normaltext, "requires restart.");
+		text_put(60, 104, 0.4f, 3, theme.color.normaltext, "End this game?");
+		if (yes_selected) {
+			C2D_DrawRectSolid(70.0f, 145, 0.35f, 80.0f, 23.0f, theme.color.menuhighlight);
+			text_put(80, 150, 0.4f, 3, theme.color.background, "YES");
+			text_put(275, 150, 0.4f, 3, theme.color.normaltext, "NO");
+		} else {
+			C2D_DrawRectSolid(250.0f, 145, 0.35f, 80.0f, 23.0f, theme.color.menuhighlight);
+			text_put(80, 150, 0.4f, 3, theme.color.normaltext, "YES");
+			text_put(275, 150, 0.4f, 3, theme.color.background, "NO");
 		}
-		if (i == 2) {
-			text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, themes_current_name());
-		}
+		break;
 	}
 }
+
 bool menu_update(u32 keys) {
-	if ((keys & KEY_UP) && (selected > 0)) {
-		selected--;
-	}
-	if ((keys & KEY_DOWN) && (selected < (sizeof(choices) / sizeof(choices[0])) - 1)) {
-		selected++;
-	}
-	if (keys & KEY_A) {
-		printf("Selected option: %zu\n", selected);
-		if (selected == 2) {
-			themes_next();
-			grid_generate_colors();
+	switch(menu_type) {
+	case MENU_NORMAL:
+		if ((keys & KEY_UP) && (selected > 0)) {
+			selected--;
 		}
+		if ((keys & KEY_DOWN) && (selected < (sizeof(choices) / sizeof(choices[0])) - 1)) {
+			selected++;
+		}
+		if (keys & KEY_LEFT) {
+			switch(selected) {
+			case 1:
+				options_difficulty_prev();
+				break;
+			case 2:
+				themes_prev();
+				break;
+			default:
+				break;
+			}
+		}
+		if (keys & KEY_RIGHT) {
+			switch(selected) {
+			case 1:
+				options_difficulty_next();
+				break;
+			case 2:
+				themes_next();
+				break;
+			default:
+				break;
+			}
+		}
+		if (keys & KEY_A) {
+			printf("Selected option: %zu\n", selected);
+			switch(selected) {
+			case 1:
+				menu_type = MENU_CONFIRM;
+				yes_selected = false;
+				break;
+			case 2:
+				themes_apply();
+				grid_generate_colors();
+				break;
+			default:
+				break;
+			}
+		}
+		break;
+	case MENU_CONFIRM:
+		if (keys & (KEY_LEFT | KEY_RIGHT)) {
+			yes_selected = !yes_selected;
+		}
+		if (keys & KEY_A) {
+			if (yes_selected) {
+				menu_type = MENU_NORMAL;
+				options_difficulty_apply();
+				game_start();
+				return true;
+			}
+			menu_type = MENU_NORMAL;
+		}
+		break;
+	default:
+		break;
 	}
 	return true;
 }

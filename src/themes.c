@@ -76,7 +76,7 @@ bool themes_exists(const char* name) {
 	return false;
 }
 
-int themes_settheme(char* themename)
+int themes_settheme(const char* themename)
 {
 	for(size_t i = 0; i < theme_count; i++) {
 		if (strcmp(themes[i], themename) == 0) {
@@ -359,7 +359,6 @@ int themes_settheme(char* themename)
 	return rc;
 }
 
-
 bool themes_load(const char *directory) {
     DIR *dir = opendir(directory);
     if (!dir) return false;
@@ -406,9 +405,23 @@ void themes_next(void) {
 	if (current_theme == theme_count) {
 		current_theme = 0;
 	}
+}
+
+void themes_prev(void) {
+	if (theme_count == 0) {
+		return;
+	}
+	if (current_theme == 0) {
+		current_theme = theme_count - 1;
+	} else {
+		current_theme--;
+	}
+}
+
+void themes_apply(void) {
 	themes_settheme(themes[current_theme]);
 }
 
-char* themes_current_name(void) {
+const char* themes_current_name(void) {
 	return themes[current_theme];
 }

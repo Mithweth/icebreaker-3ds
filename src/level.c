@@ -101,7 +101,7 @@ void level_init(GameStats *stats) {
 	stats->lives=stats->level+1;
 	//stats->currentscore = stats->basescore;
 	
-	switch(options.difficulty)
+	switch(options_difficulty_current())
 	{
 		case NORMAL:
 			scoremod=(stats->level+1)/2.0f;
@@ -203,12 +203,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			sound_play(SNDBREAK);
 			line_kill(&line1);
 			stats->lives--;
-			if (stats->lives < 0) {
-				stats->lives = 0;
-				stats->dead = true;
-				done = true;
-			}
-			//status_updatestats->lives(stats->lives);
+			if (stats->lives<0) stats->lives=0;
 		}
 	}
 	if (line2.on)
@@ -246,6 +241,12 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if (hit == LINE2 || hit == BOTH) line2.dead=true;
 	}
 
+	if (stats->lives<=0) // game over
+	{
+		stats->dead = true;
+		done = true;
+		return true;
+	}
 	if (!line1.on && !line2.on && stats->clear>=PERCENTREQUIRED) // success!
 	{ 
 		done = true;
