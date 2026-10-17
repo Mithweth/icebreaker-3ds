@@ -25,8 +25,11 @@
 #include <stdlib.h>
 #include "game.h"
 #include "hiscore.h"
+#include "text.h"
+#include "themes.h"
 
 static HighScore hiscore[HISCORENUM];
+static char username[50];
 
 static int hiscore_cmpscore(const void *a, const void *b) {
     long x = ((const HighScore *)a)->score;
@@ -67,7 +70,7 @@ void hiscore_read(void) {
 
 bool hiscore_check_high(long thisgamescore) {
 	// check to see if score is better than the lowest high score
-	return (thisgamescore>hiscore[0].score);
+	return (thisgamescore>hiscore[HISCORENUM - 1].score);
 }
 
 HighScore* hiscore_get(int id) {
@@ -109,4 +112,68 @@ void hiscore_write(void) {
 	}
 
 	fclose(hiscorefile);
+}
+static bool system_get_username(char *name, size_t size) {
+    if (size == 0) return false;
+    name[0] = '\0';
+
+    u8 block[0x1C];
+    u16 username[12] = {0};
+
+    if (R_FAILED(cfguInit())) return false;
+    Result rc = CFGU_GetConfigInfoBlk2(sizeof(block), 0x000A0000, block);
+    cfguExit();
+    if (R_FAILED(rc)) return false;
+
+    memcpy(username, block, 0x16);
+
+    ssize_t len = utf16_to_utf8((u8 *)name, username, size - 1);
+    if (len < 0 || (size_t)len >= size) {
+        name[0] = '\0';
+        return false;
+    }
+
+    name[len] = '\0';
+    return len > 0;
+}
+
+static bool hiscore_prompt_name(void) {
+    SwkbdState keyboard;
+
+    swkbdInit(&keyboard, SWKBD_TYPE_NORMAL, 2, 12);
+    swkbdSetHintText(&keyboard, "Enter your name");
+    swkbdSetValidation(&keyboard, SWKBD_NOTEMPTY_NOTBLANK, 0, 0);
+    swkbdSetButton(&keyboard, SWKBD_BUTTON_LEFT, "Cancel", false);
+    swkbdSetButton(&keyboard, SWKBD_BUTTON_RIGHT, "OK", true);
+
+    if (swkbdInputText(&keyboard, username, sizeof(username)) != SWKBD_BUTTON_RIGHT) return false;
+
+    //hiscore_add(username, score);
+    return true;
+}
+
+void hiscore_dialog_init(void) {
+	system_get_username(username, sizeof(username));
+}
+
+void hiscore_dialog_draw(void) {
+	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.4f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
+	C2D_DrawRectSolid(50.0f, 50.0f, 0.41f, 220.0f, 140.0f, theme.color.menuhighlight);
+	C2D_DrawRectSolid(52.0f, 52.0f, 0.42f, 216.0f, 136.0f, theme.color.background);
+	text_put(60, 60, 0.43f, 2, theme.color.normaltext, "NEW TOP SCORE!");
+	text_put(60, 80, 0.43f, 2, theme.color.normaltext, "ENTER YOUR NAME:");
+	C2D_DrawRectSolid(60.0f, 96.0f, 0.43f, 200.0f, 28.0f, theme.color.textentrybox);
+	text_put(70, 100, 0.44f, 4, theme.color.textentrytext, username);
+	C2D_DrawRectSolid(210.0f, 160.0f, 0.43f, 50.0f, 18.0f, theme.color.menuhighlight);
+	text_put(220, 162, 0.44f, 3, theme.color.background, "OK");
+}
+
+void hiscore_dialog_update(u32 keys, touchPosition touch) {
+	if (!(keys & KEY_TOUCH)) {
+		return;
+	}
+	if (touch.px < 60 || touch.px > 160 || touch.py < 100 || touch.py > 120) {
+		return;
+	}
+	hiscore_prompt_name();
 }

@@ -28,7 +28,7 @@
 
 void line_draw(const Line *l, u32 color) {
     if (!l->on) return;
-    C2D_DrawRectSolid(l->geom.x, l->geom.y, 0.5f, l->geom.w, l->geom.h, color);
+    C2D_DrawRectSolid(l->geom.x, l->geom.y, 0.4f, l->geom.w, l->geom.h, color);
 }
 
 static void line_finish(Line * l)

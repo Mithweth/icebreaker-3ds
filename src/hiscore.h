@@ -23,6 +23,7 @@
 
 #define HISCORENUM 10
 
+#include <3ds.h>
 #include "game.h"
 
 typedef struct {
@@ -35,3 +36,7 @@ bool hiscore_check_high(long thisgamescore);
 HighScore* hiscore_get(int id);
 void hiscore_add(const char* name, long score);
 void hiscore_write(void);
+void hiscore_dialog_init(void);
+void hiscore_dialog_draw(void);
+void hiscore_dialog_update(u32 keys, touchPosition touch);
+

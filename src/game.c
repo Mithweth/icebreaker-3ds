@@ -16,7 +16,7 @@
 typedef enum {
     GAME_INTRO,
     GAME_LEVEL,
-    GAME_MENU,
+    GAME_HIGH_SCORE,
     GAME_INTERMISSION,
     GAME_OVER
 } GameMode;
@@ -56,11 +56,19 @@ void game_start(void) {
 	game_mode = GAME_LEVEL;
 }
 
+static void game_over(void) {
+	if (hiscore_check_high(stats.score)) {
+		hiscore_dialog_init();
+		game_mode = GAME_HIGH_SCORE;
+	} else {
+		game_start();
+	}
+}
+
 static void game_continue(void) {
 	intro_close();
 	level_close();
 	stats.level++;
-	stats.score += stats.basescore + stats.clearbonus + stats.lifebonus;
 	level_init(&stats);
 	game_mode = GAME_LEVEL;
 }
@@ -74,7 +82,7 @@ bool game_update(u32 keys, touchPosition touch) {
 	if (keys & KEY_X) {
 		return false;
 	}
-	if (keys & KEY_START) {
+	if ((keys & KEY_START) && (game_mode != GAME_HIGH_SCORE)) {
 		pause = !pause;
 		if (pause) {
 			menu_init();
@@ -97,15 +105,17 @@ bool game_update(u32 keys, touchPosition touch) {
 		break;
 	case GAME_INTERMISSION:
 		if (!intermission_update(keys)) {
+			stats.score += stats.basescore + stats.clearbonus + stats.lifebonus;
 			if (stats.dead) {
-				game_start();
+				game_over();
 			} else {
 				game_continue();
 			}
 		}
 		break;
-	case GAME_MENU:
-		menu_update(keys);
+	case GAME_HIGH_SCORE:
+		hiscore_dialog_update(keys, touch);
+		// menu_update(keys);
 		break;
 	default:
 		break;
@@ -127,6 +137,10 @@ void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom) {
 	case GAME_INTERMISSION:
 		level_draw();
 		intermission_draw();
+		break;
+	case GAME_HIGH_SCORE:
+		level_draw();
+		hiscore_dialog_draw();
 		break;
 	default:
 		break;
