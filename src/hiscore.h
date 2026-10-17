@@ -38,5 +38,5 @@ void hiscore_add(const char* name, long score);
 void hiscore_write(void);
 void hiscore_dialog_init(void);
 void hiscore_dialog_draw(void);
-void hiscore_dialog_update(u32 keys, touchPosition touch);
+bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats);
 

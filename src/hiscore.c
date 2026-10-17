@@ -168,12 +168,23 @@ void hiscore_dialog_draw(void) {
 	text_put(220, 162, 0.44f, 3, theme.color.background, "OK");
 }
 
-void hiscore_dialog_update(u32 keys, touchPosition touch) {
+bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats) {
+	if (keys & KEY_A) {
+		hiscore_add(username, stats->score);
+		hiscore_write();
+		return true;
+	}
+
 	if (!(keys & KEY_TOUCH)) {
-		return;
+		return false;
 	}
-	if (touch.px < 60 || touch.px > 160 || touch.py < 100 || touch.py > 120) {
-		return;
+	if (touch.px >= 60 && touch.px <= 160 && touch.py >= 100 && touch.py <= 120) {
+		hiscore_prompt_name();
 	}
-	hiscore_prompt_name();
+	if (touch.px >= 210 && touch.px <= 260 && touch.py >= 160 && touch.py <= 178) {
+		hiscore_add(username, stats->score);
+		hiscore_write();
+		return true;
+	}
+	return false;
 }

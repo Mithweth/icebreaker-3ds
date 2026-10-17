@@ -114,8 +114,9 @@ bool game_update(u32 keys, touchPosition touch) {
 		}
 		break;
 	case GAME_HIGH_SCORE:
-		hiscore_dialog_update(keys, touch);
-		// menu_update(keys);
+		if (hiscore_dialog_update(keys, touch, &stats)) {
+			game_start();
+		}
 		break;
 	default:
 		break;
