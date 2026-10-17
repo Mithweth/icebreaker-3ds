@@ -1,4 +1,25 @@
-// menu.c
+/*
+ * IceBreaker - Nintendo 3DS port
+ * Copyright (c) 2026 Jean-Baptiste Langlois
+ *
+ * This file is part of IceBreaker.
+ *
+ * <https://github.com/Mithweth/icebreaker-3ds>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "menu.h"
 
 #include <3ds.h>
@@ -43,19 +64,21 @@ static const u8 logo_glyphs[][7] = {
 	{17, 18, 20, 24, 20, 18, 17}  // K
 };
 
-static char helptext[13][50]={
-	"Ok, so there's a bunch of penguins on an",
-	"iceberg in Antarctica. You must catch them",
-	"so they can be shipped to Finland. The",
-	"smaller the area in which they're caught,",
-	"the lower the shipping fees and the higher",
-	"your score - but don't take too long: the",
-	"clock is ticking. Once 80% of the 'berg is",
-	"cleared, it's on to the next shipment.",
-	"",
-	"Swipe the screen with stylus to create lines",
-	"horizontally or vertically.",
-	"Check the README file for more info."};
+static const char *helptext[] = {
+    "IceBreaker is a clone of JezzBall.",
+    "Trap penguins on an Antarctic iceberg!",
+    "Draw lines across the iceberg to claim ice",
+    "and leave the penguins less room to roam.",
+    "The more ice you claim, the more you score.",
+    "But your score decreases as time passes.",
+    "Claim 80% of the ice to advance.",
+    "Swipe the stylus horizontally or vertically",
+    "to draw a line across the iceberg.",
+    "Press START to open the menu.",
+    "Choose one of three difficulty modes.",
+    "Press A to confirm your selection.",
+    "Change themes or check the high scores."
+};
 
 static void logo_drawtext(const char *text, float x, float y, float scale) {
 	const u32 gradient[8] = {
@@ -133,11 +156,11 @@ void menu_draw(bool pause, const GameStats *stats) {
 	text_put(10, 200, 0.3f, 2, theme.color.normaltext, "LIVES");
 	snprintf(tmptext,30,"%d %%",stats->clear);
 	text_rput(390, 200, 0.3f, 2, theme.color.normaltext, tmptext);
-	snprintf(tmptext,30,"%d",stats->score + stats->basescore);
+	snprintf(tmptext,30,"%ld",stats->score + stats->basescore);
 	text_cput(200, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->level);
 	text_put(20, 25, 0.3f, 2, theme.color.normaltext, tmptext);
-	snprintf(tmptext,30,"%d",stats->highscore);
+	snprintf(tmptext,30,"%ld",hiscore_get(0)->score);
 	text_rput(385, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	for(int i = 0; i < stats->lives; i++) {
 		C2D_DrawImageAt(theme.spriteimage, 80.0f + (16.0f * i), 195.0f, 0.3f, NULL, 1.0f, 1.0f);
@@ -239,18 +262,20 @@ bool menu_update(u32 keys) {
 			}
 		}
 		if (keys & KEY_A) {
-			printf("Selected option: %zu\n", selected);
 			switch(selected) {
 			case MENU_NEW_GAME:
 				game_start();
 				break;
 			case MENU_DIFFICULTY:
-				dialog_type = DIALOG_CONFIRM;
-				yes_selected = false;
+				if (options_difficulty_selected() != options_difficulty_current()) {
+					dialog_type = DIALOG_CONFIRM;
+					yes_selected = false;
+				}
 				break;
 			case MENU_THEME:
 				themes_apply();
 				grid_generate_colors();
+				options_write();
 				break;
 			case MENU_HIGHSCORES:
 				dialog_type = DIALOG_HIGHSCORES;
@@ -278,6 +303,7 @@ bool menu_update(u32 keys) {
 			if (yes_selected) {
 				dialog_type = DIALOG_NORMAL;
 				options_difficulty_apply();
+				options_write();
 				game_start();
 				return true;
 			}

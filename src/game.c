@@ -1,4 +1,24 @@
-// game.c
+/*
+ * IceBreaker - Nintendo 3DS port
+ * Copyright (c) 2026 Jean-Baptiste Langlois
+ *
+ * This file is part of IceBreaker.
+ *
+ * <https://github.com/Mithweth/icebreaker-3ds>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <3ds.h>
 #include <citro2d.h>
@@ -12,6 +32,7 @@
 #include "intermission.h"
 #include "sound.h"
 #include "hiscore.h"
+#include "options.h"
 
 typedef enum {
     GAME_INTRO,
@@ -37,7 +58,7 @@ bool game_init(void) {
 	if (!themes_exists("linux")) {
 		return false;
 	}
-	themes_settheme("linux");
+	options_read();
 	intro_init();
 	menu_init();
 	hiscore_read();
@@ -79,9 +100,6 @@ static void game_intermission_start(void) {
 }
 
 bool game_update(u32 keys, touchPosition touch) {
-	if (keys & KEY_X) {
-		return false;
-	}
 	if ((keys & KEY_START) && (game_mode != GAME_HIGH_SCORE)) {
 		pause = !pause;
 		if (pause) {
