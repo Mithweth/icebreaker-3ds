@@ -30,6 +30,7 @@ ASSETS              := assets
 GRAPHICS            := $(ASSETS)/bitmaps
 SOUNDS              := $(ASSETS)/sounds
 THEMES              := $(ASSETS)/themes
+LANGUAGES           := $(ASSETS)/lang
 ROMFS               := romfs
 CIA                 := $(ASSETS)/cia
 
@@ -52,7 +53,7 @@ GFX_ROMFS_H := $(ROMFS)/bitmaps/gfx.h
 GFX_IMAGES          := $(shell find $(GRAPHICS) -type f -name '*.png' 2>/dev/null)
 
 # Copy sounds and theme descriptions to RomFS without converting them.
-RAW_ASSET_DIRS      := $(SOUNDS) $(THEMES)
+RAW_ASSET_DIRS      := $(SOUNDS) $(THEMES) $(LANGUAGES)
 RAW_ASSETS          := $(foreach dir,$(RAW_ASSET_DIRS),$(shell find $(dir) -type f 2>/dev/null))
 ROMFS_ASSETS        := $(patsubst $(ASSETS)/%,$(ROMFS)/%,$(RAW_ASSETS))
 

@@ -30,14 +30,15 @@
 #include "hiscore.h"
 #include "text.h"
 #include "themes.h"
+#include "lang.h"
 
 static HighScore hiscore[HISCORENUM];
 static char username[50];
 
 static int hiscore_cmpscore(const void *a, const void *b) {
-    long x = ((const HighScore *)a)->score;
-    long y = ((const HighScore *)b)->score;
-    return (x < y) - (x > y);
+	long x = ((const HighScore *)a)->score;
+	long y = ((const HighScore *)b)->score;
+	return (x < y) - (x > y);
 }
 
 void hiscore_read(void) {
@@ -84,15 +85,15 @@ HighScore* hiscore_get(int id) {
 }
 
 void hiscore_add(const char* name, long score) {
-    HighScore tmp[HISCORENUM + 1];
+	HighScore tmp[HISCORENUM + 1];
 
-    memcpy(tmp, hiscore, sizeof(hiscore));
-    snprintf(tmp[HISCORENUM].name,50,"%s",name);
-    tmp[HISCORENUM].score = score;
+	memcpy(tmp, hiscore, sizeof(hiscore));
+	snprintf(tmp[HISCORENUM].name,50,"%s",name);
+	tmp[HISCORENUM].score = score;
 
-    qsort(tmp, HISCORENUM + 1, sizeof(tmp[0]), hiscore_cmpscore);
+	qsort(tmp, HISCORENUM + 1, sizeof(tmp[0]), hiscore_cmpscore);
 
-    memcpy(hiscore, tmp, sizeof(hiscore));
+	memcpy(hiscore, tmp, sizeof(hiscore));
 }
 
 void hiscore_write(void) {
@@ -114,57 +115,62 @@ void hiscore_write(void) {
 }
 
 static bool system_get_username(char *name, size_t size) {
-    if (size == 0) return false;
-    name[0] = '\0';
+	if (size == 0) return false;
+	name[0] = '\0';
 
-    u8 block[0x1C];
-    u16 username[12] = {0};
+	u8 block[0x1C];
+	u16 username[12] = {0};
 
-    if (R_FAILED(cfguInit())) return false;
-    Result rc = CFGU_GetConfigInfoBlk2(sizeof(block), 0x000A0000, block);
-    cfguExit();
-    if (R_FAILED(rc)) return false;
+	if (R_FAILED(cfguInit())) return false;
+	Result rc = CFGU_GetConfigInfoBlk2(sizeof(block), 0x000A0000, block);
+	cfguExit();
+	if (R_FAILED(rc)) return false;
 
-    memcpy(username, block, 0x16);
+	memcpy(username, block, 0x16);
 
-    ssize_t len = utf16_to_utf8((u8 *)name, username, size - 1);
-    if (len < 0 || (size_t)len >= size) {
-        name[0] = '\0';
-        return false;
-    }
+	ssize_t len = utf16_to_utf8((u8 *)name, username, size - 1);
+	if (len < 0 || (size_t)len >= size) {
+		name[0] = '\0';
+		return false;
+	}
 
-    name[len] = '\0';
-    return len > 0;
+	name[len] = '\0';
+	return len > 0;
 }
 
 static bool hiscore_prompt_name(void) {
-    SwkbdState keyboard;
+	SwkbdState keyboard;
+	char new_username[sizeof(username)];
+	swkbdInit(&keyboard, SWKBD_TYPE_NORMAL, 2, 12);
+	swkbdSetHintText(&keyboard, lang_get("SWKB_PROMPT"));
+	swkbdSetInitialText(&keyboard, username);
+	swkbdSetValidation(&keyboard, SWKBD_NOTEMPTY_NOTBLANK, 0, 0);
+	swkbdSetButton(&keyboard, SWKBD_BUTTON_LEFT, lang_get("SWKB_CANCEL"), false);
+	swkbdSetButton(&keyboard, SWKBD_BUTTON_RIGHT, lang_get("SWKB_OK"), true);
 
-    swkbdInit(&keyboard, SWKBD_TYPE_NORMAL, 2, 12);
-    swkbdSetHintText(&keyboard, "Enter your name");
-    swkbdSetValidation(&keyboard, SWKBD_NOTEMPTY_NOTBLANK, 0, 0);
-    swkbdSetButton(&keyboard, SWKBD_BUTTON_LEFT, "Cancel", false);
-    swkbdSetButton(&keyboard, SWKBD_BUTTON_RIGHT, "OK", true);
-
-    if (swkbdInputText(&keyboard, username, sizeof(username)) != SWKBD_BUTTON_RIGHT) return false;
-
-    return true;
+	if (swkbdInputText(&keyboard, new_username, sizeof(new_username)) != SWKBD_BUTTON_RIGHT) return false;
+	strcpy(username, new_username);
+	return true;
 }
 
 void hiscore_dialog_init(void) {
-	system_get_username(username, sizeof(username));
+	if (!system_get_username(username, sizeof(username)) || username[0] == '\0') {
+		snprintf(username, sizeof(username), "Nobody");
+	}
 }
 
 void hiscore_dialog_draw(void) {
 	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.4f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
 	C2D_DrawRectSolid(50.0f, 50.0f, 0.41f, 220.0f, 140.0f, theme.color.menuhighlight);
 	C2D_DrawRectSolid(52.0f, 52.0f, 0.42f, 216.0f, 136.0f, theme.color.background);
-	text_put(60, 60, 0.43f, 2, theme.color.normaltext, "NEW TOP SCORE!");
-	text_put(60, 80, 0.43f, 2, theme.color.normaltext, "ENTER YOUR NAME:");
+	text_put(60, 60, 0.43f, 2, theme.color.normaltext, lang_get("HISCORE_NEW_HIGH"));
+	text_put(60, 80, 0.43f, 2, theme.color.normaltext, lang_get("HISCORE_PROMPT"));
 	C2D_DrawRectSolid(60.0f, 102.0f, 0.43f, 200.0f, 21.0f, theme.color.textentrybox);
 	text_put(70, 104, 0.44f, 3, theme.color.textentrytext, username);
-	C2D_DrawRectSolid(210.0f, 160.0f, 0.43f, 50.0f, 18.0f, theme.color.menuhighlight);
-	text_put(220, 162, 0.44f, 3, theme.color.background, "OK");
+
+	int box_w = 20.0f + text_getwidth(3, lang_get("CHOICE_OK"));
+	C2D_DrawRectSolid(200.0f, 160.0f, 0.43f, box_w, 18.0f, theme.color.menuhighlight);
+	text_cput(200 + box_w / 2, 162, 0.44f, 3, theme.color.background, lang_get("CHOICE_OK"));
 }
 
 bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats) {

@@ -32,9 +32,17 @@
 #include "options.h"
 #include "grid.h"
 #include "hiscore.h"
+#include "lang.h"
 
 typedef enum { DIALOG_NORMAL, DIALOG_CONFIRM, DIALOG_HIGHSCORES, DIALOG_HELP } DialogType;
-typedef enum { MENU_NEW_GAME, MENU_DIFFICULTY, MENU_THEME, MENU_HIGHSCORES, MENU_HELP } MenuChoice;
+typedef enum {
+	MENU_NEW_GAME,
+	MENU_LANGUAGE,
+	MENU_DIFFICULTY,
+	MENU_THEME,
+	MENU_HIGHSCORES,
+	MENU_HELP,
+} MenuChoice;
 
 typedef struct {
 	const char *label;
@@ -46,11 +54,12 @@ static bool yes_selected;
 static const char *logo_chars = "ICEBRAK";
 static size_t selected;
 static MenuEntry choices[] = {
-	{"NEW GAME", MENU_NEW_GAME},
-	{"DIFFICULTY", MENU_DIFFICULTY},
-	{"THEME", MENU_THEME},
-	{"HIGH SCORES", MENU_HIGHSCORES},
-	{"HELP", MENU_HELP},
+	{"MENU_NEW_GAME", MENU_NEW_GAME},
+	{"MENU_LANGUAGE", MENU_LANGUAGE},
+	{"MENU_DIFFICULTY", MENU_DIFFICULTY},
+	{"MENU_THEME", MENU_THEME},
+	{"MENU_HIGH_SCORES", MENU_HIGHSCORES},
+	{"MENU_HELP", MENU_HELP},
 };
 static const u8 logo_glyphs[][7] = {
 	{31,  4,  4,  4,  4,  4, 31}, // I
@@ -60,22 +69,6 @@ static const u8 logo_glyphs[][7] = {
 	{30, 17, 17, 30, 20, 18, 17}, // R
 	{14, 17, 17, 31, 17, 17, 17}, // A
 	{17, 18, 20, 24, 20, 18, 17}  // K
-};
-
-static const char *helptext[] = {
-    "IceBreaker is a clone of JezzBall.",
-    "Trap penguins on an Antarctic iceberg!",
-    "Draw lines across the iceberg to claim ice",
-    "and leave the penguins less room to roam.",
-    "The more ice you claim, the more you score.",
-    "But your score decreases as time passes.",
-    "Claim 80% of the ice to advance.",
-    "Swipe the stylus horizontally or vertically",
-    "to draw a line across the iceberg.",
-    "Press START to open the menu.",
-    "Choose one of three difficulty modes.",
-    "Press A to confirm your selection.",
-    "Change themes or check the high scores."
 };
 
 static void logo_drawtext(const char *text, float x, float y, float scale) {
@@ -138,22 +131,23 @@ void menu_init(void) {
 	dialog_type = DIALOG_NORMAL;
 	themes_selected_reset();
 	options_difficulty_selected_reset();
+	lang_selected_reset();
 }
 
 void menu_bottom_draw(bool pause) {
 	if (pause) {
 		C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.9f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
-		text_put(100, 110, 1.0f, 4, theme.color.normaltext, "PAUSE");
+		text_put(100, 110, 1.0f, 4, theme.color.normaltext, lang_get("MENU_PAUSE"));
 	}
 }
 
 void menu_draw(bool pause, const GameStats *stats) {
 	C2D_DrawRectSolid(0, 0, 0.0f, 400.0f, 240.0f, theme.color.background);
 	char tmptext[30]; // should be plenty big.
-	text_put(175, 10, 0.3f, 2, theme.color.normaltext, "SCORE");
-	text_put(10, 10, 0.3f, 2, theme.color.normaltext, "LEVEL");
-	text_put(280, 10, 0.3f, 2, theme.color.normaltext, "HIGH SCORE");
-	text_put(10, 200, 0.3f, 2, theme.color.normaltext, "LIVES");
+	text_put(175, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_SCORE"));
+	text_put(10, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LEVEL"));
+	text_rput(385, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_HIGH_SCORE"));
+	text_put(10, 200, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LIVES"));
 	snprintf(tmptext,30,"%d %%",stats->clear);
 	text_rput(390, 200, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%ld",stats->score + stats->basescore);
@@ -171,41 +165,65 @@ void menu_draw(bool pause, const GameStats *stats) {
 		logo_drawtext("BREAKER", 77, 110, 6);
 		return;
 	}
-	C2D_DrawRectSolid(50.0f, 50.0f, 0.3f, 300.0f, 140.0f, theme.color.menuhighlight);
-	C2D_DrawRectSolid(52.0f, 52.0f, 0.31f, 296.0f, 136.0f, theme.color.background);
+	C2D_DrawRectSolid(50.0f, 40.0f, 0.3f, 300.0f, 155.0f, theme.color.menuhighlight);
+	C2D_DrawRectSolid(52.0f, 42.0f, 0.31f, 296.0f, 151.0f, theme.color.background);
 	switch(dialog_type) {
 	case DIALOG_NORMAL:
 		for(size_t i = 0; i < sizeof(choices) / sizeof(choices[0]); i++) {
 			u32 option_color = theme.color.normaltext;
 			if (selected == i) {
-				C2D_DrawRectSolid(50.0f, 56 + 25 * i, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
+				C2D_DrawRectSolid(50.0f, 46 + 24 * i, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
 				option_color = theme.color.background;
 			}
-			text_put(60, 61 + 25 * i, 0.4f, 3, option_color, choices[i].label);
-			if (choices[i].choice == MENU_DIFFICULTY) {
-				text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, options_difficulty_serialize(options_difficulty_selected()));
-			}
-			if (choices[i].choice == MENU_THEME) {
-				text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, themes_selected_name());
+			text_put(60, 51 + 24 * i, 0.4f, 3, option_color, lang_get(choices[i].label));
+			switch(choices[i].choice) {
+				case MENU_LANGUAGE:
+					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, lang_selected_name());
+					break;
+				case MENU_DIFFICULTY:
+					const char* difficulty;
+					switch(options_difficulty_selected()) {
+					case EASY:
+						difficulty = lang_get("DIFFICULTY_EASY");
+						break;
+					case HARD:
+						difficulty = lang_get("DIFFICULTY_HARD");
+						break;
+					default:
+						difficulty = lang_get("DIFFICULTY_NORMAL");
+						break;
+					}
+					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, difficulty);
+					break;
+				case MENU_THEME:
+					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, themes_selected_name());
+					break;
+				default:
+					break;
 			}
 		}
 		break;
 	case DIALOG_CONFIRM:
-		text_put(60, 60, 0.4f, 3, theme.color.normaltext, "Changing difficulty");
-		text_put(60, 82, 0.4f, 3, theme.color.normaltext, "requires restart.");
-		text_put(60, 104, 0.4f, 3, theme.color.normaltext, "End this game?");
+		for(int i = 0; i < 3; i++) {
+			char restartkey[24];
+			snprintf(restartkey, 24, "QUESTION_RESTART_%d", i + 1);
+			text_put(60, 60 + 22 * i, 0.4f, 3, theme.color.normaltext, lang_get(restartkey));
+		}
+		int yes_w = text_getwidth(3, lang_get("CHOICE_YES"));
+		int no_w = text_getwidth(3, lang_get("CHOICE_NO"));
+		int box_w = (yes_w > no_w) ? 20.0f + yes_w : 20.0f + no_w;
 		if (yes_selected) {
-			C2D_DrawRectSolid(70.0f, 145, 0.35f, 80.0f, 23.0f, theme.color.menuhighlight);
-			text_put(80, 150, 0.4f, 3, theme.color.background, "YES");
-			text_put(275, 150, 0.4f, 3, theme.color.normaltext, "NO");
+			C2D_DrawRectSolid(70.0f, 145, 0.35f, box_w, 23.0f, theme.color.menuhighlight);
+			text_cput(70 + box_w / 2, 150, 0.4f, 3, theme.color.background, lang_get("CHOICE_YES"));
+			text_cput(250 + box_w / 2, 150, 0.4f, 3, theme.color.normaltext, lang_get("CHOICE_NO"));
 		} else {
-			C2D_DrawRectSolid(250.0f, 145, 0.35f, 80.0f, 23.0f, theme.color.menuhighlight);
-			text_put(80, 150, 0.4f, 3, theme.color.normaltext, "YES");
-			text_put(275, 150, 0.4f, 3, theme.color.background, "NO");
+			C2D_DrawRectSolid(250.0f, 145, 0.35f, box_w, 23.0f, theme.color.menuhighlight);
+			text_cput(70 + box_w / 2, 150, 0.4f, 3, theme.color.normaltext, lang_get("CHOICE_YES"));
+			text_cput(250 + box_w / 2, 150, 0.4f, 3, theme.color.background, lang_get("CHOICE_NO"));
 		}
 		break;
 	case DIALOG_HIGHSCORES:
-		text_cput(200, 60, 0.4f, 3, theme.color.bonusscrolltext, "HIGH SCORES");
+		text_cput(200, 50, 0.4f, 3, theme.color.bonusscrolltext, lang_get("MENU_HIGH_SCORES"));
 		for(int i = 0; i < HISCORENUM; i++) {
 			int y = 90 + 20 * i;
 			HighScore* user = hiscore_get(i);
@@ -219,8 +237,10 @@ void menu_draw(bool pause, const GameStats *stats) {
 		}
 		break;
 	case DIALOG_HELP:
-		for(int i = 0; i < sizeof(helptext) / sizeof(helptext[0]); i++) {
-			text_put(60, 58 + 10 * i, 0.4f, 1, theme.color.normaltext, helptext[i]);
+		for(int i = 0; i < 13; i++) {
+			char helpkey[24];
+			snprintf(helpkey, 24, "MENU_HELP_DETAIL_%d", i + 1);
+			text_put(60, 48 + 11 * i, 0.4f, 1, theme.color.normaltext, lang_get(helpkey));
 		}
 		break;
 	default:
@@ -239,6 +259,9 @@ bool menu_update(u32 keys) {
 		}
 		if (keys & KEY_LEFT) {
 			switch(selected) {
+			case MENU_LANGUAGE:
+				lang_prev();
+				break;
 			case MENU_DIFFICULTY:
 				options_difficulty_prev();
 				break;
@@ -251,6 +274,9 @@ bool menu_update(u32 keys) {
 		}
 		if (keys & KEY_RIGHT) {
 			switch(selected) {
+			case MENU_LANGUAGE:
+				lang_next();
+				break;
 			case MENU_DIFFICULTY:
 				options_difficulty_next();
 				break;
@@ -265,6 +291,11 @@ bool menu_update(u32 keys) {
 			switch(selected) {
 			case MENU_NEW_GAME:
 				game_start();
+				break;
+			case MENU_LANGUAGE:
+				lang_apply_selected();
+				options_write();
+				lang_selected_reset();
 				break;
 			case MENU_DIFFICULTY:
 				if (options_difficulty_selected() != options_difficulty_current()) {
