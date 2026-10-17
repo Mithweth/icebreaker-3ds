@@ -220,7 +220,7 @@ void menu_draw(bool pause, const GameStats *stats) {
 		break;
 	case DIALOG_HELP:
 		for(int i = 0; i < sizeof(helptext) / sizeof(helptext[0]); i++) {
-			text_put(60, 60 + 10 * i, 0.4f, 1, theme.color.normaltext, helptext[i]);
+			text_put(60, 58 + 10 * i, 0.4f, 1, theme.color.normaltext, helptext[i]);
 		}
 		break;
 	default:
