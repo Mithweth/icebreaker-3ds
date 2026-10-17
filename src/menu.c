@@ -43,6 +43,20 @@ static const u8 logo_glyphs[][7] = {
 	{17, 18, 20, 24, 20, 18, 17}  // K
 };
 
+static char helptext[13][50]={
+	"Ok, so there's a bunch of penguins on an",
+	"iceberg in Antarctica. You must catch them",
+	"so they can be shipped to Finland. The",
+	"smaller the area in which they're caught,",
+	"the lower the shipping fees and the higher",
+	"your score - but don't take too long: the",
+	"clock is ticking. Once 80% of the 'berg is",
+	"cleared, it's on to the next shipment.",
+	"",
+	"Swipe the screen with stylus to create lines",
+	"horizontally or vertically.",
+	"Check the README file for more info."};
+
 static void logo_drawtext(const char *text, float x, float y, float scale) {
 	const u32 gradient[8] = {
 		C2D_Color32(245, 253, 255, 255),
@@ -169,14 +183,8 @@ void menu_draw(bool pause, const GameStats *stats) {
 		break;
 	case DIALOG_HIGHSCORES:
 		text_cput(200, 60, 0.4f, 3, theme.color.bonusscrolltext, "HIGH SCORES");
-		C2D_Flush();
-		// C3D_* invert x and y axis and use the left bottom as the origin
-		// so 60 means Y from bottom, so (240 - 60) for C2D_*
-		// so 160 means Y from bottom, so (240 - 160) for C2D_*
-		// 0 and 400 are axis
-		C3D_SetScissor(GPU_SCISSOR_NORMAL, 60, 0, 160, 400);
 		for(int i = 0; i < HISCORENUM; i++) {
-			int y = 100 + 20 * i - hiscore_scroll;
+			int y = 90 + 20 * i;
 			HighScore* user = hiscore_get(i);
 			char nb[4];
 			snprintf(nb, 4, "%d.", i + 1);
@@ -186,8 +194,11 @@ void menu_draw(bool pause, const GameStats *stats) {
 			text_put(100, y, 0.4f, 2, theme.color.normaltext, user->name);
 			text_rput(340, y, 0.4f, 2, theme.color.normaltext, score);
 		}
-		C2D_Flush();
-		C3D_SetScissor(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
+		break;
+	case DIALOG_HELP:
+		for(int i = 0; i < sizeof(helptext) / sizeof(helptext[0]); i++) {
+			text_put(60, 60 + 10 * i, 0.4f, 1, theme.color.normaltext, helptext[i]);
+		}
 		break;
 	default:
 		break;
@@ -230,6 +241,9 @@ bool menu_update(u32 keys) {
 		if (keys & KEY_A) {
 			printf("Selected option: %zu\n", selected);
 			switch(selected) {
+			case MENU_NEW_GAME:
+				game_start();
+				break;
 			case MENU_DIFFICULTY:
 				dialog_type = DIALOG_CONFIRM;
 				yes_selected = false;
@@ -243,6 +257,9 @@ bool menu_update(u32 keys) {
 				hiscore_scroll = 0;
 				hiscore_direction = 1;
 				break;
+			case MENU_HELP:
+				dialog_type = DIALOG_HELP;
+				break;
 			default:
 				break;
 			}
@@ -251,15 +268,6 @@ bool menu_update(u32 keys) {
 	case DIALOG_HIGHSCORES:
 		if (keys & KEY_A) {
 			dialog_type = DIALOG_NORMAL;
-		}
-		hiscore_scroll += hiscore_direction;
-
-		if (hiscore_scroll >= 140) {
-			hiscore_scroll = 140;
-			hiscore_direction = -1;
-		} else if (hiscore_scroll <= 0) {
-			hiscore_scroll = 0;
-			hiscore_direction = 1;
 		}
 		break;
 	case DIALOG_CONFIRM:
@@ -276,6 +284,10 @@ bool menu_update(u32 keys) {
 			dialog_type = DIALOG_NORMAL;
 		}
 		break;
+	case DIALOG_HELP:
+		if (keys & KEY_A) {
+			dialog_type = DIALOG_NORMAL;
+		}
 	default:
 		break;
 	}

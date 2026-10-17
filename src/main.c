@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 	debug_init();
 	srand(time(NULL));
 	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
-	C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
+	C2D_Init(C2D_DEFAULT_MAX_OBJECTS * 4);
 	C2D_Prepare();
 	C3D_RenderTarget *top = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
 	C3D_RenderTarget *bottom = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT);

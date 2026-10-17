@@ -21,7 +21,7 @@
 */
 #pragma once
 
-#define HISCORENUM 10
+#define HISCORENUM 5
 
 #include <3ds.h>
 #include "game.h"
