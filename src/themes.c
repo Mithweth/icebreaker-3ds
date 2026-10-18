@@ -268,7 +268,7 @@ bool themes_settheme(const char* themename) {
 			{
 				theme.spriteimage=gfxmap_get_image(valbuf);
 				if (!theme.spriteimage.tex) {
-					printf("Error while loading sprite: No image found: %s", valbuf);
+					printf("Error while loading sprite: No image found: %s\n", valbuf);
 					fclose(themefile);
 					return false;
 				}
