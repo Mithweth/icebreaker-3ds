@@ -109,7 +109,7 @@ void intro_init(void) {
 	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(12)); penguincount++;
 	
 	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(14)); penguincount++;
-		flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(15)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(15)); penguincount++;
 	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(16)); penguincount++;
 	
 	//E

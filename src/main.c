@@ -64,14 +64,6 @@ static void debug_init(void) {}
 static void debug_close(void) {}
 #endif
 
-static aptHookCookie apt_cookie;
-
-static void apt_callback(APT_HookType hook, void *param) {
-	if (hook == APTHOOK_ONRESTORE || hook == APTHOOK_ONWAKEUP) {
-		// on restore
-	}
-}
-
 int main(int argc, char **argv) {
 	int ret = 0;
 	gfxInitDefault();
@@ -87,7 +79,6 @@ int main(int argc, char **argv) {
 		printf("Cannot initialize game\n");
 		ret = 1;
 	}
-	aptHook(&apt_cookie, apt_callback, NULL);
 	while (ret == 0 && aptMainLoop()) {
 		hidScanInput();
 		u32 keys = hidKeysDown();
@@ -100,8 +91,6 @@ int main(int argc, char **argv) {
 		game_draw(top, bottom);
 		C3D_FrameEnd(0);
 	}
-
-	aptUnhook(&apt_cookie);
 	game_close();
 	C2D_Fini();
 	C3D_Fini();
