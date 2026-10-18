@@ -268,7 +268,7 @@ bool themes_settheme(const char* themename) {
 			{
 				theme.spriteimage=gfxmap_get_image(valbuf);
 				if (!theme.spriteimage.tex) {
-					printf("Error while loading sprite: No image found: %s", valbuf);
+					printf("Error while loading sprite: No image found: %s\n", valbuf);
 					fclose(themefile);
 					return false;
 				}
@@ -288,6 +288,12 @@ bool themes_settheme(const char* themename) {
 			else if (!strcmp(optbuf,"soundvictory"))
 			{
 				if (!sound_load(SNDVICTORY, valbuf)) {
+					printf("Error while loading sound file: %s\n", valbuf);
+				}
+			}
+			else if (!strcmp(optbuf,"sounddefeat"))
+			{
+				if (!sound_load(SNDDEFEAT, valbuf)) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}

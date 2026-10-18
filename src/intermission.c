@@ -38,15 +38,19 @@ static float second_line_y;
 static bool done;
 static size_t first_line_size;
 static size_t second_line_size;
+static u32 second_line_color;
 
 void intermission_init(const GameStats *stats) {
 	if (!stats->dead) {
 		snprintf(first_line_text,30,"%s: %ld", lang_get("INTERMISSION_SCORE"), stats->basescore);
 		snprintf(second_line_text,30, "%s: %d", lang_get("INTERMISSION_BONUS"), stats->clearbonus + stats->lifebonus);
+		second_line_color = theme.color.bonusscrolltext;
 		sound_play(SNDVICTORY);
 	} else {
 		snprintf(first_line_text,30,"%s: %ld", lang_get("INTERMISSION_FINAL_SCORE"), stats->basescore + stats->score);
 		snprintf(second_line_text,30, "%s", lang_get("INTERMISSION_GAME_OVER"));
+		second_line_color = theme.color.gameovertext;
+		sound_play(SNDDEFEAT);
 	}
 	int first_line_w;
 	int second_line_w;
@@ -76,7 +80,7 @@ void intermission_init(const GameStats *stats) {
 void intermission_draw(void) {
 	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.4f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
 	text_put(first_line_x, first_line_y, 0.5f, first_line_size, theme.color.scorescrolltext, first_line_text);
-	text_put(second_line_x, second_line_y, 0.5f, second_line_size, theme.color.bonusscrolltext, second_line_text);
+	text_put(second_line_x, second_line_y, 0.5f, second_line_size, second_line_color, second_line_text);
 }
 
 bool intermission_update(u32 keys) {

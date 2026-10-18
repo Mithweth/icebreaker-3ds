@@ -1,0 +1,23 @@
+Background			48	32	80
+NormalText			248	248	255
+BoardFillMin		132	112	176
+BoardFillMax		182	160	216
+Gridline			54	106	143
+GridHighlight		255	255	255
+Line1				255	225	78
+Line2				255	96	130
+MenuHighlight		255	210	85
+GameoverText		255	112	135
+ScorescrollText		255	255	255
+BonusscrollText		176	245	133
+TextentryBox		255	210	85
+TextentryText		48	32	80
+CopyrightText		187	173	215
+ProgressbarOutline	255 110	145
+ProgressbarInner	30	20	55
+ProgressbarFill		255	199	74
+SpriteBitmap		ice_cube
+SoundOuch			8bit-touch
+SoundCrash			8bit-touch
+SoundVictory		8bit-win
+SoundDefeat			8bit-lose

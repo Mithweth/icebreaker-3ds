@@ -8,7 +8,7 @@ more than seven requires the options menubox to be really big and ugly and
 we don't want that. 
 
 The file consists mostly of color definitions, and also gives the location
-of the two sound files and the one sprite bitmap. Color definitions begin
+of the sound files and the one sprite bitmap. Color definitions begin
 with a keyword ("Background", "NormalText", etc.) and then give decimal
 values from 0-255 for red, green, and blue, respectively. 
 
@@ -19,6 +19,10 @@ The keywords aren't case sensitive, and you can use any amount of whitespace
 you want. If you leave out a particular keyword, IceBreaker will use the
 default but spit out a complaint on stderr -- so don't do that. (There's
 currently one exception -- SpriteMirrorBitmap, which I'll get to in a bit.)
+
+All four sounds (SoundOuch, SoundCrash, SoundVictory and SoundDefeat) are
+optional: a theme without them is just silent for those events, with no
+complaint.
 
 
 The default theme is "linux", and the file linux.ibt looks approximately
@@ -45,6 +49,8 @@ like this:
   SpriteBitmap          penguin
   SoundOuch             ouch
   SoundCrash            crash
+  SoundVictory          victory
+  SoundDefeat           defeat
 ```
 The names should mostly be self-explanatory. If something is unclear, let me
 know, and I'll either change the name in a future version or write better
