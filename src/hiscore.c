@@ -60,7 +60,7 @@ void hiscore_read(void) {
 		{
 			if (fgets(linebuf,80,hiscorefile))
 			{
-				sscanf(linebuf,"%49s %30ld",hiscore[i].name,&hiscore[i].score);
+				sscanf(linebuf,"%ld %49[^\r\n]",&hiscore[i].score,hiscore[i].name);
 			}
 		}
 		fclose(hiscorefile);
@@ -106,16 +106,13 @@ void hiscore_write(void) {
 		printf("Can't open %s for writing\n", filename);
 		return;
 	}
-	// FIX -- make this go so people can have spaces in their names
-	//for (i=0;hiscorename[i]!='\0';i++)
-	//      if (hiscorename[i]==' ') hiscorename[i]='_';
-
 	for (int i=0;i<HISCORENUM;i++) {
-		fprintf(hiscorefile,"%s %ld\n",hiscore[i].name,hiscore[i].score);
+		fprintf(hiscorefile,"%ld %s\n",hiscore[i].score,hiscore[i].name);
 	}
-
+	printf("Written highscores in %s successfully\n", filename);
 	fclose(hiscorefile);
 }
+
 static bool system_get_username(char *name, size_t size) {
     if (size == 0) return false;
     name[0] = '\0';
@@ -151,7 +148,6 @@ static bool hiscore_prompt_name(void) {
 
     if (swkbdInputText(&keyboard, username, sizeof(username)) != SWKBD_BUTTON_RIGHT) return false;
 
-    //hiscore_add(username, score);
     return true;
 }
 
