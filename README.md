@@ -94,7 +94,7 @@ Then:
 |---------------|-------------------------------------------------------------------------|
 | `make`        | Build `icebreaker-3ds.3dsx`                                              |
 | `make banner` | Build the HOME Menu banner (needed once before `make cia`)              |
-| `make cia`    | Build `icebreaker-3ds.cia` (version set with `APP_VERSION=x.y.z`)        |
+| `make cia`    | Build `icebreaker-3ds.cia` (run `make` first; version set with `APP_VERSION=x.y.z`) |
 | `make run`    | Start the game in the [Azahar](https://azahar-emu.org/) emulator (Flatpak) |
 | `make lint`   | Build with GCC's static analyser (`-fanalyzer`)                          |
 | `make clean`  | Remove all build outputs                                                |
