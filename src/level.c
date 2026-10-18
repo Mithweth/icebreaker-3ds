@@ -42,6 +42,7 @@
 #include "sound.h"
 
 #define GESTURE_THRESHOLD 12
+#define FPS 60 // C3D_FRAME_SYNCDRAW locks the main loop to the 3DS refresh rate
 
 static Line line1;
 static Line line2;
@@ -57,7 +58,7 @@ static float bonusmod;
 static bool done;
 static int percentextrabonus;
 static int percentbonus;
-static u64 now;
+static int tick;
 
 static void level_action_startclick(int mousex, int mousey, bool vertical)
 {
@@ -136,7 +137,7 @@ void level_init(GameStats *stats) {
 	{
 		flock[i] = penguin_create();
 	}
-	now = osGetTime();
+	tick = 0;
 }
 
 void level_draw(void) {
@@ -197,7 +198,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		{
 			stats->clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
 			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
-			//tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+			tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 		}
 
 		if (line1.dead) 
@@ -225,6 +226,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		{
 			stats->clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
 			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
+			tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 		}
 
 		if (line2.dead)
@@ -265,11 +267,10 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		stats->lifebonus=(int)((stats->lives-1)*3*bonusmod);
 	} 
 
-	u64 elapsed = osGetTime();
-	if (elapsed - now > timepenaltyinterval * 10) {
-		now += timepenaltyinterval * 10;
-		if (stats->basescore>0)
-		{
+	tick++;
+	if (tick >= timepenaltyinterval * FPS / 100) {
+		tick = 0;
+		if (stats->basescore>0) {
 			timepenalty++;
 			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
 		}

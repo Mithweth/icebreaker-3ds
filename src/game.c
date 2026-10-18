@@ -100,6 +100,11 @@ static void game_intermission_start(void) {
 }
 
 bool game_update(u32 keys, touchPosition touch) {
+#ifdef DEBUG
+	if (keys & KEY_X) {
+		return false;
+	}
+#endif
 	if ((keys & KEY_START) && (game_mode != GAME_HIGH_SCORE)) {
 		pause = !pause;
 		if (pause) {
