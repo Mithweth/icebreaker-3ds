@@ -109,6 +109,12 @@ Themes are plain text files in `assets/themes/`. They set the colours, the
 penguin sprite and the sounds. See [README.themes.md](README.themes.md) to
 write your own.
 
+## Languages
+
+The game is available in English, French, German and Italian. Translations
+are plain text files in `assets/lang/`. See [TRANSLATIONS.md](TRANSLATIONS.md)
+to add a new language.
+
 ## Credits
 
 - **Original game:** Matthew Miller, with many contributions from
