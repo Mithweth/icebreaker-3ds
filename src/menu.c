@@ -163,7 +163,7 @@ void menu_draw(bool pause, const GameStats *stats) {
 	snprintf(tmptext,30,"%ld",hiscore_get(0)->score);
 	text_rput(385, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	for(int i = 0; i < stats->lives; i++) {
-		C2D_DrawImageAt(theme.spriteimage, 80.0f + (16.0f * i), 195.0f, 0.3f, NULL, 1.0f, 1.0f);
+		C2D_DrawImageAt(theme.spriteimage, 80.0f + (16.0f * i), 205.0f - (theme.spriteimage.subtex->height / 2), 0.3f, NULL, 1.0f, 1.0f);
 	}
 	progress_bar_draw(stats->clear);
 	if (!pause) {
