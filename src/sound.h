@@ -28,6 +28,7 @@ typedef enum {
 	SNDOUCH,
 	SNDBREAK,
 	SNDVICTORY,
+	SNDDEFEAT,
 	SNDCOUNT
 } Sound;
 

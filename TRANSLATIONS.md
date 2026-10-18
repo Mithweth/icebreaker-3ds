@@ -31,7 +31,7 @@ a language only takes one text file: no code change is needed.
 ## Characters
 
 The game uses its own pixel font, so many characters are not supported.
-In a nutshell, English, French, Deutsch and Italian specific characters exists
+In a nutshell, English, French, Deutsch and Italian specific characters exist
 but you will need to update `text.c` to add a language with specific glyphs.
 
 ## Text length

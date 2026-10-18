@@ -47,6 +47,7 @@ void intermission_init(const GameStats *stats) {
 	} else {
 		snprintf(first_line_text,30,"%s: %ld", lang_get("INTERMISSION_FINAL_SCORE"), stats->basescore + stats->score);
 		snprintf(second_line_text,30, "%s", lang_get("INTERMISSION_GAME_OVER"));
+		sound_play(SNDDEFEAT);
 	}
 	int first_line_w;
 	int second_line_w;

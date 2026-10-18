@@ -291,6 +291,12 @@ bool themes_settheme(const char* themename) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
+			else if (!strcmp(optbuf,"sounddefeat"))
+			{
+				if (!sound_load(SNDDEFEAT, valbuf)) {
+					printf("Error while loading sound file: %s\n", valbuf);
+				}
+			}
 		}
 		
 	}	
