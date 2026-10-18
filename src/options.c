@@ -29,8 +29,9 @@
 #include "game.h"
 #include "options.h"
 #include "themes.h"
+#include "lang.h"
 
-static GameOptionsType options;
+static GameDifficultyType current_difficulty;
 static GameDifficultyType selected_difficulty;
 
 void options_difficulty_next(void) {
@@ -50,22 +51,22 @@ void options_difficulty_prev(void) {
 }
 
 void options_difficulty_selected_reset(void) {
-	selected_difficulty = options.difficulty;
+	selected_difficulty = current_difficulty;
 }
 
 void options_difficulty_apply(void) {
-    options.difficulty = selected_difficulty;
-    printf("selected difficulty: %s\n", options_difficulty_serialize(options.difficulty));
+    current_difficulty = selected_difficulty;
+    printf("selected difficulty: %s\n", options_difficulty_serialize(current_difficulty));
 }
 
 static void options_difficulty_set(GameDifficultyType diff) {
     selected_difficulty = diff;
-    options.difficulty = diff;
-    printf("selected difficulty: %s\n", options_difficulty_serialize(options.difficulty));
+    current_difficulty = diff;
+    printf("selected difficulty: %s\n", options_difficulty_serialize(current_difficulty));
 }
 
 GameDifficultyType options_difficulty_current(void) {
-    return options.difficulty;
+    return current_difficulty;
 }
 
 
@@ -97,28 +98,17 @@ GameDifficultyType options_difficulty_deserialize(const char* s) {
 	return NORMAL;
 }
 
-static bool options_setdefault(void) {
-	options_difficulty_set(NORMAL);
-	return themes_settheme("linux");
-}
-
 bool options_read(void) {
 	FILE * optionfile;
 	char linebuf[50];
 	char optbuf[21];
 	char valbuf[74];
-	
-	if (!options_setdefault()) {
-		printf("Error: Cannot load default theme: linux\n");
-		return false;
-	}
+	bool difficulty_set = false;
+	bool theme_set = false;
+	bool language_set = false;
 
 	optionfile=fopen(OPTIONFILE,"r");
-	if (!optionfile) {
-		printf("Can't open %s for reading\n", OPTIONFILE);
-		return false;
-	}
-	while(fgets(linebuf,50,optionfile)) {
+	while(optionfile && fgets(linebuf,50,optionfile)) {
 		if (linebuf[0] == '\0' || linebuf[0] == '#') {
 			continue;
 		}
@@ -132,20 +122,39 @@ bool options_read(void) {
 			if (!strcmp(optbuf,"difficulty"))
 			{
 				options_difficulty_set(options_difficulty_deserialize(valbuf));
+				difficulty_set = true;
 			}
 			else if (!strcmp(optbuf,"theme"))
 			{
-				if (!themes_settheme(valbuf)) {
-					printf("Error: Cannot load theme: %s\n", valbuf);
-					fclose(optionfile);
-					themes_settheme("linux");
-					return false;
+				if (themes_settheme(valbuf)) {
+					theme_set = true;
+				}
+			}
+			else if (!strcmp(optbuf,"language"))
+			{
+				if (lang_set_current_name(valbuf)) {
+					language_set = true;
 				}
 			}
 		}
 	}
-
-	fclose(optionfile);
+	if (!optionfile) {
+		printf("Can't open %s for reading\n", OPTIONFILE);
+	} else {
+		fclose(optionfile);
+	}
+	if (!difficulty_set) {
+		printf("Difficulty not found. Setting to default\n");
+		options_difficulty_set(NORMAL);
+	}
+	if (!theme_set) {
+		printf("Theme not found or not loaded. Setting to default\n");
+		themes_settheme("linux");
+	}
+	if (!language_set) {
+		printf("Language not found. Setting to default\n");
+		lang_set_current_name("english");
+	}
 	return true;
 }
 
@@ -165,11 +174,11 @@ bool options_write(void) {
 	fprintf(optionfile,"# but you won't get very high scores. Hard is for those who really\n");
 	fprintf(optionfile,"# want a challenge, but scores only slightly higher than normal.\n");
 
-	if (options.difficulty==NORMAL)
+	if (current_difficulty==NORMAL)
 		fprintf(optionfile,"Difficulty normal\n");
-	else if (options.difficulty==HARD)
+	else if (current_difficulty==HARD)
 		fprintf(optionfile,"Difficulty hard\n");
-	else if (options.difficulty==EASY)
+	else if (current_difficulty==EASY)
 		fprintf(optionfile,"Difficulty easy\n");
 
 	fprintf(optionfile,"\n# Themes provide an easy way to select (or tweak!) the appearance\n");
@@ -177,6 +186,11 @@ bool options_write(void) {
 	fprintf(optionfile,"# directory. Check the docs for info on creating your own themes, too.\n");	
 
 	fprintf(optionfile,"Theme %s\n",themes_current_name());
+
+	fprintf(optionfile,"\n# Language. Ensure a file which contains NAME=<your language>\n");
+	fprintf(optionfile,"\n# is present in romfs:/lang directory\n");	
+
+	fprintf(optionfile,"Language %s\n",lang_current_name());
 
 	fclose(optionfile);
 	

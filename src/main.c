@@ -25,6 +25,7 @@
 #include <3ds.h>
 #include <time.h>
 #include "game.h"
+#include "lang.h"
 
 #ifdef DEBUG
 
@@ -75,6 +76,10 @@ int main(int argc, char **argv) {
 	C2D_Prepare();
 	C3D_RenderTarget *top = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
 	C3D_RenderTarget *bottom = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT);
+	if (!lang_init()) {
+		printf("Cannot initialize languages\n");
+		ret = 1;
+	}
 	if (!game_init()) {
 		printf("Cannot initialize game\n");
 		ret = 1;
@@ -92,6 +97,7 @@ int main(int argc, char **argv) {
 		C3D_FrameEnd(0);
 	}
 	game_close();
+	lang_close();
 	C2D_Fini();
 	C3D_Fini();
 	romfsExit();

@@ -27,6 +27,7 @@
 #include "themes.h"
 #include "text.h"
 #include "sound.h"
+#include "lang.h"
 
 static char first_line_text[30];
 static char second_line_text[30];
@@ -35,31 +36,47 @@ static float first_line_y;
 static float second_line_x;
 static float second_line_y;
 static bool done;
+static size_t first_line_size;
+static size_t second_line_size;
 
 void intermission_init(const GameStats *stats) {
 	if (!stats->dead) {
-		snprintf(first_line_text,30,"SCORE: %ld",stats->basescore);
-		snprintf(second_line_text,30, "BONUS: %d",stats->clearbonus + stats->lifebonus);
+		snprintf(first_line_text,30,"%s: %ld", lang_get("INTERMISSION_SCORE"), stats->basescore);
+		snprintf(second_line_text,30, "%s: %d", lang_get("INTERMISSION_BONUS"), stats->clearbonus + stats->lifebonus);
 		sound_play(SNDVICTORY);
 	} else {
-		snprintf(first_line_text,30,"FINAL SCORE: %ld",stats->basescore + stats->score);
-		snprintf(second_line_text,30, "GAME OVER");
+		snprintf(first_line_text,30,"%s: %ld", lang_get("INTERMISSION_FINAL_SCORE"), stats->basescore + stats->score);
+		snprintf(second_line_text,30, "%s", lang_get("INTERMISSION_GAME_OVER"));
 	}
-	int first_line_w = text_getwidth(4,first_line_text);
-	int second_line_w = text_getwidth(4,second_line_text);
+	int first_line_w;
+	int second_line_w;
+	for(size_t size = 4; size > 0; size--) {
+		first_line_w = text_getwidth(size, first_line_text);
+		if (first_line_w < WIDTH) {
+			first_line_size = size;
+			break;
+		}
+	}
+	for(size_t size = 4; size > 0; size--) {
+		second_line_w = text_getwidth(size, second_line_text);
+		if (second_line_w < WIDTH) {
+			second_line_size = size;
+			break;
+		}
+	}
 
-	first_line_x=(WIDTH - first_line_w) / 2;
-	first_line_y=HEIGHT;
+	first_line_x = (WIDTH - first_line_w) / 2;
+	first_line_y = HEIGHT;
 
-	second_line_x=(WIDTH - second_line_w) / 2;
-	second_line_y=HEIGHT;
+	second_line_x = (WIDTH - second_line_w) / 2;
+	second_line_y = HEIGHT;
 	done = false;
 }
 
 void intermission_draw(void) {
 	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.4f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
-	text_put(first_line_x, first_line_y, 0.5f, 4, theme.color.scorescrolltext, first_line_text);
-	text_put(second_line_x, second_line_y, 0.5f, 4, theme.color.bonusscrolltext, second_line_text);
+	text_put(first_line_x, first_line_y, 0.5f, first_line_size, theme.color.scorescrolltext, first_line_text);
+	text_put(second_line_x, second_line_y, 0.5f, second_line_size, theme.color.bonusscrolltext, second_line_text);
 }
 
 bool intermission_update(u32 keys) {

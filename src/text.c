@@ -29,60 +29,58 @@
 
 #include "text.h"
 
-static const char letterindex[] = " AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG HHHHH III JJJJJ KKKK LLLLL MMMMM NNNNN OOOOO PPPPP QQQQQ RRRRR SSSSS TTTTT UUUUU VVVVV WWWWW XXXXX YYYYY ZZZZZ aaaaa bbbbb cccc ddddd eeeee fffff ggggg hhhhh i jjjj kkkk lll mmmmm nnnnn ooooo ppppp qqqqq rrrr sssss tttt uuuuu vvvvv wwwww xxxx yyyyy zzzz 00000 11 22222 33333 44444 55555 66666 77777 88888 99999 ~~~~~    ``     !    @@@@   #####  $$$$$  %%%%%  ^^^^^  &&&&&  *****    ((   ))    _____  -----  +++++  =====   {{{     [[[   }}}   ]]]      |     :     ;;      ''   <<<<<<   ,,   >>>>>>    .    ????   /////    \"\"\" \\\\\\\\\\";
+static const char letterindex[] =
+	" AAAAA BBBBB CCCCC DDDDD EEEEE FFFFF GGGGG HHHHH III JJJJJ KKKK LLLLL MMMMM NNNNN OOOOO PPPPP QQQQQ RRRRR SSSSS TTTTT UUUUU VVVVV WWWWW XXXXX YYYYY ZZZZZ aaaaa \xE0\xE0\xE0\xE0\xE0 \xE4\xE4\xE4\xE4\xE4 bbbbb cccc \xE7\xE7\xE7\xE7 ddddd eeeee \xE9\xE9\xE9\xE9\xE9 \xE8\xE8\xE8\xE8\xE8 fffff ggggg hhhhh i jjjj kkkk lll mmmmm nnnnn ooooo \xF6\xF6\xF6\xF6\xF6 ppppp qqqqq rrrr sssss tttt uuuuu \xF9\xF9\xF9\xF9\xF9 \xFC\xFC\xFC\xFC\xFC vvvvv wwwww xxxx yyyyy zzzz 00000 11 22222 33333 44444 55555 66666 77777 88888 99999 ~~~~~    ``     !    @@@@   #####  $$$$$  %%%%%  ^^^^^  &&&&&  *****    ((   ))    _____  -----  +++++  =====   {{{     [[[   }}}   ]]]      |     :     ;;      ''   <<<<<<   ,,   >>>>>>    .    ????   /////    \"\"\" \\\\\\\\\\";
 
 static const char *const letterdata[6] = {
-	"   #   ####   ###  ####  ##### #####  #### #   # ###   ### #  # #     #   # #   #  ###  ####   ###  ####   #### ##### #   # #   # #   # #   # #   # #####       #              #         ###       #     #    # #    ##                                            #                                      ###   # ####  ####     ## #####  ###  #####  ###   ###   #       #      #     ##     # #    ###   ##  #    #     ##      #       #   #                     #              #     ###   #     ###      #                    #       ##        ##             ###        #    # # #    ",
-	"  # #  #   # #   # #   # #     #     #     #   #  #      # # #  #     ## ## ##  # #   # #   # #   # #   # #       #   #   # #   # # # #  # #   # #     #   #### ####   ###  ####  ###   #     #### ####         # ##  #  ## #  # ##   ###  ####   #### # ##  #### #### #   # #   # #   # #  # #   # #### #   # ##     #     #   # # #     #         # #   # #   # # # #     #     #    # ##   #####  # #    ## #    # #   #      # # #    #     #                    #    #####    #      #      #      #      #     #      #      #      ##            ##              #      #     # #  #   ",
-	" #   # ####  #     #   # ####  ####  #  ## #####  #      # ##   #     # # # # # # #   # ####  #   # ####   ###    #   #   #  # #  # # #   #     #     #   #   # #   # #    #   # ## ## ####  #   # #   # #    # ##    #  # # # ##  # #   # #   # #   # ##   ###    #   #   #  # #  # # #  ##  #   #   #  #   #  #  ###   ###   #  # ####  ####     #   ###   ####    #            #    # ##    # #    ###     #    #   #   ## #   ###     #     #           #####  #####          ##      #      ##     #      #                        ##                ##          ##      #            #  ",
-	" ##### #   # #   # #   # #     #     #   # #   #  #  #   # # #  #     # # # #  ## #   # #     #   # #  #      #   #   #   #  # #  ## ##  # #    #    #    #  ## #   # #    #   # ###    #     #### #   # #    # # #   #  # # # #   # #   # #   # #   # #      ###  #   #  ##  # #  # # #  ##   ####  #   #   #  # #         # #####     # #   #   #   #   #     #                      #      #####    # #   # ##         #  #   # # #    #     #                    #    #####    #      #      #      #      #     #      #             ##      #     ##      #            #              # ",
-	" #   # ####   ###  ####  ##### #      #### #   # ###  ###  #  # ##### #   # #   #  ###  #      ###  #   # ####    #    ###    #   #   # #   #   #   #####  ## # ####   ###  ####  ###   #        # #   # # #  # #  # ### #   # #   #  ###  ####   #### #    ####    ##  ## #   #    # #  #  #     # ####  ###   # ##### ####      # ####   ###   #     ###   ###                  #     ##     # #    ###   #  ##          ## #    #       #   #                     #              #     ###   #     ###      #            #               ##    #   ##        #     #     #                #",
-	"                                                                                                 ##                                                                                           ###           ##                             #         #                                         ###                                                                                                                                                   #####                                                                 #                     #                                            ",
+	"   #   ####   ###  ####  ##### #####  #### #   # ###   ### #  # #     #   # #   #  ###  ####   ###  ####   #### ##### #   # #   # #   # #   # #   # #####         #     # # #                   #          #   #      ###       #     #    # #    ##                     # #                    #                 #   #   #                              ###   # ####  ####     ## #####  ###  #####  ###   ###   #       #      #     ##     # #    ###   ##  #    #     ##      #       #   #                     #              #     ###   #     ###      #                    #       ##        ##             ###        #    # # #    ",
+	"  # #  #   # #   # #   # #     #     #     #   #  #      # # #  #     ## ## ##  # #   # #   # #   # #   # #       #   #   # #   # # # #  # #   # #     #   ####  ####  #### ####   ###  ###  ####  ###   ###   ###   #     #### ####         # ##  #  ## #  # ##   ###   ###  ####   #### # ##  #### #### #   # #   #       #   # #   # #  # #   # #### #   # ##     #     #   # # #     #         # #   # #   # # # #     #     #    # ##   #####  # #    ## #    # #   #      # # #    #     #                    #    #####    #      #      #      #      #     #      #      #      ##            ##              #      #     # #  #   ",
+	" #   # ####  #     #   # ####  ####  #  ## #####  #      # ##   #     # # # # # # #   # ####  #   # ####   ###    #   #   #  # #  # # #   #     #     #   #   # #   # #   # #   # #    #    #   # ## ## ## ## ## ## ####  #   # #   # #    # ##    #  # # # ##  # #   # #   # #   # #   # ##   ###    #   #   # #   # #   #  # #  # # #  ##  #   #   #  #   #  #  ###   ###   #  # ####  ####     #   ###   ####    #            #    # ##    # #    ###     #    #   #   ## #   ###     #     #           #####  #####          ##      #      ##     #      #                        ##                ##          ##      #            #  ",
+	" ##### #   # #   # #   # #     #     #   # #   #  #  #   # # #  #     # # # #  ## #   # #     #   # #  #      #   #   #   #  # #  ## ##  # #    #    #    #  ## #  ## #  ## #   # #    #    #   # ###   ###   ###    #     #### #   # #    # # #   #  # # # #   # #   # #   # #   # #   # #      ###  #   #  ## #  ## #  ##  # #  # # #  ##   ####  #   #   #  # #         # #####     # #   #   #   #   #     #                      #      #####    # #   # ##         #  #   # # #    #     #                    #    #####    #      #      #      #      #     #      #             ##      #     ##      #            #              # ",
+	" #   # ####   ###  ####  ##### #      #### #   # ###  ###  #  # ##### #   # #   #  ###  #      ###  #   # ####    #    ###    #   #   # #   #   #   #####  ## #  ## #  ## # ####   ###  ###  ####  ###   ###   ###   #        # #   # # #  # #  # ### #   # #   #  ###   ###  ####   #### #    ####    ##  ## #  ## #  ## #   #    # #  #  #     # ####  ###   # ##### ####      # ####   ###   #     ###   ###                  #     ##     # #    ###   #  ##          ## #    #       #   #                     #              #     ###   #     ###      #            #               ##    #   ##        #     #     #                #",
+	"                                                                                                 ##                                                                                      #                                 ###           ##                                   #         #                                                     ###                                                                                                                                                   #####                                                                 #                     #                                            ",
 };
 
+static unsigned int text_next_char(const unsigned char **text) {
+	unsigned int c = **text;
+	(*text)++;
 
-static int text_getletterwidth(int size, const char letter)
-{
-	int i;
-	char * indexpointer;
-	int width=0;
-		
-	indexpointer=index(letterindex,letter);
-	if (indexpointer!=NULL)
-		for (i=indexpointer-letterindex; *(letterindex+i)==letter; i++)
-		{
-			width+= size;
-		}
+	if (c == 0xC3 && (**text & 0xC0) == 0x80) {
+		unsigned int first = (c & 0x1F) << 6;
+		unsigned int second = **text & 0x3F;
+		(*text)++;
+		c = first | second;
+	}
+
+	return c;
+}
+
+// Rewritten it all: UTF-8 is a bitch. Thank anyway, stack overflow ;-)
+static int text_getletterwidth(int size, unsigned int letter) {
+	const char *indexpointer = strchr(letterindex, (unsigned char)letter);
+	if (!indexpointer) return 0;
+
+	int width = 0;
+	for (int i = indexpointer - letterindex; (unsigned char)letterindex[i] == letter; i++) width += size;
 
 	return width;
 }
 
-int text_getwidth(int size, const char * text)
-{
-	unsigned int l;
-	int width=0;
-		
-	for (l=0; l<strlen(text); l++)
-	{
-		width += text_getletterwidth(size,*(text+l));
-		width +=  CHARSPACE;
+int text_getwidth(int size, const char *text) {
+	const unsigned char *p = (const unsigned char *)text;
+	int width = 0;
+
+	while (*p) {
+		unsigned int c = text_next_char(&p);
+		if (strchr(letterindex, (unsigned char)c)) width += text_getletterwidth(size, c) + CHARSPACE;
 	}
 
-
-	// spacing after last letter is not considered		
-	width -= CHARSPACE ;
-
-	//fprintf(stderr,"Len of '%s' with size %d is %d pixels.\n",text,size,width);
-	
+	if (width) width -= CHARSPACE;
 	return width;
 }
 
 void text_put(int x, int y, float z, int size, u32 color, const char * text)
 {
-
-	unsigned int l;
-	char * indexpointer;
-	unsigned char c;
 	int w,startx;
 	int recth = 1;
 	int rectw = 1;
@@ -93,15 +91,14 @@ void text_put(int x, int y, float z, int size, u32 color, const char * text)
 		rectw=(int)(size / 2.0f + 0.5f);
 	}
 	startx=x;
-		
-	for (l=0; l<strlen(text); l++)
-	{
-		c=*(text+l);
-		indexpointer=index(letterindex,c);
+	const unsigned char *p = (const unsigned char *)text;
+	while (*p) {
+		unsigned int c = text_next_char(&p);
+		const char *indexpointer = strchr(letterindex, (unsigned char)c);
 		if (indexpointer!=NULL)
 		{
 			w=0;
-			for (int i=indexpointer-letterindex; *(letterindex+i)==c; i++)
+			for (int i=indexpointer-letterindex; (unsigned char)letterindex[i]==c; i++)
 			{ // scan through index for location of letter.
 				for (int j=0;j<CHARHEIGHT;j++)
 				{

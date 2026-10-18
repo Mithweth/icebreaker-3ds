@@ -34,12 +34,10 @@ score, high score, lives and how much ice has been cleared.
 ## Menu
 
 - **New game** — start over from level 1.
-- **Difficulty** — easy, normal or hard. Changing it ends the current game
-  (you are asked to confirm).
-- **Theme** — change the look of the game. Seven themes are included:
-  blocks, cows, jz-like, kitty, linux (default), stars and turtles.
-- **High scores** — the five best scores. When you set a new one, you are
-  asked for your name with the system keyboard.
+- **Language** — change the current language.
+- **Difficulty** — Changing it ends the current game.
+- **Theme** — change the look of the game.
+- **High scores** — the five best scores.
 - **Help** — a short summary of the rules.
 
 Options and high scores are saved on the SD card, in `sdmc:/.icebreaker` and
