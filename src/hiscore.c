@@ -161,8 +161,8 @@ void hiscore_dialog_draw(void) {
 	C2D_DrawRectSolid(52.0f, 52.0f, 0.42f, 216.0f, 136.0f, theme.color.background);
 	text_put(60, 60, 0.43f, 2, theme.color.normaltext, "NEW TOP SCORE!");
 	text_put(60, 80, 0.43f, 2, theme.color.normaltext, "ENTER YOUR NAME:");
-	C2D_DrawRectSolid(60.0f, 96.0f, 0.43f, 200.0f, 28.0f, theme.color.textentrybox);
-	text_put(70, 100, 0.44f, 4, theme.color.textentrytext, username);
+	C2D_DrawRectSolid(60.0f, 102.0f, 0.43f, 200.0f, 21.0f, theme.color.textentrybox);
+	text_put(70, 104, 0.44f, 3, theme.color.textentrytext, username);
 	C2D_DrawRectSolid(210.0f, 160.0f, 0.43f, 50.0f, 18.0f, theme.color.menuhighlight);
 	text_put(220, 162, 0.44f, 3, theme.color.background, "OK");
 }

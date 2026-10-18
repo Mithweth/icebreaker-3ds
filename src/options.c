@@ -138,6 +138,7 @@ bool options_read(void) {
 				if (!themes_settheme(valbuf)) {
 					printf("Error: Cannot load theme: %s\n", valbuf);
 					fclose(optionfile);
+					themes_settheme("linux");
 					return false;
 				}
 			}

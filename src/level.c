@@ -99,8 +99,10 @@ void level_init(GameStats *stats) {
 	percentbonus=PERCENTBONUS; // right now, there's really no point in making this a variable but it doesn't hurt, and keeps things consistant
 	timepenalty=0;
 	done = false;
-
 	penguincount=stats->level+1;
+	if (penguincount > MAXPENGUINS) {
+		penguincount = MAXPENGUINS;
+	}
 	stats->lives=stats->level+1;
 	//stats->currentscore = stats->basescore;
 	

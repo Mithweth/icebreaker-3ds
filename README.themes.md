@@ -70,7 +70,7 @@ than being abstract or iconic is a challenge. A future version of IceBreaker
 may allow you to include background and playing board graphics instead of
 just colors -- but don't hold your breath for that.
 
-The sound files are 8 bit mono PCM at 22050. They should also be really
+The sound files are 16 bit mono PCM at 22050. They should also be really
 short -- under a second. This'll mean the total size will be easily less
 than 30k -- if it's not, something's not right.
 They are expected to be converted as RAW files :
