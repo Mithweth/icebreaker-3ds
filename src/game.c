@@ -128,7 +128,9 @@ bool game_update(u32 keys, touchPosition touch) {
 		break;
 	case GAME_INTERMISSION:
 		if (!intermission_update(keys)) {
+			printf("GAME OVER: score=%ld base=%ld clearbonus=%d lifebonus=%d dead=%d\n", stats.score, stats.basescore, stats.clearbonus, stats.lifebonus, stats.dead);
 			stats.score += stats.basescore + stats.clearbonus + stats.lifebonus;
+			stats.basescore = 0;
 			if (stats.dead) {
 				game_over();
 			} else {

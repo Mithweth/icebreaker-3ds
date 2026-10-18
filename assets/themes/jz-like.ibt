@@ -19,3 +19,4 @@ ProgressbarFill     32 32 32
 SpriteBitmap		atom
 SoundOuch		pop
 SoundCrash		drum
+SoundVictory	victory
