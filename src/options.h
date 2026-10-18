@@ -1,60 +1,42 @@
 /*
-* IceBreaker
-* Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org> and
-*   Enrico Tassi <gareuselesinge@infinito.it>
-*
-* <http://www.mattdm.org/icebreaker/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc., 59
-* Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*
-*/
+ * IceBreaker
+ * Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
+ * Copyright (c) 2000-2020 Enrico Tassi <gareuselesinge@infinito.it>
+ * Copyright (c) 2026 Jean-Baptiste Langlois
+ *
+ * Original game by Matthew Miller.
+ * Nintendo 3DS port by Jean-Baptiste Langlois (2026).
+ *
+ * <http://www.mattdm.org/icebreaker/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see <https://www.gnu.org/licenses/>.
+ */
 
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#pragma once
 
-typedef enum { SOUNDON,SOUNDOFF } SoundSettingType;
-typedef enum { AUTOPAUSEON,AUTOPAUSEOFF } AutoPauseType;
-typedef enum { NORMAL, EASY, HARD } GameDifficultyType;
-typedef enum { FULLSCREENOFF, FULLSCREENON, FULLSCREENALWAYS, FULLSCREENUNKNOWN } FullscreenSettingType;
+typedef enum { EASY, NORMAL, HARD } GameDifficultyType;
 
-typedef struct
-{
-	SoundSettingType sound;
-	AutoPauseType autopause;
+typedef struct {
 	GameDifficultyType difficulty;
-	FullscreenSettingType fullscreen;
-        char theme[11+MAXTHEMENAMELENGTH];
 } GameOptionsType;
 
-typedef struct
-{
-	int isfullscreen;
-	int benchmarkmode;
-	int soundsystemworks;
-	int themechanged;
-} GameFlagsType;
-
-extern GameOptionsType options;
-extern GameOptionsType commandline;
-
-extern GameFlagsType gameflags;
-
-void options_setdefault(void);
-extern int options_read(void);
-extern int options_write(void);
-
-extern int options_parsecommandline(int argc, char** argv);
-
-#endif /* OPTIONS_H */
+void options_difficulty_next(void);
+void options_difficulty_prev(void);
+void options_difficulty_apply(void);
+GameDifficultyType options_difficulty_current(void);
+GameDifficultyType options_difficulty_selected(void);
+const char* options_difficulty_serialize(GameDifficultyType t);
+GameDifficultyType options_difficulty_deserialize(const char* s);
+bool options_write(void);
+bool options_read(void);

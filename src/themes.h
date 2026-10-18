@@ -1,66 +1,70 @@
 /*
-* IceBreaker
-* Copyright (c) 2002-2020 Matthew Miller <mattdm@mattdm.org>
-* 
-* <http://www.mattdm.org/icebreaker/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc., 59
-* Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*
-*/
+ * IceBreaker
+ * Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
+ * Copyright (c) 2026 Jean-Baptiste Langlois
+ *
+ * Original game by Matthew Miller.
+ * Nintendo 3DS port by Jean-Baptiste Langlois (2026).
+ *
+ * <http://www.mattdm.org/icebreaker/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see <https://www.gnu.org/licenses/>.
+ */
 
-#ifndef THEMES_H
-#define THEMES_H
+#pragma once
+
+#include <3ds.h>
+#include <citro2d.h>
 
 typedef struct
 {
-	Uint32 background;
-	Uint32 normaltext;
-	Uint8  boardfillminr;
-	Uint8  boardfillming;
-	Uint8  boardfillminb;
-	Uint8  boardfillmaxr;
-	Uint8  boardfillmaxg;
-	Uint8  boardfillmaxb;
-	Uint32 gridline;
-	Uint32 gridhighlight;
-	Uint32 line1;
-	Uint32 line2;
-	Uint32 menuhighlight;
-	Uint32 gameovertext;
-	Uint32 scorescrolltext;
-	Uint32 bonusscrolltext;
-	Uint32 textentrybox;
-	Uint32 textentrytext;
-	Uint32 copyrighttext;
-	Uint32 spritetransparent; // fix -- this doesn't really belong here
-
+	u32 background;
+	u32 normaltext;
+	u8  boardfillminr;
+	u8  boardfillming;
+	u8  boardfillminb;
+	u8  boardfillmaxr;
+	u8  boardfillmaxg;
+	u8  boardfillmaxb;
+	u32 gridline;
+	u32 gridhighlight;
+	u32 line1;
+	u32 line2;
+	u32 menuhighlight;
+	u32 gameovertext;
+	u32 scorescrolltext;
+	u32 bonusscrolltext;
+	u32 textentrybox;
+	u32 textentrytext;
+	u32 copyrighttext;
+	u32 progressbaroutline;
+	u32 progressbarinner;
+	u32 progressbarfill;
 } ThemeColorsType;
 
-extern ThemeColorsType color;
+typedef struct {
+	char name[64];
+	ThemeColorsType color;
+	C2D_Image spriteimage;
+} Theme;
 
-extern SDL_Surface * spriteimage;
-extern SDL_Surface * spritemirrorimage;
+extern Theme theme;
 
-
-
-// you might expect sounds to go here, but in the interest of keeping
-// SDL_mixer stuff confined to the sound module, it's done separately
-
-int themes_getthemenames(char*** themenamelist);
-void themes_freethemenames(char*** themenamelist,int numthemes);
-int themes_getthemenumber(char** themenamelist,int numthemes,char* themename);
-int themes_settheme(char* themename);
-
-#endif /* THEMES_H */
+bool themes_exists(const char* name);
+bool themes_settheme(const char* themename);
+bool themes_load(const char *directory);
+void themes_next(void);
+void themes_prev(void);
+void themes_apply(void);
+const char* themes_current_name(void);

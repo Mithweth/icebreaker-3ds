@@ -13,7 +13,9 @@ BonusscrollText		192    0   64
 TextentryBox		192  192  192
 TextentryText		  0    0    0
 CopyrightText		192  192  192
-SpriteTransparent	  0    0  255
-SpriteBitmap		atom.bmp
-SoundOuch		pop.wav
-SoundCrash		drum.wav
+ProgressbarOutline  192  192  192
+ProgressbarInner    192  192  192
+ProgressbarFill     32 32 32
+SpriteBitmap		atom
+SoundOuch		pop
+SoundCrash		drum

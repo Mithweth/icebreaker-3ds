@@ -1,286 +1,192 @@
 /*
-* IceBreaker
-* Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org> and 
-*  Enrico Tassi <gareuselesinge@infinito.it>
-*
-* <http://www.mattdm.org/icebreaker/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-*
-*/
+ * IceBreaker
+ * Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
+ * Copyright (c) 2000-2020 Enrico Tassi <gareuselesinge@infinito.it>
+ * Copyright (c) 2026 Jean-Baptiste Langlois
+ *
+ * Original game by Matthew Miller.
+ * Nintendo 3DS port by Jean-Baptiste Langlois (2026).
+ *
+ * <http://www.mattdm.org/icebreaker/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see <https://www.gnu.org/licenses/>.
+ */
 
-#include <SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "icebreaker.h"
-#include "globals.h"
+#include "game.h"
 #include "hiscore.h"
-#include "lock.h"
+#include "text.h"
+#include "themes.h"
 
-char hiscorename[HISCORENUM][50];
-long hiscoreval[HISCORENUM];
+static HighScore hiscore[HISCORENUM];
+static char username[50];
 
-static char temphiscorename[HISCORENUM+1][50]; //used for sorting
-static long temphiscoreval[HISCORENUM+1];
-
-// used if we can't get write access to the high score file immediately
-static char delayedhiscorename[HISCORENUM+1][50]; 
-static long delayedhiscoreval[HISCORENUM+1];
-
-static int hiscore_cmpscore(int * a, int * b);
-static void hiscore_sort(char hiname[HISCORENUM][50],long hival[HISCORENUM],char * username, long score);
-static void hiscore_writes(char * username, long thisgamescore);
-static void hiscore_adddelayed(char* username,long finalscore);
-
-void hiscore_inits()
-{
-	int i;
-	hiscore_reads();
-
-	// zero out the just-in-case array
-	for (i=0;i<HISCORENUM;i++)
-	{
-		delayedhiscoreval[i]=0;
-	}
+static int hiscore_cmpscore(const void *a, const void *b) {
+    long x = ((const HighScore *)a)->score;
+    long y = ((const HighScore *)b)->score;
+    return (x < y) - (x > y);
 }
 
-void hiscore_reads()
-{
+void hiscore_read(void) {
 	FILE *hiscorefile;
 	char linebuf[80];
-	char filename[274]; // fix -- use defined OS constant
-
-	int arrayindex[HISCORENUM];
-	int i;
-
-	// fill the "helper" array. 
-	for (i=0;i<HISCORENUM;i++)
-		arrayindex[i]=i;
-		
+	char filename[274];
 
 	// make sure all entries are zeroed out to start.
-	for (i=0;i<HISCORENUM;i++)
+	for (int i=0;i<HISCORENUM;i++)
 	{
-		snprintf(temphiscorename[i],7,"Nobody");
-		temphiscoreval[i]=100; //100 is better than 0. :)
+		snprintf(hiscore[i].name,7,"Nobody");
+		hiscore[i].score=100; //100 is better than 0. :)
 	}
 
-	snprintf(filename,274,"%s/%s",homedir,HISCOREFILE);
+	snprintf(filename,274,"%s",HISCOREFILE);
 
 	hiscorefile=fopen(filename,"r");
-	if (hiscorefile==NULL)
-	{
-		// It's writing we need to worry about, really, so don't
-		// complain here.
-		//fprintf(stderr,"Can't read high score file; continuing anyway.\nYou may want to ask your sysadmin to make sure this program can access\n " homedir "/" HISCOREFILE "\n");
-	}
-	else
-	{
-		for (i=0;i<HISCORENUM;i++)
+	if (hiscorefile) {
+		for (int i=0;i<HISCORENUM;i++)
 		{
 			if (fgets(linebuf,80,hiscorefile))
 			{
-				sscanf(linebuf,"%49s %30ld",temphiscorename[i],&temphiscoreval[i]);
+				sscanf(linebuf,"%49s %30ld",hiscore[i].name,&hiscore[i].score);
 			}
 		}
 		fclose(hiscorefile);
 		
-		// sort arrayindex based on the corresponding hiscoreval
-		// really, the array should already be sorted. but you never know.	
-		qsort(arrayindex, HISCORENUM, sizeof(int), (int (*)(const void*,const void*))hiscore_cmpscore);
-
+		qsort(hiscore, HISCORENUM, sizeof(hiscore[0]), hiscore_cmpscore);
+	} else {
+		printf("Can't open %s for reading\n", filename);
 	}
-	
-	// ok, so now, we can copy things over in the proper sorted order
-	for (i=0;i<HISCORENUM;i++)
-	{
-		snprintf(hiscorename[i],50,"%s",temphiscorename[arrayindex[i]]);
-		hiscoreval[i]=temphiscoreval[arrayindex[i]];
-	}
-
 }
 
-
-int hiscore_check(long thisgamescore)
-{
-	// need to re-read from disk in case another user has obtained
-	// a better score in the meantime...
-	hiscore_reads();
+bool hiscore_check_high(long thisgamescore) {
 	// check to see if score is better than the lowest high score
-	return (thisgamescore>hiscoreval[HISCORENUM-1]);
+	return (thisgamescore>hiscore[HISCORENUM - 1].score);
 }
 
-int hiscore_add(char* username, long finalscore, int candelay)
-{
-	int gotlock=false;
-	int rc=-1;
-	FILE_DESC filelock;
-	char filename[274]; // fix -- use defined OS constant
-	
-	snprintf(filename,274,"%s/%s",homedir,HISCORELOCKFILE);
-
-	filelock = openlockfile(filename);
-	if (filelock == INVALID_FILE_DESC)
-	{
-		 fprintf(stderr,"Can't access lock file -- this means we can't save the high scores.\n"
-	 	                "You may want to ask your sysadmin to make sure this program can write to\n"
-		                "<%s>.\n",filename);
+HighScore* hiscore_get(int id) {
+	if (id < 0 || id >= HISCORENUM) {
+		return NULL;
 	}
-	else
-	{
-		gotlock = lock(filelock);
-		if (!gotlock)
-		{
-			if (hiscore_check(finalscore))
-				hiscore_writes(username,finalscore);
-			else
-				rc=0;
-
-			gotlock=lock_un(filelock);
-
-			if (gotlock)
-			{
-				fprintf(stderr,"Warning: something very strange has happened. This isn't good.\n"
-				               "Can't lock_un <%s>!\n",filename);
-		        }     
-		}
-		else if (candelay)
-		{
-			hiscore_adddelayed(username,finalscore);
-		}
-		else
-		{
-			fprintf(stderr,"Someone is holding onto the lock file and we can't save high scores, so\n"
-			               "despite our best efforts, %s's high score of %ld was dropped.\n",username,finalscore);
-		}	
-
-		lock_closefile(filelock);
-	}
-
-	return rc;
-
+	return &hiscore[id];
 }
 
-void hiscore_writedelayeds()
-{
-	int i;
+void hiscore_add(const char* name, long score) {
+    HighScore tmp[HISCORENUM + 1];
 
-	for (i=0;i<HISCORENUM;i++)
-	{
-		if(delayedhiscoreval[i]!=0) // fix -- we're done if this happens, right? 
-		{
-			if(!hiscore_add(delayedhiscorename[i],delayedhiscoreval[i],false))
-			{
-				// I think it's let better to let people figure this
-				// out by themselves than to clutter up stderr -- they
-				// can just compare and see that the score was beaten.
-				//fprintf(stderr,"Sorry: %s %ld was a high score once, but now it's been beaten.\n",delayedhiscorename[i],delayedhiscoreval[i]);
-			}
-			else
-			{
-				// pointless at the end of the game, but needed if this function
-				// were to be called midgame.
-				delayedhiscoreval[i]=0;
-			}
-		
-		}
-	}
+    memcpy(tmp, hiscore, sizeof(hiscore));
+    snprintf(tmp[HISCORENUM].name,50,"%s",name);
+    tmp[HISCORENUM].score = score;
+
+    qsort(tmp, HISCORENUM + 1, sizeof(tmp[0]), hiscore_cmpscore);
+
+    memcpy(hiscore, tmp, sizeof(hiscore));
 }
 
-void hiscore_sort(char hiname[HISCORENUM][50],long hival[HISCORENUM],char * username, long score)
-{
-	int arrayindex[HISCORENUM+1]; // note the +1 -- we're including the new score
-	int i;
-
-	// make sure the temp array contains the right data
-	for (i=0;i<HISCORENUM;i++)
-	{
-		snprintf(temphiscorename[i],50,"%s",hiname[i]);
-		temphiscoreval[i]=hival[i];
-	}
-	
-	// and toss in the new data 
-	//(this is why these arrays are size HISCORENUM+1)
-	snprintf(temphiscorename[HISCORENUM],50,"%s",username);
-	temphiscoreval[HISCORENUM]=score;
-
-	// fill the "helper" array. 
-	for (i=0;i<HISCORENUM+1;i++)
-		arrayindex[i]=i;
-
-	
-	// ok, now sort those 
-	qsort(arrayindex, HISCORENUM+1, sizeof(int), (int (*)(const void*,const void*))hiscore_cmpscore);
-
-	// and take the top ones back.
-	for (i=0;i<HISCORENUM;i++)
-	{
-		snprintf(hiname[i],50,"%s",temphiscorename[arrayindex[i]]); 
-		hival[i]=temphiscoreval[arrayindex[i]];
-	}
-}
-
-void hiscore_writes(char * username, long thisgamescore)
-{
+void hiscore_write(void) {
 	FILE *hiscorefile;
-	char filename[274]; // fix -- use defined OS constant
-	int i;
+	char filename[274];
 
-	hiscore_sort(hiscorename,hiscoreval,username,thisgamescore);
-
-	snprintf(filename,274,"%s/%s",homedir,HISCOREFILE);
+	snprintf(filename,274,"%s",HISCOREFILE);
 	
 	hiscorefile=fopen(filename,"w");
-	if (hiscorefile==NULL)
-	{
-		fprintf(stderr,"Can't save high scores."
-		               "You may want to ask your sysadmin to make sure this program can write to\n"
-	                       "<%s>.\n",filename);
+	if (!hiscorefile) {
+		printf("Can't open %s for writing\n", filename);
+		return;
 	}
-	else
-	{
-		// FIX -- make this go so people can have spaces in their names
-		//for (i=0;hiscorename[i]!='\0';i++)
-		//      if (hiscorename[i]==' ') hiscorename[i]='_';
-	
-		for (i=0;i<HISCORENUM;i++)
-		{
-			fprintf(hiscorefile,"%s %ld\n",hiscorename[i],hiscoreval[i]);
-		}
-			
-		fclose(hiscorefile);
+	// FIX -- make this go so people can have spaces in their names
+	//for (i=0;hiscorename[i]!='\0';i++)
+	//      if (hiscorename[i]==' ') hiscorename[i]='_';
+
+	for (int i=0;i<HISCORENUM;i++) {
+		fprintf(hiscorefile,"%s %ld\n",hiscore[i].name,hiscore[i].score);
 	}
+
+	fclose(hiscorefile);
+}
+static bool system_get_username(char *name, size_t size) {
+    if (size == 0) return false;
+    name[0] = '\0';
+
+    u8 block[0x1C];
+    u16 username[12] = {0};
+
+    if (R_FAILED(cfguInit())) return false;
+    Result rc = CFGU_GetConfigInfoBlk2(sizeof(block), 0x000A0000, block);
+    cfguExit();
+    if (R_FAILED(rc)) return false;
+
+    memcpy(username, block, 0x16);
+
+    ssize_t len = utf16_to_utf8((u8 *)name, username, size - 1);
+    if (len < 0 || (size_t)len >= size) {
+        name[0] = '\0';
+        return false;
+    }
+
+    name[len] = '\0';
+    return len > 0;
 }
 
-void hiscore_adddelayed(char* username,long finalscore)
-{
-	// int i;
+static bool hiscore_prompt_name(void) {
+    SwkbdState keyboard;
 
-	hiscore_sort(delayedhiscorename,delayedhiscoreval,username,finalscore);
+    swkbdInit(&keyboard, SWKBD_TYPE_NORMAL, 2, 12);
+    swkbdSetHintText(&keyboard, "Enter your name");
+    swkbdSetValidation(&keyboard, SWKBD_NOTEMPTY_NOTBLANK, 0, 0);
+    swkbdSetButton(&keyboard, SWKBD_BUTTON_LEFT, "Cancel", false);
+    swkbdSetButton(&keyboard, SWKBD_BUTTON_RIGHT, "OK", true);
 
-	//Uncomment for debugging
-	/*for (i=0;i<HISCORENUM;i++)
-	{
-		if(delayedhiscoreval[i] != 0)
-			printf("%2d : %s %ld\n",i,delayedhiscorename[i],delayedhiscoreval[i]);
-	} */             
+    if (swkbdInputText(&keyboard, username, sizeof(username)) != SWKBD_BUTTON_RIGHT) return false;
+
+    //hiscore_add(username, score);
+    return true;
 }
 
-int hiscore_cmpscore(int * a, int * b)
-{
-	return(temphiscoreval[*b] - temphiscoreval[*a]);
+void hiscore_dialog_init(void) {
+	system_get_username(username, sizeof(username));
 }
 
+void hiscore_dialog_draw(void) {
+	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.4f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
+	C2D_DrawRectSolid(50.0f, 50.0f, 0.41f, 220.0f, 140.0f, theme.color.menuhighlight);
+	C2D_DrawRectSolid(52.0f, 52.0f, 0.42f, 216.0f, 136.0f, theme.color.background);
+	text_put(60, 60, 0.43f, 2, theme.color.normaltext, "NEW TOP SCORE!");
+	text_put(60, 80, 0.43f, 2, theme.color.normaltext, "ENTER YOUR NAME:");
+	C2D_DrawRectSolid(60.0f, 96.0f, 0.43f, 200.0f, 28.0f, theme.color.textentrybox);
+	text_put(70, 100, 0.44f, 4, theme.color.textentrytext, username);
+	C2D_DrawRectSolid(210.0f, 160.0f, 0.43f, 50.0f, 18.0f, theme.color.menuhighlight);
+	text_put(220, 162, 0.44f, 3, theme.color.background, "OK");
+}
 
+bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats) {
+	if (keys & KEY_A) {
+		hiscore_add(username, stats->score);
+		hiscore_write();
+		return true;
+	}
+
+	if (!(keys & KEY_TOUCH)) {
+		return false;
+	}
+	if (touch.px >= 60 && touch.px <= 160 && touch.py >= 100 && touch.py <= 120) {
+		hiscore_prompt_name();
+	}
+	if (touch.px >= 210 && touch.px <= 260 && touch.py >= 160 && touch.py <= 178) {
+		hiscore_add(username, stats->score);
+		hiscore_write();
+		return true;
+	}
+	return false;
+}

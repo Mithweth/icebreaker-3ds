@@ -1,120 +1,144 @@
 /*
-* IceBreaker
-* Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
-*
-* <http://www.mattdm.org/icebreaker/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the Free
-* Software Foundation; either version 2 of the License, or (at your option)
-* any later version.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-*
-*/
+ * IceBreaker - Nintendo 3DS port
+ * Copyright (c) 2026 Jean-Baptiste Langlois
+ *
+ * This file is part of IceBreaker.
+ *
+ * <https://github.com/Mithweth/icebreaker-3ds>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, see <https://www.gnu.org/licenses/>.
+ */
 
-#include <SDL.h>
-#include <SDL_mixer.h>
-#include "icebreaker.h"
+#include <3ds.h>
+#include <stdio.h>
+#include <string.h>
 #include "sound.h"
-#include "options.h"
 
+typedef struct {
+    s16 *sample;
+    ndspWaveBuf wavebuf;
+} Sfx;
 
-static Mix_Chunk *sndouch = NULL;
-static Mix_Chunk *sndbreak = NULL;
+static Sfx sounds[SNDCOUNT];
+static bool initialized;
 
+bool sound_load(Sound id, const char *soundname) {
+    if (!initialized) {
+    	return false;
+    }
+    char filename[128];
+    snprintf(filename, sizeof(filename), "romfs:/sounds/%s.raw", soundname);
+    FILE *f = fopen(filename, "rb");
+    if (!f) {
+        printf("File not found: %s\n", filename);
+        return false;
+    }
 
-void sound_init()
-{
-	gameflags.soundsystemworks=false;
+    if (fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        return false;
+    }
 
-	if (commandline.sound==SOUNDOFF)
+    long end = ftell(f);
+    if (end <= 0 || end % sizeof(s16) != 0) {
+        printf("Invalid sound file: %s\n", filename);
+        fclose(f);
+        return false;
+    }
+
+    size_t size = (size_t)end;
+    rewind(f);
+
+    s16 *sample = linearAlloc(size);
+    if (!sample) {
+        fclose(f);
+        return false;
+    }
+
+    if (fread(sample, 1, size, f) != size) {
+        fclose(f);
+        linearFree(sample);
+        return false;
+    }
+    fclose(f);
+
+    DSP_FlushDataCache(sample, size);
+
+    Sfx *sfx = &sounds[id];
+
+    ndspChnReset(id);
+    if (sfx->sample) linearFree(sfx->sample);
+
+    memset(&sfx->wavebuf, 0, sizeof(sfx->wavebuf));
+    sfx->sample = sample;
+    sfx->wavebuf.data_pcm16 = sample;
+    sfx->wavebuf.nsamples = size / sizeof(s16);
+    sfx->wavebuf.looping = false;
+
+    return true;
+}
+
+bool sound_play(Sound id) {
+    if (!initialized) {
+    	return false;
+    }
+
+    if (!sounds[id].sample) {
+    	return false;
+    }
+
+    ndspChnReset(id);
+    ndspChnSetInterp(id, NDSP_INTERP_LINEAR);
+    ndspChnSetRate(id, 22050.0f);
+    ndspChnSetFormat(id, NDSP_FORMAT_MONO_PCM16);
+
+    float mix[12] = {0};
+    mix[0] = 1.0f;
+    mix[1] = 1.0f;
+
+    ndspChnSetMix(id, mix);
+    ndspChnWaveBufAdd(id, &sounds[id].wavebuf);
+
+    return true;
+}
+
+void sound_init(void) {
+	if (R_FAILED(ndspInit())) {
+		printf("Cannot initialize audio (missing dspfirm.cdc?)");
 		return;
-
-	if (SDL_InitSubSystem(SDL_INIT_AUDIO))
-	{
-		fprintf(stderr, "Can't start sound subsystem: %s.\nContinuing without it.\n", SDL_GetError());
 	}
-	else if (Mix_OpenAudio(22050, AUDIO_U8, 2, 1024))
-	{
-		fprintf(stderr, "Can't open audio: %s.\nContinuing without sound support.\n", SDL_GetError());
-		fprintf(stderr, "You may see some other errors from system sound libraries. Ignore them.\n");
-	}
-	else
-	{
-		gameflags.soundsystemworks=true;
-		sound_loads(NULL,DATAPREFIX "/" SNDFILEOUCH,DATAPREFIX "/" SNDFILEBREAK);
-	}
+	initialized = true;
 }
 
-int sound_loads(char* themename, char* soundouchfile, char* soundcrashfile)
-{
-	int rc=0;
-
-	if (gameflags.soundsystemworks==false)
-		return 0;
-
-	if (soundouchfile!=NULL)
-	{
-		while (Mix_Playing(-1));
-		if (sndouch) { Mix_FreeChunk(sndouch); sndouch = NULL; }
-		if ( (sndouch=Mix_LoadWAV(soundouchfile)) == NULL)
-		{
-			fprintf(stderr, "Error loading " DATAPREFIX "/" SNDFILEOUCH "\n%s\n", SDL_GetError());
-			rc--;
-		}
+void sound_reset(void) {
+	if (!initialized) {
+		return;
 	}
-
-	if (soundcrashfile!=NULL)
-	{
-		while (Mix_Playing(-1));
-		if (sndbreak) { Mix_FreeChunk(sndbreak); sndbreak = NULL; }
-		if ( (sndbreak=Mix_LoadWAV(soundcrashfile)) == NULL)
-		{
-			fprintf(stderr, "Error loading " DATAPREFIX "/" SNDFILEBREAK "\n%s\n", SDL_GetError()); // fix -- is "break" or "crash" a better generic term?
-			rc--;
-		}
-	}
-	
-	return rc;
-}
-void sound_quit()
-{
-	while (Mix_Playing(-1)); 
-	
-	if (sndouch) { Mix_FreeChunk(sndouch); sndouch = NULL; }
-	if (sndbreak) { Mix_FreeChunk(sndbreak); sndbreak = NULL; }
-	
-	if (gameflags.soundsystemworks) Mix_CloseAudio();	
+    for (int i = 0; i < SNDCOUNT; i++) {
+        ndspChnReset(i);
+        if (sounds[i].sample) {
+        	linearFree(sounds[i].sample);
+        }
+        memset(&sounds[i], 0, sizeof(sounds[i]));
+    }
 }
 
-#define MAXBREAKSOUNDOVERLAP 30
-void sound_play(SoundSample s)
-{
-	static Uint32 lastplayedbreak=0;
-
-	if (gameflags.soundsystemworks && options.sound==SOUNDON)
-	{
-		switch (s)
-		{
-			case SNDOUCH:
-				Mix_PlayChannel(-1, sndouch, 0);
-			break;
-			case SNDBREAK:
-				if (SDL_GetTicks()-lastplayedbreak>=MAXBREAKSOUNDOVERLAP)
-				{ // fix -- this is on the right track, but it'd be better
-				  //        to some how schedule the sound to be played later.
-					lastplayedbreak=SDL_GetTicks();
-					Mix_PlayChannel(-1, sndbreak, 0);
-				}
-			break;
-		}
-	}
+void sound_close(void) {
+    if (!initialized) {
+    	return;
+    }
+    sound_reset();
+    ndspExit();
+    initialized = false;
 }

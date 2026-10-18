@@ -1,3 +1,5 @@
+# Themes
+
 IceBreaker themes are simple to create. They're are definined in text files
 with the extension .ibt (that's _I_ce_B_reaker _T_heme) in the IceBreaker
 data directory. The filename is the name of the theme itself, which must be
@@ -21,7 +23,7 @@ currently one exception -- SpriteMirrorBitmap, which I'll get to in a bit.)
 
 The default theme is "linux", and the file linux.ibt looks approximately
 like this:
-
+```
   Background              0   64  128
   NormalText            255  255  255
   BoardFillMin          224  224  224
@@ -37,11 +39,13 @@ like this:
   TextentryBox            0    0    0
   TextentryText         255  255  255
   CopyrightText         192  192  192
-  SpriteTransparent     255    0    0
-  SpriteBitmap          penguin.bmp
-  SoundOuch             ouch.wav
-  SoundCrash            crash.wav
-
+  ProgressbarOutline  180 225 245
+  ProgressbarInner    20  50  75
+  ProgressbarFill     100  200  240
+  SpriteBitmap          penguin
+  SoundOuch             ouch
+  SoundCrash            crash
+```
 The names should mostly be self-explanatory. If something is unclear, let me
 know, and I'll either change the name in a future version or write better
 documentation here. A few things bear mentioning:
@@ -53,18 +57,12 @@ values will be randomly selected from the range given, but there's a twist
 you can produce grey or monotone backgrounds instead of having every theme
 look like the mutant love child of Rainbow Brite and the Swamp Thing.
 
-SpriteTransparent is the color value which will be treated as clear when
-drawing the bitmap. In the above example, the penguin.bmp has a bright red
-background, and since SpriteTransparent is set to the matching value, the
-background isn't shown.
-
-The bitmap file should be a 24-bit MS-Windows-style .bmp format. I know that
-this is Lame(tm) but the SDL library which IceBreaker uses understands this
-format natively, and so using it allows us to avoid having a whole extra
-library just to load some really tiny bitmaps. They should be 14x14, by the
-way. If you want, you can make them as small as 12x12, but that's basically
-treated as the top-left of 14x14, and support for that may vanish in a
-future version. (If you want smaller, just mask out most of the image.)
+The bitmap file should be a 24-bit .png format. Alpha is supported.
+They should be 14x14, by the way. If you want, you can make them as
+small as 12x12, but that's basically treated as the top-left of 14x14,
+and support for that may vanish in a future version.
+(If you want smaller, just mask out most of the image.)
+BTW, do not give the .png extension in the ibt file.
 
 Don't underestimate how hard it is to make a sprite image look good at such
 a tiny size. Making a theme which represents something in real life rather
@@ -72,18 +70,14 @@ than being abstract or iconic is a challenge. A future version of IceBreaker
 may allow you to include background and playing board graphics instead of
 just colors -- but don't hold your breath for that.
 
-In addition to SpriteBitmap, you may also set SpriteMirrorBitmap. If this
-tag exists, the given image will be used when the sprite is moving to the
-right, and the main SpriteBitmap when it's moving to the left. If you leave
-out this tag, there will be no warning -- the main bitmap will be used for
-both. In fact, leaving it out is the best thing to do if you don't want your
-image to flip, because it saves, like, 500 bytes of RAM over defining the
-same image twice. And we all know how important those few bytes of RAM are
-these days, right?
-
 The sound files are 8 bit mono PCM at 22050. They should also be really
 short -- under a second. This'll mean the total size will be easily less
 than 30k -- if it's not, something's not right.
+They are expected to be converted as RAW files :
+```
+ffmpeg -i "<wav file>" -ac 1 -ar 22050 -f s16le "assets/sounds/<raw file>"
+```
+Do not give the .png extension in the ibt file.
 
 If you do produce a good theme, let me know -- send it to 
 <mattdm@mattdm.org>, and I'll consider including it with the main
