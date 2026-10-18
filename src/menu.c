@@ -45,8 +45,6 @@ static DialogType dialog_type;
 static bool yes_selected;
 static const char *logo_chars = "ICEBRAK";
 static size_t selected;
-static int hiscore_scroll;
-static int hiscore_direction;
 static MenuEntry choices[] = {
 	{"NEW GAME", MENU_NEW_GAME},
 	{"DIFFICULTY", MENU_DIFFICULTY},
@@ -138,6 +136,8 @@ static void progress_bar_draw(int pct) {
 void menu_init(void) {
 	selected = 0;
 	dialog_type = DIALOG_NORMAL;
+	themes_selected_reset();
+	options_difficulty_selected_reset();
 }
 
 void menu_bottom_draw(bool pause) {
@@ -186,7 +186,7 @@ void menu_draw(bool pause, const GameStats *stats) {
 				text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, options_difficulty_serialize(options_difficulty_selected()));
 			}
 			if (choices[i].choice == MENU_THEME) {
-				text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, themes_current_name());
+				text_rput(340, 61 + 25 * i, 0.4f, 3, option_color, themes_selected_name());
 			}
 		}
 		break;
@@ -279,8 +279,6 @@ bool menu_update(u32 keys) {
 				break;
 			case MENU_HIGHSCORES:
 				dialog_type = DIALOG_HIGHSCORES;
-				hiscore_scroll = 0;
-				hiscore_direction = 1;
 				break;
 			case MENU_HELP:
 				dialog_type = DIALOG_HELP;
@@ -307,6 +305,7 @@ bool menu_update(u32 keys) {
 				game_start();
 				return true;
 			}
+			options_difficulty_selected_reset();
 			dialog_type = DIALOG_NORMAL;
 		}
 		break;

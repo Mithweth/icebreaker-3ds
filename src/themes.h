@@ -68,3 +68,5 @@ void themes_next(void);
 void themes_prev(void);
 void themes_apply(void);
 const char* themes_current_name(void);
+const char* themes_selected_name(void);
+void themes_selected_reset(void);

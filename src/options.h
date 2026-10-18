@@ -38,5 +38,6 @@ GameDifficultyType options_difficulty_current(void);
 GameDifficultyType options_difficulty_selected(void);
 const char* options_difficulty_serialize(GameDifficultyType t);
 GameDifficultyType options_difficulty_deserialize(const char* s);
+void options_difficulty_selected_reset(void);
 bool options_write(void);
 bool options_read(void);
