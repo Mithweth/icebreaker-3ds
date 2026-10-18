@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "game.h"
 #include "hiscore.h"
 #include "text.h"
@@ -180,7 +181,7 @@ bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats
 	if (!(keys & KEY_TOUCH)) {
 		return false;
 	}
-	if (touch.px >= 60 && touch.px <= 160 && touch.py >= 100 && touch.py <= 120) {
+	if (touch.px >= 60 && touch.px <= 260 && touch.py >= 96 && touch.py <= 124) {
 		hiscore_prompt_name();
 	}
 	if (touch.px >= 210 && touch.px <= 260 && touch.py >= 160 && touch.py <= 178) {

@@ -49,6 +49,10 @@ void options_difficulty_prev(void) {
     }
 }
 
+void options_difficulty_selected_reset(void) {
+	selected_difficulty = options.difficulty;
+}
+
 void options_difficulty_apply(void) {
     options.difficulty = selected_difficulty;
     printf("selected difficulty: %s\n", options_difficulty_serialize(options.difficulty));
@@ -93,9 +97,9 @@ GameDifficultyType options_difficulty_deserialize(const char* s) {
 	return NORMAL;
 }
 
-static void options_setdefault(void) {
+static bool options_setdefault(void) {
 	options_difficulty_set(NORMAL);
-	themes_settheme("linux");
+	return themes_settheme("linux");
 }
 
 bool options_read(void) {
@@ -103,10 +107,12 @@ bool options_read(void) {
 	char linebuf[50];
 	char optbuf[21];
 	char valbuf[74];
-	char scanformat[20];
-
-	options_setdefault();
 	
+	if (!options_setdefault()) {
+		printf("Error: Cannot load default theme: linux\n");
+		return false;
+	}
+
 	optionfile=fopen(OPTIONFILE,"r");
 	if (!optionfile) {
 		printf("Can't open %s for reading\n", OPTIONFILE);
@@ -118,12 +124,10 @@ bool options_read(void) {
 		}
 		for (int i=0;i<50;i++)
 		{
-			if (linebuf[i]=='\0') break;
+			if (linebuf[i]=='\0' || linebuf[i]==' ' || linebuf[i]=='\t') break;
 			linebuf[i]=tolower(linebuf[i]);
 		}
-		
-		sprintf(scanformat,"%%20s %%%ds",74);	
-		if (sscanf(linebuf,"%20s %10s",optbuf,valbuf)==2)
+		if (sscanf(linebuf,"%20s %73s",optbuf,valbuf)==2)
 		{
 			if (!strcmp(optbuf,"difficulty"))
 			{
@@ -131,11 +135,15 @@ bool options_read(void) {
 			}
 			else if (!strcmp(optbuf,"theme"))
 			{
-				themes_settheme(valbuf);
+				if (!themes_settheme(valbuf)) {
+					printf("Error: Cannot load theme: %s\n", valbuf);
+					fclose(optionfile);
+					return false;
+				}
 			}
 		}
 	}
-	
+
 	fclose(optionfile);
 	return true;
 }
@@ -149,21 +157,19 @@ bool options_write(void) {
 	}
 
 	fprintf(optionfile,"# Icebreaker config file 1.0\n#\n");
-	fprintf(optionfile,"# Separate keywords from values by whitespace. Not case sensitive.\n#\n");
+	fprintf(optionfile,"# Separate keywords from values by whitespace. Values are case sensitive.\n#\n");
 	fprintf(optionfile,"# %s will be overwritten automatically.\n#\n", OPTIONFILE);
 
 	fprintf(optionfile,"\n# Normal is the best way to play. Easy is okay to get started,\n");
 	fprintf(optionfile,"# but you won't get very high scores. Hard is for those who really\n");
 	fprintf(optionfile,"# want a challenge, but scores only slightly higher than normal.\n");
-	
 
 	if (options.difficulty==NORMAL)
-		fprintf(optionfile,"Difficulty Normal\n");
+		fprintf(optionfile,"Difficulty normal\n");
 	else if (options.difficulty==HARD)
-		fprintf(optionfile,"Difficulty Hard\n");
+		fprintf(optionfile,"Difficulty hard\n");
 	else if (options.difficulty==EASY)
-		fprintf(optionfile,"Difficulty Easy\n");
-
+		fprintf(optionfile,"Difficulty easy\n");
 
 	fprintf(optionfile,"\n# Themes provide an easy way to select (or tweak!) the appearance\n");
 	fprintf(optionfile,"# and sound of the game. Select from .ibt files in the game data\n");

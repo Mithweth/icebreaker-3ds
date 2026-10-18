@@ -38,6 +38,7 @@ Theme theme;
 static char* themes[MAX_THEMES];
 static size_t theme_count;
 static size_t current_theme;
+static size_t selected_theme;
 
 static int alphasortstringarray(const void *a, const void *b) {
     return strcmp(*(const char *const *)a, *(const char *const *)b);
@@ -82,6 +83,7 @@ bool themes_settheme(const char* themename) {
 	for(size_t i = 0; i < theme_count; i++) {
 		if (strcmp(themes[i], themename) == 0) {
 			current_theme = i;
+			selected_theme = i;
 		}
 	}
 	FILE* themefile;
@@ -94,10 +96,7 @@ bool themes_settheme(const char* themename) {
 	ThemeColorsType foundcolor;
 	
 	themes_setdefaultcolors();
-	if (theme.spriteimage.tex)
-	{
-		theme.spriteimage=(C2D_Image){0};
-	}
+	theme.spriteimage=(C2D_Image){0};
 	
 	foundcolor.background      = 0;
 	foundcolor.normaltext      = 0;
@@ -265,10 +264,14 @@ bool themes_settheme(const char* themename) {
 		}
 		else if (sscanf(linebuf,"%20s %255s",optbuf,valbuf)==2)
 		{
-			//printf("S: %s = %s\n",optbuf,valbuf);
 			if (!strcmp(optbuf,"spritebitmap"))
 			{
 				theme.spriteimage=gfxmap_get_image(valbuf);
+				if (!theme.spriteimage.tex) {
+					printf("Error while loading sprite: No image found: %s", valbuf);
+					fclose(themefile);
+					return false;
+				}
 			}
 			else if (!strcmp(optbuf,"soundouch"))
 			{
@@ -344,9 +347,6 @@ bool themes_settheme(const char* themename) {
 		printf("Warning: max blue value less than min value in theme %s\n",themename);
 	}
 	
-	if (!theme.spriteimage.tex) {
-		return false;
-	}
 	printf("theme loaded successfully: %s\n", themename);
 	return true;
 }
@@ -358,6 +358,7 @@ bool themes_load(const char *directory) {
     for (size_t i = 0; i < theme_count; i++) free(themes[i]);
     theme_count = 0;
     current_theme = 0;
+    selected_theme = 0;
 
     struct dirent *entry;
     while ((entry = readdir(dir))) {
@@ -393,9 +394,9 @@ void themes_next(void) {
 	if (theme_count == 0) {
 		return;
 	}
-	current_theme++;
-	if (current_theme == theme_count) {
-		current_theme = 0;
+	selected_theme++;
+	if (selected_theme == theme_count) {
+		selected_theme = 0;
 	}
 }
 
@@ -403,17 +404,26 @@ void themes_prev(void) {
 	if (theme_count == 0) {
 		return;
 	}
-	if (current_theme == 0) {
-		current_theme = theme_count - 1;
+	if (selected_theme == 0) {
+		selected_theme = theme_count - 1;
 	} else {
-		current_theme--;
+		selected_theme--;
 	}
 }
 
 void themes_apply(void) {
+	current_theme = selected_theme;
 	themes_settheme(themes[current_theme]);
 }
 
 const char* themes_current_name(void) {
 	return themes[current_theme];
+}
+
+const char* themes_selected_name(void) {
+	return themes[selected_theme];
+}
+
+void themes_selected_reset(void) {
+	selected_theme = current_theme;
 }

@@ -256,9 +256,9 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 
 		stats->clearbonus=0;
 		// bonuses for clearing lots
-		if (stats->clear>PERCENTBONUS)
+		if (stats->clear>percentbonus)
 			stats->clearbonus+=(int)((stats->clear-percentbonus)*bonusmod);
-		if (stats->clear>PERCENTEXTRABONUS)
+		if (stats->clear>percentextrabonus)
 			stats->clearbonus+=(int)((stats->clear-percentextrabonus)*(stats->clear-percentextrabonus)*bonusmod);
 			
 		// bonuses for leftover stats->lives
