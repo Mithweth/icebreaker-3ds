@@ -40,9 +40,11 @@
 typedef enum { DIALOG_NORMAL, DIALOG_CONFIRM, DIALOG_HIGHSCORES, DIALOG_HELP } DialogType;
 typedef enum {
 	MENU_NEW_GAME,
+	MENU_OPTIONS,
 	MENU_LANGUAGE,
 	MENU_DIFFICULTY,
 	MENU_THEME,
+	MENU_BACK,
 	MENU_HIGHSCORES,
 	MENU_HELP,
 } MenuChoice;
@@ -56,14 +58,19 @@ static DialogType dialog_type;
 static bool yes_selected;
 static const char *logo_chars = "ICEBRAK";
 static size_t selected;
+static bool options_selected;
 
-static MenuEntry choices[] = {
+static MenuEntry main_menu[] = {
 	{"MENU_NEW_GAME", MENU_NEW_GAME},
+	{"MENU_OPTIONS", MENU_OPTIONS},
+	{"MENU_HIGH_SCORES", MENU_HIGHSCORES},
+	{"MENU_HELP", MENU_HELP},
+};
+static MenuEntry options_menu[] = {
 	{"MENU_LANGUAGE", MENU_LANGUAGE},
 	{"MENU_DIFFICULTY", MENU_DIFFICULTY},
 	{"MENU_THEME", MENU_THEME},
-	{"MENU_HIGH_SCORES", MENU_HIGHSCORES},
-	{"MENU_HELP", MENU_HELP},
+	{"MENU_BACK", MENU_BACK},
 };
 static const u8 logo_glyphs[][7] = {
 	{31,  4,  4,  4,  4,  4, 31}, // I
@@ -163,21 +170,24 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		flying_sprite_draw(parallax);
 		return;
 	}
-	C2D_DrawRectSolid(50.0f, 40.0f, 0.3f, 300.0f, 155.0f, theme.color.menuhighlight);
-	C2D_DrawRectSolid(52.0f, 42.0f, 0.31f, 296.0f, 151.0f, theme.color.background);
 	switch(dialog_type) {
 	case DIALOG_NORMAL:
-		for(size_t i = 0; i < sizeof(choices) / sizeof(choices[0]); i++) {
+		const MenuEntry *choices = options_selected ? options_menu : main_menu;
+		size_t count = options_selected ? sizeof(options_menu) / sizeof(options_menu[0]) : sizeof(main_menu) / sizeof(main_menu[0]);
+		C2D_DrawRectSolid(50.0f, 50.0f, 0.3f, 300.0f, 25.0f * count + 5.0f, theme.color.menuhighlight);
+		C2D_DrawRectSolid(52.0f, 52.0f, 0.31f, 296.0f, 25.0f * count + 1.0f, theme.color.background);
+	
+		for(size_t i = 0; i < count; i++) {
 			u32 option_color = theme.color.normaltext;
 			if (selected == i) {
-				C2D_DrawRectSolid(50.0f, 46 + 24 * i, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
+				C2D_DrawRectSolid(50.0f, 56 + 24 * i, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
 				option_color = theme.color.background;
 			}
-			text_put(60, 51 + 24 * i, 0.4f, 3, option_color, lang_get(choices[i].label));
+			text_put(60, 61 + 24 * i, 0.4f, 3, option_color, lang_get(choices[i].label));
 			
 			switch(choices[i].choice) {
 				case MENU_LANGUAGE:
-					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, lang_selected_name());
+					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, lang_selected_name());
 					break;
 				case MENU_DIFFICULTY:
 					const char* difficulty;
@@ -192,10 +202,10 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 						difficulty = lang_get("DIFFICULTY_NORMAL");
 						break;
 					}
-					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, difficulty);
+					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, difficulty);
 					break;
 				case MENU_THEME:
-					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, themes_current_name());
+					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, themes_current_name());
 					break;
 				default:
 					break;
@@ -203,6 +213,8 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		}
 		break;
 	case DIALOG_CONFIRM:
+		C2D_DrawRectSolid(50.0f, 40.0f, 0.3f, 300.0f, 155.0f, theme.color.menuhighlight);
+		C2D_DrawRectSolid(52.0f, 42.0f, 0.31f, 296.0f, 151.0f, theme.color.background);
 		for(int i = 0; i < 3; i++) {
 			char restartkey[24];
 			snprintf(restartkey, 24, "QUESTION_RESTART_%d", i + 1);
@@ -222,6 +234,8 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		}
 		break;
 	case DIALOG_HIGHSCORES:
+		C2D_DrawRectSolid(50.0f, 40.0f, 0.3f, 300.0f, 155.0f, theme.color.menuhighlight);
+		C2D_DrawRectSolid(52.0f, 42.0f, 0.31f, 296.0f, 151.0f, theme.color.background);
 		text_cput(200, 50, 0.4f, 3, theme.color.bonusscrolltext, lang_get("MENU_HIGH_SCORES"));
 		for(int i = 0; i < HISCORENUM; i++) {
 			int y = 90 + 20 * i;
@@ -236,6 +250,8 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		}
 		break;
 	case DIALOG_HELP:
+		C2D_DrawRectSolid(50.0f, 40.0f, 0.3f, 300.0f, 155.0f, theme.color.menuhighlight);
+		C2D_DrawRectSolid(52.0f, 42.0f, 0.31f, 296.0f, 151.0f, theme.color.background);
 		for(int i = 0; i < 13; i++) {
 			char helpkey[24];
 			snprintf(helpkey, 24, "MENU_HELP_DETAIL_%d", i + 1);
@@ -255,14 +271,16 @@ bool menu_update(bool pause, u32 keys) {
 	}
 	switch(dialog_type) {
 	case DIALOG_NORMAL:
+		const MenuEntry *choices = options_selected ? options_menu : main_menu;
+		size_t count = options_selected ? sizeof(options_menu) / sizeof(options_menu[0]) : sizeof(main_menu) / sizeof(main_menu[0]);
 		if ((keys & KEY_UP) && (selected > 0)) {
 			selected--;
 		}
-		if ((keys & KEY_DOWN) && (selected < (sizeof(choices) / sizeof(choices[0])) - 1)) {
+		if ((keys & KEY_DOWN) && (selected < count - 1)) {
 			selected++;
 		}
 		if (keys & KEY_LEFT) {
-			switch(selected) {
+			switch(choices[selected].choice) {
 			case MENU_LANGUAGE:
 				lang_prev();
 				break;
@@ -278,7 +296,7 @@ bool menu_update(bool pause, u32 keys) {
 			}
 		}
 		if (keys & KEY_RIGHT) {
-			switch(selected) {
+			switch(choices[selected].choice) {
 			case MENU_LANGUAGE:
 				lang_next();
 				break;
@@ -294,7 +312,7 @@ bool menu_update(bool pause, u32 keys) {
 			}
 		}
 		if (keys & KEY_A) {
-			switch(selected) {
+			switch(choices[selected].choice) {
 			case MENU_NEW_GAME:
 				game_start();
 				break;
@@ -308,6 +326,14 @@ bool menu_update(bool pause, u32 keys) {
 					dialog_type = DIALOG_CONFIRM;
 					yes_selected = false;
 				}
+				break;
+			case MENU_OPTIONS:
+				options_selected = true;
+				selected = 0;
+				break;
+			case MENU_BACK:
+				options_selected = false;
+				selected = 0;
 				break;
 			case MENU_HIGHSCORES:
 				dialog_type = DIALOG_HIGHSCORES;
@@ -358,6 +384,7 @@ void menu_init(void) {
 	options_difficulty_selected_reset();
 	lang_selected_reset();
 	flying_sprite_init();
+	options_selected = false;
 }
 
 void menu_close(void) {
