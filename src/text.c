@@ -26,6 +26,7 @@
 #include <3ds.h>
 #include <citro2d.h>
 #include <string.h>
+#include <math.h>
 
 #include "text.h"
 
@@ -79,18 +80,22 @@ int text_getwidth(int size, const char *text) {
 	return width;
 }
 
-void text_put(int x, int y, float z, int size, u32 color, const char * text)
+// Updated the function to use float instead of int because the 3DS slider returns
+// a float values between 0.0f and 1.0f being rounded by integers when the slider
+// is less than 80%
+void text_put(float x, float y, float z, float size, u32 color, const char * text)
 {
-	int w,startx;
-	int recth = 1;
-	int rectw = 1;
+	float w, startx;
+	float recth = 1.0f;
+	float rectw = 1.0f;
 	
 	if (size>1)
 	{
-		recth=(int)(size / 2.0f + 0.5f);
-		rectw=(int)(size / 2.0f + 0.5f);
+		recth = floorf(size / 2.0f + 0.5f);
+		rectw = floorf(size / 2.0f + 0.5f);
 	}
-	startx=x;
+	startx = floorf(x + 0.5f);
+	y = floorf(y + 0.5f);
 	const unsigned char *p = (const unsigned char *)text;
 	while (*p) {
 		unsigned int c = text_next_char(&p);
@@ -105,7 +110,6 @@ void text_put(int x, int y, float z, int size, u32 color, const char * text)
 					if (*(letterdata[j]+i) != ' ') // hmm. maybe there's a better way to deal with spaces?
 					{
 						C2D_DrawRectSolid(startx+w, y+j*size, z, recth, rectw, color);
-   
 					}	
 				}
 				w+=size;
@@ -115,10 +119,10 @@ void text_put(int x, int y, float z, int size, u32 color, const char * text)
 	}
 }
 
-void text_rput(int x, int y, float z, int size, u32 color, const char * text) {
+void text_rput(float x, float y, float z, float size, u32 color, const char * text) {
 	text_put(x - text_getwidth(size,text), y, z, size, color, text);
 }
 
-void text_cput(int x, int y, float z, int size, u32 color, const char * text) {
+void text_cput(float x, float y, float z, float size, u32 color, const char * text) {
 	text_put(x - text_getwidth(size,text) / 2, y, z, size, color, text);
 }

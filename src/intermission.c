@@ -78,7 +78,7 @@ void intermission_init(const GameStats *stats) {
 }
 
 void intermission_draw(void) {
-	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.4f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
+	C2D_DrawRectSolid(0, 0, 0.4f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
 	text_put(first_line_x, first_line_y, 0.5f, first_line_size, theme.color.scorescrolltext, first_line_text);
 	text_put(second_line_x, second_line_y, 0.5f, second_line_size, second_line_color, second_line_text);
 }

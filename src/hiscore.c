@@ -160,7 +160,7 @@ void hiscore_dialog_init(void) {
 }
 
 void hiscore_dialog_draw(void) {
-	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.4f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
+	C2D_DrawRectSolid(0, 0, 0.4f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
 	C2D_DrawRectSolid(50.0f, 50.0f, 0.41f, 220.0f, 140.0f, theme.color.menuhighlight);
 	C2D_DrawRectSolid(52.0f, 52.0f, 0.42f, 216.0f, 136.0f, theme.color.background);
 	text_put(60, 60, 0.43f, 2, theme.color.normaltext, lang_get("HISCORE_NEW_HIGH"));

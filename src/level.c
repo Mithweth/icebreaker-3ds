@@ -25,12 +25,6 @@
 
 /* special thanks to Enrico for the grid coloring stuff for themes */
 
-// #include <SDL.h>
-// #include <stdio.h>
-
-// #include "icebreaker.h"
-// #include "cursor.h"
-// #include "penguin.h"
 #include <3ds.h>
 #include <stdlib.h>
 #include "game.h"
@@ -40,6 +34,7 @@
 #include "options.h"
 #include "themes.h"
 #include "sound.h"
+#include "flying_sprite.h"
 
 #define GESTURE_THRESHOLD 12
 #define FPS 60 // C3D_FRAME_SYNCDRAW locks the main loop to the 3DS refresh rate
@@ -64,9 +59,9 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 {
 	int x,y,xdif,ydif;
 
-	x=(((mousex-BORDERLEFT)/BLOCKWIDTH ) * BLOCKWIDTH ) +BORDERLEFT;
-	y=(((mousey-BORDERTOP)/BLOCKHEIGHT) * BLOCKHEIGHT) +BORDERTOP;
-	xdif=mousex-x; ydif=mousey-y;
+	x = mousex / BLOCKWIDTH * BLOCKWIDTH;
+	y = mousey / BLOCKHEIGHT * BLOCKHEIGHT;
+	xdif = mousex - x; ydif = mousey - y;
 
 	if (grid[x][y] == '*' || grid[mousex][mousey] == '*') 
 	{ // a little bit of grace if the player clicks directly on the penguin
@@ -92,7 +87,7 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 void level_init(GameStats *stats) {
 	grid_generate_colors();
 	grid_reset(' ');
-
+	flying_sprite_init();
 	scoremod=1.0f;
 	bonusmod=1.0f;
 	percentextrabonus=PERCENTEXTRABONUS-(stats->level-1)/5; // this needs to decrease, or else the bonus disintegrates as the space required to actually trap penguins increases
@@ -104,7 +99,6 @@ void level_init(GameStats *stats) {
 		penguincount = MAXPENGUINS;
 	}
 	stats->lives=stats->level+1;
-	//stats->currentscore = stats->basescore;
 	
 	switch(options_difficulty_current())
 	{
@@ -163,6 +157,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
         gesture_start = touch;
         gesture_last = touch;
         gesture_active = true;
+        flying_sprite_watch();
     }
 
     if (gesture_active && (hidKeysHeld() & KEY_TOUCH)) {
@@ -198,7 +193,9 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			
 		if (linedoneflag)
 		{
-			stats->clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
+
+			flying_sprite_capture();
+			stats->clear=(100-(grid_countcleared()*100/(WIDTH*HEIGHT)));
 			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
 			tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 		}
@@ -206,6 +203,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if (line1.dead) 
 		{
 			sound_play(SNDBREAK);
+			flying_sprite_death();
 			line_kill(&line1);
 			stats->lives--;
 			if (stats->lives<0) stats->lives=0;
@@ -226,7 +224,8 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 
 		if (linedoneflag)
 		{
-			stats->clear=(100-(grid_countcleared()*100/(PLAYWIDTH*PLAYHEIGHT)));
+			flying_sprite_capture();
+			stats->clear=(100-(grid_countcleared()*100/(WIDTH*HEIGHT)));
 			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
 			tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 		}
@@ -234,6 +233,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if (line2.dead)
 		{ 
 			sound_play(SNDBREAK);
+			flying_sprite_death();
 			line_kill(&line2);
 			stats->lives--;
 			if (stats->lives<0) stats->lives=0;
@@ -250,11 +250,13 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (stats->lives<=0) // game over
 	{
 		stats->dead = true;
+		flying_sprite_gameover();
 		done = true;
 		return true;
 	}
 	if (!line1.on && !line2.on && stats->clear>=PERCENTREQUIRED) // success!
 	{ 
+		flying_sprite_victory();
 		done = true;
 		stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
 

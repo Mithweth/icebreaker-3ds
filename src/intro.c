@@ -32,8 +32,8 @@
 #include "line.h"
 #include "themes.h"
 
-#define LXPOS(x) (BORDERLEFT+(BLOCKWIDTH*(x)))
-#define LYPOS(y) (BORDERTOP+(BLOCKHEIGHT*(y)))
+#define LXPOS(x) (BLOCKWIDTH * (x))
+#define LYPOS(y) (BLOCKHEIGHT * (y))
 
 static int letterstep;
 static bool linedone1=false;
@@ -282,7 +282,7 @@ bool intro_update(u32 keys, touchPosition touch) {
 				// an issue in the game, as lines aways stop on cell boundaries, but
 				// sometimes shows up in the intro. this is a kludge
 				// which should fix it.
-				else if (((x-BORDERLEFT) % BLOCKWIDTH)==0 && ((y-BORDERTOP) % BLOCKHEIGHT)==0)
+				else if ((x % BLOCKWIDTH)==0 && (y % BLOCKHEIGHT)==0)
 				{
 					if (grid_at(x+BLOCKWIDTH-1,y+BLOCKHEIGHT-1)==' ')
 						grid[x][y]=' ';
@@ -332,8 +332,8 @@ bool intro_update(u32 keys, touchPosition touch) {
 	{
 		if (!line1.on && !line2.on)
 		{
-			int x=LXPOS(random() % 32);
-			int y=LYPOS(random() % 20);
+			int x=LXPOS(random() % COLS);
+			int y=LYPOS(random() % ROWS);
 			if (random()%2)
 			{
 				line_start(&line1,UP,x,y);

@@ -38,7 +38,7 @@ char maskgrid[WIDTH][HEIGHT];
 static u32 block_colors[COLS][ROWS];
 
 char grid_at(int x, int y) {
-	if (x < BORDERLEFT || x >= BORDERRIGHT || y < BORDERTOP || y >= BORDERBOTTOM)
+	if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT)
 		return 'X';
 	return grid[x][y];
 }
@@ -62,8 +62,8 @@ long grid_countcleared(void) {
 	int i, j;
 	long c;
 	c=0;
-	for (i=BORDERLEFT;i<BORDERRIGHT;i++)
-		for (j=BORDERTOP;j<BORDERBOTTOM;j++)
+	for (i=0;i<WIDTH;i++)
+		for (j=0;j<HEIGHT;j++)
 			if (grid_at(i,j) == ' ' || grid_at(i,j) == '*')
 				c++;
 	return c;
@@ -87,10 +87,10 @@ void grid_mark(int x, int y, int w, int h, char fillchar) {
 	// rethinking the collision detection -- which could stand a rethink
 	// anyway -- there's not much that can be done.
 	
-	if (x < BORDERLEFT) { w -= BORDERLEFT - x; x = BORDERLEFT; }
-	if (y < BORDERTOP)  { h -= BORDERTOP - y;  y = BORDERTOP; }
-	if (x + w > BORDERRIGHT)  w = BORDERRIGHT - x;
-	if (y + h > BORDERBOTTOM) h = BORDERBOTTOM - y;
+	if (x < 0) { w -= - x; x = 0; }
+	if (y < 0)  { h -= - y;  y = 0; }
+	if (x + w > WIDTH)  w = WIDTH - x;
+	if (y + h > HEIGHT) h = HEIGHT - y;
 	if (w <= 0 || h <= 0) return;
 	for (i=x;i<x+w;i++)
 		memset(&grid[i][y],fillchar,h);
@@ -120,12 +120,12 @@ void grid_generate_colors(void) {
 }
 
 void grid_drawblocks(void) {
-	C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.0f, PLAYWIDTH, PLAYHEIGHT, theme.color.background);
+	C2D_DrawRectSolid(0, 0, 0.0f, WIDTH, HEIGHT, theme.color.background);
 
 	for (int bx = 0; bx < COLS; bx++) {
 		for (int by = 0; by < ROWS; by++) {
-			int x = BORDERLEFT + bx * BLOCKWIDTH;
-			int y = BORDERTOP + by * BLOCKHEIGHT;
+			int x = bx * BLOCKWIDTH;
+			int y = by * BLOCKHEIGHT;
 
 			if (grid_at(x,y) == '.' || grid_at(x,y) == '-' || grid_at(x,y) == '|')
 				continue;
@@ -144,7 +144,7 @@ void grid_drawblocks(void) {
 static int grid_penguinsearch(int i, int j)
 {
 	int searchval=0;
-	if (i < BORDERLEFT || i >= BORDERRIGHT || j < BORDERTOP || j >= BORDERBOTTOM)
+	if (i < 0 || i >= WIDTH || j < 0 || j >= HEIGHT)
 		return 0;
 	rcount++; 
 	// kludge! FIX! BAD!
@@ -190,6 +190,6 @@ void grid_checkempty(int x, int y)
 		// this makes sure x and y are the top left corners of blocks.
 		// since the area is empty of penguins, it should be completely
 		// safe to use this isntead of grid_floodfill here. really. :)
-		grid_squarefill( (((x-BORDERLEFT)/BLOCKWIDTH ) * BLOCKWIDTH ) +BORDERLEFT, (((y-BORDERTOP)/BLOCKHEIGHT) * BLOCKHEIGHT) +BORDERTOP);
+		grid_squarefill(x / BLOCKWIDTH * BLOCKWIDTH, y / BLOCKHEIGHT * BLOCKHEIGHT);
 	}
 }

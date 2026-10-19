@@ -33,6 +33,7 @@
 #include "grid.h"
 #include "hiscore.h"
 #include "lang.h"
+#include "flying_sprite.h"
 
 typedef enum { DIALOG_NORMAL, DIALOG_CONFIRM, DIALOG_HIGHSCORES, DIALOG_HELP } DialogType;
 typedef enum {
@@ -53,6 +54,7 @@ static DialogType dialog_type;
 static bool yes_selected;
 static const char *logo_chars = "ICEBRAK";
 static size_t selected;
+
 static MenuEntry choices[] = {
 	{"MENU_NEW_GAME", MENU_NEW_GAME},
 	{"MENU_LANGUAGE", MENU_LANGUAGE},
@@ -113,9 +115,9 @@ static void logo_drawtext(const char *text, float x, float y, float scale) {
 static void menu_draw_rounded_rect(float x, float y, float w, float h, u32 color) {
 	if (w <= 0 || h <= 0) return;
 	float r = fminf(w / 2.0f, h / 2.0f);
-	C2D_DrawRectSolid(x + r, y + h / 2.0f - r, 0.3f, w - 2.0f * r, 2.0f * r, color);
-	C2D_DrawCircleSolid(x + r, y + h / 2.0f, 0.3f, r, color);
-	C2D_DrawCircleSolid(x + w - r, y + h / 2.0f, 0.3f, r, color);
+	C2D_DrawRectSolid(x + r, y + h / 2.0f - r, 0.6f, w - 2.0f * r, 2.0f * r, color);
+	C2D_DrawCircleSolid(x + r, y + h / 2.0f, 0.6f, r, color);
+	C2D_DrawCircleSolid(x + w - r, y + h / 2.0f, 0.6f, r, color);
 }
 
 static void progress_bar_draw(int pct) {
@@ -126,43 +128,36 @@ static void progress_bar_draw(int pct) {
 	menu_draw_rounded_rect(12.0f, 222.0f, (376.0f) * pct / 100.0f, 10.0f, theme.color.progressbarfill);
 }
 
-void menu_init(void) {
-	selected = 0;
-	dialog_type = DIALOG_NORMAL;
-	themes_selected_reset();
-	options_difficulty_selected_reset();
-	lang_selected_reset();
-}
-
 void menu_bottom_draw(bool pause) {
 	if (pause) {
-		C2D_DrawRectSolid(BORDERLEFT, BORDERTOP, 0.9f, PLAYWIDTH, PLAYHEIGHT, C2D_Color32(0, 0, 0, 192));
+		C2D_DrawRectSolid(0, 0, 0.9f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
 		text_put(100, 110, 1.0f, 4, theme.color.normaltext, lang_get("MENU_PAUSE"));
 	}
 }
 
-void menu_draw(bool pause, const GameStats *stats) {
+void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	C2D_DrawRectSolid(0, 0, 0.0f, 400.0f, 240.0f, theme.color.background);
 	char tmptext[30]; // should be plenty big.
-	text_put(175, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_SCORE"));
-	text_put(10, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LEVEL"));
-	text_rput(385, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_HIGH_SCORE"));
-	text_put(10, 200, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LIVES"));
+	text_put(175 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_SCORE"));
+	text_put(10 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LEVEL"));
+	text_rput(385 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_HIGH_SCORE"));
+	text_put(10 + parallax, 200, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LIVES"));
 	snprintf(tmptext,30,"%d %%",stats->clear);
-	text_rput(390, 200, 0.3f, 2, theme.color.normaltext, tmptext);
+	text_rput(390 + parallax, 200, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%ld",stats->score + stats->basescore);
-	text_cput(200, 25, 0.3f, 2, theme.color.normaltext, tmptext);
+	text_cput(200 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->level);
-	text_put(20, 25, 0.3f, 2, theme.color.normaltext, tmptext);
+	text_put(20 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%ld",hiscore_get(0)->score);
-	text_rput(385, 25, 0.3f, 2, theme.color.normaltext, tmptext);
+	text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	for(int i = 0; i < stats->lives; i++) {
-		C2D_DrawImageAt(theme.spriteimage, 80.0f + (16.0f * i), 205.0f - (theme.spriteimage.subtex->height / 2), 0.3f, NULL, 1.0f, 1.0f);
+		C2D_DrawImageAt(theme.spriteimage, 80.0f + (16.0f * i) + parallax, 205.0f - (theme.spriteimage.subtex->height / 2), 0.3f, NULL, 1.0f, 1.0f);
 	}
 	progress_bar_draw(stats->clear);
 	if (!pause) {
-		logo_drawtext("ICE", 148, 55, 6);
-		logo_drawtext("BREAKER", 77, 110, 6);
+		logo_drawtext("ICE", 148 + parallax / 2, 55, 6);
+		logo_drawtext("BREAKER", 77 + parallax / 2, 110, 6);
+		flying_sprite_draw(parallax);
 		return;
 	}
 	C2D_DrawRectSolid(50.0f, 40.0f, 0.3f, 300.0f, 155.0f, theme.color.menuhighlight);
@@ -176,6 +171,7 @@ void menu_draw(bool pause, const GameStats *stats) {
 				option_color = theme.color.background;
 			}
 			text_put(60, 51 + 24 * i, 0.4f, 3, option_color, lang_get(choices[i].label));
+			
 			switch(choices[i].choice) {
 				case MENU_LANGUAGE:
 					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, lang_selected_name());
@@ -248,7 +244,11 @@ void menu_draw(bool pause, const GameStats *stats) {
 	}
 }
 
-bool menu_update(u32 keys) {
+bool menu_update(bool pause, u32 keys) {
+	flying_sprite_update();
+	if (!pause) {
+		return true;
+	}
 	switch(dialog_type) {
 	case DIALOG_NORMAL:
 		if ((keys & KEY_UP) && (selected > 0)) {
@@ -305,6 +305,7 @@ bool menu_update(u32 keys) {
 				break;
 			case MENU_THEME:
 				themes_apply();
+				flying_sprite_init();
 				grid_generate_colors();
 				options_write();
 				break;
@@ -349,6 +350,16 @@ bool menu_update(u32 keys) {
 	}
 	return true;
 }
+
+void menu_init(void) {
+	selected = 0;
+	dialog_type = DIALOG_NORMAL;
+	themes_selected_reset();
+	options_difficulty_selected_reset();
+	lang_selected_reset();
+	flying_sprite_init();
+}
+
 void menu_close(void) {
 	return;
 }
