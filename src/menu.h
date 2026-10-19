@@ -1,12 +1,10 @@
 /*
- * IceBreaker
- * Copyright (c) 2000-2020 Matthew Miller <mattdm@mattdm.org>
+ * IceBreaker - Nintendo 3DS port
  * Copyright (c) 2026 Jean-Baptiste Langlois
  *
- * Original game by Matthew Miller.
- * Nintendo 3DS port by Jean-Baptiste Langlois (2026).
+ * This file is part of IceBreaker.
  *
- * <http://www.mattdm.org/icebreaker/>
+ * <https://github.com/Mithweth/icebreaker-3ds>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -28,7 +26,10 @@
 #include "game.h"
 
 void menu_init(void);
-void menu_draw(bool pause, const GameStats *stats);
-bool menu_update(u32 keys);
+void menu_draw(bool pause, const GameStats *stats, float parallax);
+bool menu_update(bool pause, u32 keys);
 void menu_close(void);
 void menu_bottom_draw(bool pause);
+void menu_penguin_watch(void);
+void menu_penguin_capture(void);
+void menu_penguin_death(void);
