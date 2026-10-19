@@ -46,7 +46,6 @@ static int penguincount;
 static bool frozen;
 
 void intro_init(void) {
-	grid_generate_colors();
 	grid_reset('w');
 	letterstep = 0;
 	line1=line_create(1);

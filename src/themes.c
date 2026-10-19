@@ -32,12 +32,12 @@
 #include "gfxmap.h"
 #include "game.h"
 #include "sound.h"
+#include "grid.h"
 
 Theme theme;
 static char* themes[MAX_THEMES];
 static size_t theme_count;
 static size_t current_theme;
-static size_t selected_theme;
 
 static int alphasortstringarray(const void *a, const void *b) {
     return strcmp(*(const char *const *)a, *(const char *const *)b);
@@ -82,7 +82,6 @@ bool themes_settheme(const char* themename) {
 	for(size_t i = 0; i < theme_count; i++) {
 		if (strcmp(themes[i], themename) == 0) {
 			current_theme = i;
-			selected_theme = i;
 		}
 	}
 	FILE* themefile;
@@ -353,6 +352,7 @@ bool themes_settheme(const char* themename) {
 	}
 	
 	printf("theme loaded successfully: %s\n", themename);
+	grid_generate_colors();
 	return true;
 }
 
@@ -363,7 +363,6 @@ bool themes_load(const char *directory) {
     for (size_t i = 0; i < theme_count; i++) free(themes[i]);
     theme_count = 0;
     current_theme = 0;
-    selected_theme = 0;
 
     struct dirent *entry;
     while ((entry = readdir(dir))) {
@@ -399,36 +398,37 @@ void themes_next(void) {
 	if (theme_count == 0) {
 		return;
 	}
-	selected_theme++;
-	if (selected_theme == theme_count) {
-		selected_theme = 0;
+	size_t previous_theme = current_theme;
+	for(size_t i = 0; i < theme_count; i++) {
+		current_theme++;
+		if (current_theme == theme_count) {
+			current_theme = 0;
+		}
+		if (themes_settheme(themes[current_theme])) {
+			return;
+		}
 	}
+	themes_settheme(themes[previous_theme]);
 }
 
 void themes_prev(void) {
 	if (theme_count == 0) {
 		return;
 	}
-	if (selected_theme == 0) {
-		selected_theme = theme_count - 1;
-	} else {
-		selected_theme--;
+	size_t next_theme = current_theme;
+	for(size_t i = 0; i < theme_count; i++) {
+		if (current_theme == 0) {
+			current_theme = theme_count - 1;
+		} else {
+			current_theme--;
+		}
+		if (themes_settheme(themes[current_theme])) {
+			return;
+		}
 	}
-}
-
-void themes_apply(void) {
-	current_theme = selected_theme;
-	themes_settheme(themes[current_theme]);
+	themes_settheme(themes[next_theme]);
 }
 
 const char* themes_current_name(void) {
 	return themes[current_theme];
-}
-
-const char* themes_selected_name(void) {
-	return themes[selected_theme];
-}
-
-void themes_selected_reset(void) {
-	selected_theme = current_theme;
 }

@@ -40,14 +40,12 @@ typedef struct {
 	float progress;
 	FlyingSpriteStatus status;
 	float fall_speed;
-	C2D_Image image;
 } FlyingSprite;
 
 static FlyingSprite sprite;
 static float initial_z;
 
 void flying_sprite_init(void) {
-	sprite.image = theme.spriteimage;
 	sprite.speed = 0.015f;
 	sprite.boost = 0.0f;
 	sprite.status = SPRITE_NORMAL;
@@ -112,7 +110,7 @@ void flying_sprite_update(void) {
 
 void flying_sprite_draw(float parallax) {
 	float scale = exp2f(sprite.z) * 0.75f;
-	float x = sprite.x + sprite.z * parallax - (sprite.image.subtex->width / 2.0f) * scale;
-	float y = sprite.y - (sprite.image.subtex->height / 2.0f) * scale;
-	C2D_DrawImageAt(sprite.image, x, y, 0.4f + sprite.z * 0.2f, NULL, scale, scale);
+	float x = sprite.x + sprite.z * parallax - (theme.spriteimage.subtex->width / 2.0f) * scale;
+	float y = sprite.y - (theme.spriteimage.subtex->height / 2.0f) * scale;
+	C2D_DrawImageAt(theme.spriteimage, x, y, 0.4f + sprite.z * 0.2f, NULL, scale, scale);
 }
