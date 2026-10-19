@@ -27,7 +27,6 @@
 #include <3ds.h>
 #include <citro2d.h>
 #include <stdbool.h>
-#include <stddef.h>
 
 #define MAXPENGUINS 100
 #define PENGUINSPEED 2

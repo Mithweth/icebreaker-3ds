@@ -24,6 +24,7 @@
 
 #include <3ds.h>
 #include <citro2d.h>
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "themes.h"

@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 typedef enum { EASY, NORMAL, HARD } GameDifficultyType;
 
 void options_difficulty_next(void);

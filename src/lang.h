@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 bool lang_init(void);
 void lang_close(void);
 void lang_next(void);

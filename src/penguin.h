@@ -24,8 +24,6 @@
 
 #pragma once
 
-#include <citro2d.h>
-
 typedef struct
 {
 	int x;
@@ -36,10 +34,10 @@ typedef struct
 } Penguin;
 
 typedef enum {
-	NONE,
-	LINE1,
-	LINE2,
-	BOTH 
+	PENGUIN_HIT_NONE,
+	PENGUIN_HIT_LINE1,
+	PENGUIN_HIT_LINE2,
+	PENGUIN_HIT_BOTH 
 } PenguinHit;
 
 Penguin penguin_create(void);

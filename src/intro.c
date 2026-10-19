@@ -24,7 +24,7 @@
  */
 
 #include <3ds.h>
-#include <citro2d.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "game.h"
 #include "grid.h"
@@ -388,13 +388,13 @@ bool intro_update(u32 keys, touchPosition touch) {
 	if (!frozen) {
 		for (int i=0;i<penguincount;i++) {
 			PenguinHit hit = penguin_move(&flock[i]);
-			if (hit == LINE1 || hit == BOTH) line1.dead=true;
-			if (hit == LINE2 || hit == BOTH) line2.dead=true;
+			if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead=true;
+			if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead=true;
 		}
 	}
 	PenguinHit hit = penguin_move(&tux);
-	if (hit == LINE1 || hit == BOTH) line1.dead=true;
-	if (hit == LINE2 || hit == BOTH) line2.dead=true;
+	if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead=true;
+	if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead=true;
 	return true;
 }
 

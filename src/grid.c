@@ -24,11 +24,12 @@
 
 #include <3ds.h>
 #include <citro2d.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "grid.h"
 #include "game.h"
 #include "themes.h"
-#include "line.h"
 
 static long rcount;
 #define MAXRCOUNT 80000
