@@ -22,8 +22,8 @@
 
 #include <3ds.h>
 #include <citro2d.h>
+#include <stdio.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include "gfxmap.h"
 #include "intro.h"
 #include "themes.h"

@@ -23,6 +23,8 @@
  */
 
 #include <3ds.h>
+#include <citro2d.h>
+#include <stdio.h>
 #include "game.h"
 #include "themes.h"
 #include "text.h"

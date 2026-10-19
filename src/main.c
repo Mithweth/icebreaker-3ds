@@ -20,9 +20,10 @@
  * with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <citro2d.h>
-#include <stdlib.h>
 #include <3ds.h>
+#include <citro2d.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include "game.h"
 #include "lang.h"

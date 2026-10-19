@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 typedef enum {
 	SNDOUCH,
 	SNDBREAK,

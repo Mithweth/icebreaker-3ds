@@ -24,19 +24,8 @@
 
 #pragma once
 
-#include "line.h"
-#include "penguin.h"
+#include <3ds.h>
 #include "game.h"
-
-typedef enum { ERROR, PASS, DEAD, ZERO, QUIT } LevelExitType;
-
-typedef struct
-{
-	int basescore;
-	int clearbonus;
-	int lifebonus;
-} ScoreSheet;
-
 
 void level_init(GameStats *stats);
 void level_draw(void);

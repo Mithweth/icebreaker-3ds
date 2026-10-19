@@ -23,8 +23,8 @@
  * with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include "game.h"
 #include "options.h"

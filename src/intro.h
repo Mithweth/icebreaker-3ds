@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <3ds.h>
+
 void intro_init(void);
 void intro_draw(void);
 bool intro_update(u32 keys, touchPosition touch);

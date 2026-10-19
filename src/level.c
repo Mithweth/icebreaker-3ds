@@ -26,6 +26,7 @@
 /* special thanks to Enrico for the grid coloring stuff for themes */
 
 #include <3ds.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "game.h"
 #include "line.h"
@@ -35,6 +36,7 @@
 #include "themes.h"
 #include "sound.h"
 #include "flying_sprite.h"
+#include "penguin.h"
 
 #define GESTURE_THRESHOLD 12
 #define FPS 60 // C3D_FRAME_SYNCDRAW locks the main loop to the 3DS refresh rate
@@ -243,8 +245,8 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	for (int i=0;i<penguincount;i++)
 	{
 		PenguinHit hit = penguin_move(&flock[i]);
-		if (hit == LINE1 || hit == BOTH) line1.dead=true;
-		if (hit == LINE2 || hit == BOTH) line2.dead=true;
+		if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead=true;
+		if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead=true;
 	}
 
 	if (stats->lives<=0) // game over

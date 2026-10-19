@@ -22,6 +22,7 @@
  * with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <citro2d.h>
 #include <stdlib.h>
 #include "game.h"
 #include "penguin.h"
@@ -166,8 +167,8 @@ PenguinHit penguin_move(Penguin* p)
 
 	grid_mark(p->x,p->y,BLOCKWIDTH,BLOCKHEIGHT,'*');
 
-	if (hitline1 && hitline2) return BOTH;
-	if (hitline1) return LINE1;
-	if (hitline2) return LINE2;
-	return NONE;
+	if (hitline1 && hitline2) return PENGUIN_HIT_BOTH;
+	if (hitline1) return PENGUIN_HIT_LINE1;
+	if (hitline2) return PENGUIN_HIT_LINE2;
+	return PENGUIN_HIT_NONE;
 }

@@ -23,6 +23,7 @@
  */
 
 #include <citro2d.h>
+#include <stdio.h>
 #include "game.h"
 #include "line.h"
 #include "grid.h"
