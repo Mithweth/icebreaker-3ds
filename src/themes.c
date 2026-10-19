@@ -94,7 +94,8 @@ bool themes_settheme(const char* themename) {
 	ThemeColorsType foundcolor;
 	
 	themes_setdefaultcolors();
-	theme.spriteimage=(C2D_Image){0};
+	theme.spriteimage = (C2D_Image){0};
+	theme.fallingparticle = (C2D_Image){0};
 	
 	foundcolor.background      = 0;
 	foundcolor.normaltext      = 0;
@@ -271,6 +272,15 @@ bool themes_settheme(const char* themename) {
 					return false;
 				}
 			}
+			else if (!strcmp(optbuf,"fallingparticle"))
+			{
+				theme.fallingparticle=gfxmap_get_image(valbuf);
+				if (!theme.fallingparticle.tex) {
+					printf("Error while loading sprite: No image found: %s\n", valbuf);
+					fclose(themefile);
+					return false;
+				}
+			}
 			else if (!strcmp(optbuf,"soundouch"))
 			{
 				if (!sound_load(SNDOUCH, valbuf)) {
@@ -295,8 +305,7 @@ bool themes_settheme(const char* themename) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
-		}
-		
+		}	
 	}	
 	fclose(themefile);
 
@@ -335,6 +344,9 @@ bool themes_settheme(const char* themename) {
 	if (foundcolor.progressbarinner == 0)
 		{ printf("Warning: ProgressbarInner not correctly defined in theme %s. Using default.\n",themename); }
 	
+	if (!theme.fallingparticle.tex) {
+		printf("Warning: FallingParticle not correctly defined in theme %s\n", themename);
+	}
 	if (theme.color.boardfillmaxr<theme.color.boardfillminr)
 	{
 		theme.color.boardfillmaxr=theme.color.boardfillminr;

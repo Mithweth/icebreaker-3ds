@@ -35,6 +35,7 @@
 #include "hiscore.h"
 #include "lang.h"
 #include "flying_sprite.h"
+#include "snowflake.h"
 
 typedef enum { DIALOG_NORMAL, DIALOG_CONFIRM, DIALOG_HIGHSCORES, DIALOG_HELP } DialogType;
 typedef enum {
@@ -155,6 +156,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		C2D_DrawImageAt(theme.spriteimage, 80.0f + (16.0f * i) + parallax, 205.0f - (theme.spriteimage.subtex->height / 2), 0.3f, NULL, 1.0f, 1.0f);
 	}
 	progress_bar_draw(stats->clear);
+	snowflake_draw(parallax);
 	if (!pause) {
 		logo_drawtext("ICE", 148 + parallax / 2, 55, 6);
 		logo_drawtext("BREAKER", 77 + parallax / 2, 110, 6);
@@ -247,6 +249,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 
 bool menu_update(bool pause, u32 keys) {
 	flying_sprite_update();
+	snowflake_update();
 	if (!pause) {
 		return false;
 	}

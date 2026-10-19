@@ -17,6 +17,7 @@ ProgressbarOutline	255	204	77
 ProgressbarInner	12	 38	69
 ProgressbarFill		64	214	165
 SpriteBitmap		cartridge
+FallingParticle		paddle
 SoundOuch			8bit-touch
 SoundCrash			8bit-touch
 SoundVictory		8bit-win
