@@ -68,13 +68,15 @@ static void debug_close(void) {}
 int main(int argc, char **argv) {
 	int ret = 0;
 	gfxInitDefault();
+	gfxSet3D(true);
 	romfsInit();
 	debug_init();
 	srand(time(NULL));
 	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 	C2D_Init(C2D_DEFAULT_MAX_OBJECTS * 4);
 	C2D_Prepare();
-	C3D_RenderTarget *top = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
+	C3D_RenderTarget *top_left = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
+	C3D_RenderTarget *top_right = C2D_CreateScreenTarget(GFX_TOP, GFX_RIGHT);
 	C3D_RenderTarget *bottom = C2D_CreateScreenTarget(GFX_BOTTOM, GFX_LEFT);
 	if (!lang_init()) {
 		printf("Cannot initialize languages\n");
@@ -87,13 +89,18 @@ int main(int argc, char **argv) {
 	while (ret == 0 && aptMainLoop()) {
 		hidScanInput();
 		u32 keys = hidKeysDown();
+		float parallax = 4.0f * osGet3DSliderState();
 		touchPosition touch;
 		hidTouchRead(&touch);
 		if (!game_update(keys, touch)) {
 			ret = 1;
 		}
 		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-		game_draw(top, bottom);
+		game_draw_bottom(bottom);
+		game_draw_top(top_left, parallax);
+		if (parallax > 0.0f) {
+			game_draw_top(top_right, -parallax);
+		}
 		C3D_FrameEnd(0);
 	}
 	game_close();

@@ -31,7 +31,7 @@
 
 Penguin penguin_create(void)
 {
-	return penguin_createxy(BORDERLEFT + (random() % (PLAYWIDTH-BLOCKWIDTH)),BORDERTOP + (random() % (PLAYHEIGHT-BLOCKWIDTH)));
+	return penguin_createxy((random() % (WIDTH-BLOCKWIDTH)), (random() % (HEIGHT-BLOCKWIDTH)));
 }
 
 Penguin penguin_createxy(int x, int y)

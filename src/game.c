@@ -111,10 +111,7 @@ bool game_update(u32 keys, touchPosition touch) {
 			menu_init();
 		}
 	}
-	if (pause) {
-		menu_update(keys);
-		return true;
-	}
+	menu_update(pause, keys);
 	switch(game_mode) {
 	case GAME_INTRO:
 		if (!intro_update(keys, touch)) {
@@ -149,8 +146,7 @@ bool game_update(u32 keys, touchPosition touch) {
 	return true;
 }
 
-void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom) {
-	C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
+void game_draw_bottom(C3D_RenderTarget *bottom) {
 	C2D_TargetClear(bottom, C2D_Color32(0, 0, 0, 255));
 	C2D_SceneBegin(bottom);
 	switch(game_mode) {
@@ -172,8 +168,13 @@ void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom) {
 		break;
 	}
 	menu_bottom_draw(pause);
+	return;
+}
+
+void game_draw_top(C3D_RenderTarget *top, float parallax) {
+	C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
 	C2D_SceneBegin(top);
-	menu_draw(pause, &stats);
+	menu_draw(pause, &stats, parallax);
 	return;
 }
 

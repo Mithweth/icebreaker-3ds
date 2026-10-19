@@ -39,21 +39,9 @@
 #define COLS 32
 #define ROWS 24
 
-#define MARGINTOP 0
-#define MARGINBOTTOM 0
-#define MARGINLEFT 0
-#define MARGINRIGHT 0
+#define WIDTH (COLS*BLOCKWIDTH)
+#define HEIGHT (ROWS*BLOCKHEIGHT)
 
-#define PLAYWIDTH (COLS*BLOCKWIDTH)
-#define PLAYHEIGHT (ROWS*BLOCKHEIGHT)
-
-#define WIDTH (MARGINLEFT+PLAYWIDTH+MARGINRIGHT)
-#define HEIGHT (MARGINTOP+PLAYHEIGHT+MARGINBOTTOM)
-
-#define BORDERTOP    MARGINTOP
-#define BORDERBOTTOM (MARGINTOP+PLAYHEIGHT)
-#define BORDERLEFT   MARGINLEFT
-#define BORDERRIGHT  (MARGINLEFT+PLAYWIDTH)
 #define LINEMAXSTUCK 750
 
 #define PERCENTREQUIRED 80
@@ -79,5 +67,6 @@ typedef struct {
 bool game_init(void);
 void game_start(void);
 bool game_update(u32 keys, touchPosition touch);
-void game_draw(C3D_RenderTarget *top, C3D_RenderTarget *bottom);
+void game_draw_bottom(C3D_RenderTarget *bottom);
+void game_draw_top(C3D_RenderTarget *top, float parallax);
 void game_close(void);
