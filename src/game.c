@@ -111,7 +111,9 @@ bool game_update(u32 keys, touchPosition touch) {
 			menu_init();
 		}
 	}
-	menu_update(pause, keys);
+	if (menu_update(pause, keys)) {
+		return true;
+	}
 	switch(game_mode) {
 	case GAME_INTRO:
 		if (!intro_update(keys, touch)) {

@@ -193,7 +193,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, difficulty);
 					break;
 				case MENU_THEME:
-					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, themes_selected_name());
+					text_rput(340, 51 + 24 * i, 0.4f, 3, option_color, themes_current_name());
 					break;
 				default:
 					break;
@@ -248,7 +248,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 bool menu_update(bool pause, u32 keys) {
 	flying_sprite_update();
 	if (!pause) {
-		return true;
+		return false;
 	}
 	switch(dialog_type) {
 	case DIALOG_NORMAL:
@@ -268,6 +268,7 @@ bool menu_update(bool pause, u32 keys) {
 				break;
 			case MENU_THEME:
 				themes_prev();
+				options_write();
 				break;
 			default:
 				break;
@@ -283,6 +284,7 @@ bool menu_update(bool pause, u32 keys) {
 				break;
 			case MENU_THEME:
 				themes_next();
+				options_write();
 				break;
 			default:
 				break;
@@ -303,12 +305,6 @@ bool menu_update(bool pause, u32 keys) {
 					dialog_type = DIALOG_CONFIRM;
 					yes_selected = false;
 				}
-				break;
-			case MENU_THEME:
-				themes_apply();
-				flying_sprite_init();
-				grid_generate_colors();
-				options_write();
 				break;
 			case MENU_HIGHSCORES:
 				dialog_type = DIALOG_HIGHSCORES;
@@ -336,16 +332,17 @@ bool menu_update(bool pause, u32 keys) {
 				options_difficulty_apply();
 				options_write();
 				game_start();
-				return true;
+			} else {
+				options_difficulty_selected_reset();
+				dialog_type = DIALOG_NORMAL;
 			}
-			options_difficulty_selected_reset();
-			dialog_type = DIALOG_NORMAL;
 		}
 		break;
 	case DIALOG_HELP:
 		if (keys & KEY_A) {
 			dialog_type = DIALOG_NORMAL;
 		}
+		break;
 	default:
 		break;
 	}
@@ -355,7 +352,6 @@ bool menu_update(bool pause, u32 keys) {
 void menu_init(void) {
 	selected = 0;
 	dialog_type = DIALOG_NORMAL;
-	themes_selected_reset();
 	options_difficulty_selected_reset();
 	lang_selected_reset();
 	flying_sprite_init();
