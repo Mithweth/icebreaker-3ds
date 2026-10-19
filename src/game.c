@@ -33,6 +33,7 @@
 #include "sound.h"
 #include "hiscore.h"
 #include "options.h"
+#include "snowflake.h"
 
 typedef enum {
     GAME_INTRO,
@@ -62,6 +63,7 @@ bool game_init(void) {
 	intro_init();
 	menu_init();
 	hiscore_read();
+	snowflake_init();
 	pause = false;
 	return true;
 }

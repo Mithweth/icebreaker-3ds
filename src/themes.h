@@ -57,6 +57,7 @@ typedef struct {
 	char name[64];
 	ThemeColorsType color;
 	C2D_Image spriteimage;
+	C2D_Image fallingparticle;
 } Theme;
 
 extern Theme theme;
