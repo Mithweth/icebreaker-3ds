@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include "gfxmap.h"
 #include "intro.h"
+#include "grid_maps.h"
 #include "themes.h"
 #include "level.h"
 #include "menu.h"
@@ -53,7 +54,10 @@ bool game_init(void) {
 	if (!gfxmap_init()) {
 		return false;
 	}
-	if (!themes_load("romfs:/themes")) {
+	if (!themes_load()) {
+		return false;
+	}
+	if (!grid_maps_load()) {
 		return false;
 	}
 	if (!themes_exists("linux")) {
@@ -80,7 +84,7 @@ void game_start(void) {
 }
 
 static void game_over(void) {
-	if (hiscore_check_high(stats.score)) {
+	if (hiscore_check_high(grid_maps_current_name(), stats.score)) {
 		hiscore_dialog_init();
 		game_mode = GAME_HIGH_SCORE;
 	} else {
@@ -118,7 +122,7 @@ bool game_update(u32 keys, touchPosition touch) {
 	}
 	switch(game_mode) {
 	case GAME_INTRO:
-		if (!intro_update(keys, touch)) {
+		if (!intro_update(keys)) {
 			game_start();
 		}
 		break;

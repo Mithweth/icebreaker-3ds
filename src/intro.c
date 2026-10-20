@@ -47,12 +47,13 @@ static bool frozen;
 
 void intro_init(void) {
 	grid_reset('w');
+	grid_generate_colors();
 	letterstep = 0;
 	line1=line_create(1);
 	line2=line_create(2);
 	tux = penguin_create();
 	penguincount = 0;
-	frozen=true;
+	frozen = true;
 	/// Here's the fun part where we set up the letters.
 	// I
 	grid_mark(LXPOS(1),LYPOS(2),BLOCKWIDTH*3,BLOCKHEIGHT  ,' ');
@@ -215,7 +216,7 @@ void intro_draw(void) {
     line_draw(&line2, theme.color.line2);
 }
 
-bool intro_update(u32 keys, touchPosition touch) {
+bool intro_update(u32 keys) {
 	if (keys & KEY_TOUCH) {
 		return false;
 	}
@@ -274,7 +275,7 @@ bool intro_update(u32 keys, touchPosition touch) {
 			for (int y=0;y<HEIGHT;y++)
 				if (grid_at(x,y)=='w')
 				{
-					grid[x][y]=' ';
+					grid_mark(x, y, 1, 1, ' ');
 				}
 				// FIX: known bug -- if a line stops partway through a grid cell,
 				// the space left over is not cleared properly later. this isn't 
@@ -284,7 +285,7 @@ bool intro_update(u32 keys, touchPosition touch) {
 				else if ((x % BLOCKWIDTH)==0 && (y % BLOCKHEIGHT)==0)
 				{
 					if (grid_at(x+BLOCKWIDTH-1,y+BLOCKHEIGHT-1)==' ')
-						grid[x][y]=' ';
+						grid_mark(x, y, 1, 1, ' ');
 				}
 		letterstep++;
 	}
@@ -309,7 +310,6 @@ bool intro_update(u32 keys, touchPosition touch) {
 			grid_mark(flock[i].x,flock[i].y,BLOCKWIDTH,BLOCKHEIGHT,' ');
 		}
 		letterstep++;
-		//cursor_set(CURSORCLICK);
 	}
 	else if (letterstep<400)
 	{

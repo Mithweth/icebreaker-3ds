@@ -48,19 +48,24 @@
 #define PERCENTEXTRABONUS 85
 
 #define MAX_THEMES	16
+#define MAX_GRIDS	16
 
 #define OPTIONFILE "sdmc:/.icebreaker"
 #define HISCOREFILE "sdmc:/.icebreaker.scores"
 
+#define THEME_DIRECTORY		"romfs:/themes"
+#define LANGUAGE_DIRECTORY	"romfs:/lang"
+#define GRID_DIRECTORY		"romfs:/grids"
+
 typedef struct {
-    long basescore;
-    long score;
-    int level;
-    int clearbonus;
-    int lifebonus;
-    int lives;
-    int clear;
-    bool dead;
+	long basescore;
+	long score;
+	int level;
+	int clearbonus;
+	int lifebonus;
+	int lives;
+	int clear;
+	bool dead;
 } GameStats;
 
 bool game_init(void);

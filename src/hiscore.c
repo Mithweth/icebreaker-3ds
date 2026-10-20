@@ -33,84 +33,82 @@
 #include "text.h"
 #include "themes.h"
 #include "lang.h"
+#include "grid_maps.h"
 
-static HighScore hiscore[HISCORENUM];
+static HighScore hiscore[MAX_GRIDS][HISCORENUM];
 static char username[50];
 
 static int hiscore_cmpscore(const void *a, const void *b) {
-	long x = ((const HighScore *)a)->score;
-	long y = ((const HighScore *)b)->score;
-	return (x < y) - (x > y);
+    long x = ((const HighScore *)a)->score;
+    long y = ((const HighScore *)b)->score;
+    return (x < y) - (x > y);
 }
 
 void hiscore_read(void) {
 	FILE *hiscorefile;
-	char linebuf[80];
-	char filename[274];
-
+	char linebuf[128];
+    char gridname[32];
+    char name[50];
+    long score;
 	// make sure all entries are zeroed out to start.
-	for (int i=0;i<HISCORENUM;i++)
-	{
-		snprintf(hiscore[i].name,7,"Nobody");
-		hiscore[i].score=100; //100 is better than 0. :)
+	for (size_t g = 0; g < grid_maps_get_count(); g++) {
+	    for (int i = 0; i < HISCORENUM; i++) {
+	        snprintf(hiscore[g][i].name, sizeof(hiscore[g][i].name), "Nobody");
+	        hiscore[g][i].score = 100; //100 is better than 0. :)
+	    }
 	}
 
-	snprintf(filename,274,"%s",HISCOREFILE);
-
-	hiscorefile=fopen(filename,"r");
-	if (hiscorefile) {
-		for (int i=0;i<HISCORENUM;i++)
-		{
-			if (fgets(linebuf,80,hiscorefile))
-			{
-				sscanf(linebuf,"%ld %49[^\r\n]",&hiscore[i].score,hiscore[i].name);
-			}
-		}
-		fclose(hiscorefile);
-		
-		qsort(hiscore, HISCORENUM, sizeof(hiscore[0]), hiscore_cmpscore);
-	} else {
-		printf("Can't open %s for reading\n", filename);
+	hiscorefile=fopen(HISCOREFILE,"r");
+	if (!hiscorefile) {
+		printf("Can't open %s for reading\n", HISCOREFILE);
+		return;
 	}
+
+    while (fgets(linebuf, 80, hiscorefile)) {
+        if (sscanf(linebuf, "%31s %ld %49[^\r\n]", gridname, &score, name) == 3) {
+            hiscore_add(gridname, name, score);
+        }
+    }
+	fclose(hiscorefile);
 }
 
-bool hiscore_check_high(long thisgamescore) {
+HighScore* hiscore_get(const char *grid, int id) {
+    int g = grid_maps_get_index(grid);
+    if (g < 0 || id < 0 || id >= HISCORENUM) return NULL;
+    return &hiscore[g][id];
+}
+
+bool hiscore_check_high(const char *grid, long score) {
 	// check to see if score is better than the lowest high score
-	return (thisgamescore>hiscore[HISCORENUM - 1].score);
+    return score > hiscore_get(grid, HISCORENUM - 1)->score;
 }
 
-HighScore* hiscore_get(int id) {
-	if (id < 0 || id >= HISCORENUM) {
-		return NULL;
-	}
-	return &hiscore[id];
-}
+void hiscore_add(const char *grid, const char *name, long score) {
+    int g = grid_maps_get_index(grid);
+    if (g < 0 || score <= hiscore[g][HISCORENUM - 1].score) return;
 
-void hiscore_add(const char* name, long score) {
-	HighScore tmp[HISCORENUM + 1];
+    HighScore *worst = &hiscore[g][HISCORENUM - 1];
+    snprintf(worst->name, sizeof(worst->name), "%s", name);
+    worst->score = score;
 
-	memcpy(tmp, hiscore, sizeof(hiscore));
-	snprintf(tmp[HISCORENUM].name,50,"%s",name);
-	tmp[HISCORENUM].score = score;
-
-	qsort(tmp, HISCORENUM + 1, sizeof(tmp[0]), hiscore_cmpscore);
-
-	memcpy(hiscore, tmp, sizeof(hiscore));
+    qsort(hiscore[g], HISCORENUM, sizeof(HighScore), hiscore_cmpscore);
 }
 
 void hiscore_write(void) {
 	FILE *hiscorefile;
 	char filename[274];
 
-	snprintf(filename,274,"%s",HISCOREFILE);
+	snprintf(filename,274,"%s", HISCOREFILE);
 	
-	hiscorefile=fopen(filename,"w");
+	hiscorefile=fopen(filename, "w");
 	if (!hiscorefile) {
 		printf("Can't open %s for writing\n", filename);
 		return;
 	}
-	for (int i=0;i<HISCORENUM;i++) {
-		fprintf(hiscorefile,"%ld %s\n",hiscore[i].score,hiscore[i].name);
+	for (size_t g = 0; g < grid_maps_get_count(); g++) {
+	    for (int i = 0; i < HISCORENUM; i++) {
+	        fprintf(hiscorefile, "%s %ld %s\n", grid_maps_get_name(g), hiscore[g][i].score, hiscore[g][i].name);
+	    }
 	}
 	printf("Written highscores in %s successfully\n", filename);
 	fclose(hiscorefile);
@@ -177,7 +175,7 @@ void hiscore_dialog_draw(void) {
 
 bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats) {
 	if (keys & KEY_A) {
-		hiscore_add(username, stats->score);
+		hiscore_add(grid_maps_current_name(), username, stats->score);
 		hiscore_write();
 		return true;
 	}
@@ -189,7 +187,7 @@ bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats
 		hiscore_prompt_name();
 	}
 	if (touch.px >= 210 && touch.px <= 260 && touch.py >= 160 && touch.py <= 178) {
-		hiscore_add(username, stats->score);
+		hiscore_add(grid_maps_current_name(), username, stats->score);
 		hiscore_write();
 		return true;
 	}

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "game.h"
+#include "grid_maps.h"
 #include "options.h"
 #include "themes.h"
 #include "lang.h"
@@ -103,9 +104,10 @@ bool options_read(void) {
 	char linebuf[50];
 	char optbuf[21];
 	char valbuf[74];
-	bool difficulty_set = false;
-	bool theme_set = false;
-	bool language_set = false;
+	bool difficulty_found = false;
+	bool theme_found = false;
+	bool language_found = false;
+	bool grid_found = false;
 
 	optionfile=fopen(OPTIONFILE,"r");
 	while(optionfile && fgets(linebuf,50,optionfile)) {
@@ -122,18 +124,24 @@ bool options_read(void) {
 			if (!strcmp(optbuf,"difficulty"))
 			{
 				options_difficulty_set(options_difficulty_deserialize(valbuf));
-				difficulty_set = true;
+				difficulty_found = true;
 			}
 			else if (!strcmp(optbuf,"theme"))
 			{
-				if (themes_settheme(valbuf)) {
-					theme_set = true;
+				if (themes_exists(valbuf) && themes_settheme(valbuf)) {
+					theme_found = true;
 				}
 			}
 			else if (!strcmp(optbuf,"language"))
 			{
 				if (lang_set_current_name(valbuf)) {
-					language_set = true;
+					language_found = true;
+				}
+			}
+			else if (!strcmp(optbuf,"grid"))
+			{
+				if (grid_maps_apply(valbuf)) {
+					grid_found = true;
 				}
 			}
 		}
@@ -143,17 +151,21 @@ bool options_read(void) {
 	} else {
 		fclose(optionfile);
 	}
-	if (!difficulty_set) {
+	if (!difficulty_found) {
 		printf("Difficulty not found. Setting to default\n");
 		options_difficulty_set(NORMAL);
 	}
-	if (!theme_set) {
+	if (!theme_found) {
 		printf("Theme not found or not loaded. Setting to default\n");
 		themes_settheme("linux");
 	}
-	if (!language_set) {
+	if (!language_found) {
 		printf("Language not found. Setting to default\n");
 		lang_set_current_name("english");
+	}
+	if (!grid_found) {
+		printf("Grid not found. Set to default\n");
+		grid_maps_apply("classic");
 	}
 	return true;
 }
@@ -188,10 +200,19 @@ bool options_write(void) {
 	fprintf(optionfile,"Theme %s\n",themes_current_name());
 
 	fprintf(optionfile,"\n# Language. Ensure a file which contains NAME=<your language>\n");
-	fprintf(optionfile,"\n# is present in romfs:/lang directory\n");	
+	fprintf(optionfile,"\n# is present in %s directory\n", LANGUAGE_DIRECTORY);	
 
 	fprintf(optionfile,"Language %s\n",lang_current_name());
 
+	fprintf(optionfile,"\n# Grid. If unset, will fallback to the initial behaviour.\n");
+	fprintf(optionfile,"\n# The grid file must be .ibg file located in %s.\n", GRID_DIRECTORY);
+	fprintf(optionfile,"\n# Size must be 16x12. '#' are ground, '.' is emptiness\n");	
+	const char *grid_name = grid_maps_current_name();
+	if (grid_name) {
+		fprintf(optionfile,"Grid %s\n",grid_name);
+	} else {
+		fprintf(optionfile,"# Grid classic\n");	
+	}
 	fclose(optionfile);
 	
 	printf("options successfully written in %s\n", OPTIONFILE);

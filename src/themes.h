@@ -64,7 +64,7 @@ extern Theme theme;
 
 bool themes_exists(const char* name);
 bool themes_settheme(const char* themename);
-bool themes_load(const char *directory);
+bool themes_load(void);
 void themes_next(void);
 void themes_prev(void);
 const char* themes_current_name(void);
