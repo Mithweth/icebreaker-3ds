@@ -30,9 +30,26 @@
 #include "grid.h"
 #include "options.h"
 
-Penguin penguin_create(void)
-{
-	return penguin_createxy((random() % (WIDTH-BLOCKWIDTH)), (random() % (HEIGHT-BLOCKWIDTH)));
+// Since the play field is not square anymore, checking only the block
+// first pixel is not enough. We need to ensure the penguin to hold
+// fully on the block.
+static bool penguin_occupy_block(int x, int y) {
+	const int r = x + BLOCKWIDTH - 1;
+	const int b = y + BLOCKHEIGHT - 1;
+	return (grid_at(x, y) == ' ' || grid_at(x, y) == 'w')
+		&& (grid_at(r, y) == ' ' || grid_at(r, y) == 'w')
+		&& (grid_at(x, b) == ' ' || grid_at(x, b) == 'w')
+		&& (grid_at(r, b) == ' ' || grid_at(r, b) == 'w');
+}
+
+Penguin penguin_create(void) {
+	int x = random() % (WIDTH - BLOCKWIDTH);
+	int y = random() % (HEIGHT - BLOCKWIDTH);
+	while(!penguin_occupy_block(x, y)) {
+		x = random() % (WIDTH - BLOCKWIDTH);
+		y = random() % (HEIGHT - BLOCKWIDTH);
+	}
+	return penguin_createxy(x, y);
 }
 
 Penguin penguin_createxy(int x, int y)

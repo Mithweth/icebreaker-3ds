@@ -35,11 +35,10 @@ typedef struct {
 } HighScore;
 
 void hiscore_read(void);
-bool hiscore_check_high(long thisgamescore);
-HighScore* hiscore_get(int id);
-void hiscore_add(const char* name, long score);
+bool hiscore_check_high(const char* grid, long thisgamescore);
+HighScore* hiscore_get(const char* grid, int id);
+void hiscore_add(const char *grid, const char* name, long score);
 void hiscore_write(void);
 void hiscore_dialog_init(void);
 void hiscore_dialog_draw(void);
 bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats);
-

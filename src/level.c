@@ -31,6 +31,7 @@
 #include "game.h"
 #include "line.h"
 #include "grid.h"
+#include "grid_maps.h"
 #include "level.h"
 #include "options.h"
 #include "themes.h"
@@ -65,11 +66,11 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 	y = mousey / BLOCKHEIGHT * BLOCKHEIGHT;
 	xdif = mousex - x; ydif = mousey - y;
 
-	if (grid[x][y] == '*' || grid[mousex][mousey] == '*') 
+	if (grid_at(x, y) == '*' || grid_at(mousex, mousey) == '*') 
 	{ // a little bit of grace if the player clicks directly on the penguin
 		sound_play(SNDOUCH);
 	}
-	else if (grid[x][y] == ' ')
+	else if (grid_at(x, y) == ' ')
 	{
 		if (vertical)
 		{
@@ -88,7 +89,7 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 
 void level_init(GameStats *stats) {
 	grid_generate_colors();
-	grid_reset(' ');
+	grid_maps_apply(grid_maps_current_name());
 	flying_sprite_init();
 	scoremod=1.0f;
 	bonusmod=1.0f;
@@ -197,7 +198,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		{
 
 			flying_sprite_capture();
-			stats->clear=(100-(grid_countcleared()*100/(WIDTH*HEIGHT)));
+			stats->clear=grid_countcleared();
 			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
 			tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 		}
@@ -227,7 +228,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if (linedoneflag)
 		{
 			flying_sprite_capture();
-			stats->clear=(100-(grid_countcleared()*100/(WIDTH*HEIGHT)));
+			stats->clear=grid_countcleared();
 			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
 			tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 		}

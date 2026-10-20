@@ -26,12 +26,11 @@
 #include <dirent.h>
 
 #include "lang.h"
+#include "game.h"
 
-#define LANGUAGE_DIRECTORY "romfs:/lang"
-#define MAX_LANGUAGES 16
-#define MAX_TRANSLATIONS 256
-#define MAX_LINE_LENGTH  128
-
+#define MAX_LANGUAGES		16
+#define MAX_TRANSLATIONS	256
+#define MAX_LINE_LENGTH		128
 
 typedef struct {
 	char *key;
@@ -156,7 +155,7 @@ void lang_apply_selected(void) {
 }
 
 bool lang_set_current_name(const char *lang) {
-	for(int i = 0; i < language_count; i++) {
+	for(size_t i = 0; i < language_count; i++) {
 		if (strcmp(languages[i].name, lang) == 0) {
 			current_language = i;
 			if (!lang_load()) {

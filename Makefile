@@ -1,6 +1,6 @@
 #---------------------------------------------------------------------------------
 .SUFFIXES:
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL	:= all
 #---------------------------------------------------------------------------------
 
 ifeq ($(strip $(DEVKITARM)),)
@@ -14,97 +14,98 @@ include $(DEVKITARM)/3ds_rules
 #---------------------------------------------------------------------------------
 # Project configuration
 #---------------------------------------------------------------------------------
-BUILD               := build
-SOURCES             := src
-INCLUDES            := include src
+BUILD				:= build
+SOURCES				:= src
+INCLUDES			:= include src
 
-TARGET              := icebreaker-3ds
-APP_TITLE           := Icebreaker
-APP_DESCRIPTION     := Icebreaker 3DS port
-APP_AUTHOR          := Jean-Baptiste Langlois
-APP_PRODUCT_CODE    := CTR-H-ICEB
-APP_UNIQUE_ID       := 0xFAA72
-APP_VERSION         ?= 1.0.0
+TARGET				:= icebreaker-3ds
+APP_TITLE			:= Icebreaker
+APP_DESCRIPTION		:= Icebreaker 3DS port
+APP_AUTHOR			:= Jean-Baptiste Langlois
+APP_PRODUCT_CODE	:= CTR-H-ICEB
+APP_UNIQUE_ID		:= 0xFAA72
+APP_VERSION			?= 1.0.0
 
-ASSETS              := assets
-GRAPHICS            := $(ASSETS)/bitmaps
-SOUNDS              := $(ASSETS)/sounds
-THEMES              := $(ASSETS)/themes
-LANGUAGES           := $(ASSETS)/lang
-ROMFS               := romfs
-CIA                 := $(ASSETS)/cia
+ASSETS				:= assets
+GRAPHICS			:= $(ASSETS)/bitmaps
+SOUNDS				:= $(ASSETS)/sounds
+THEMES				:= $(ASSETS)/themes
+GRIDS				:= $(ASSETS)/grids
+LANGUAGES			:= $(ASSETS)/lang
+ROMFS				:= romfs
+CIA					:= $(ASSETS)/cia
 
-ICON                := $(CIA)/icon.png
-CIA_RSF             := $(CIA)/app.rsf
-CIA_BANNER          := $(CIA)/banner.bnr
-CIA_BANNER_PNG      := $(CIA)/banner.png
-CIA_BANNER_WAV      := $(CIA)/banner.wav
+ICON				:= $(CIA)/icon.png
+CIA_RSF				:= $(CIA)/app.rsf
+CIA_BANNER			:= $(CIA)/banner.bnr
+CIA_BANNER_PNG		:= $(CIA)/banner.png
+CIA_BANNER_WAV		:= $(CIA)/banner.wav
 
-VERSION_PARTS       := $(subst ., ,$(APP_VERSION))
-APP_VERSION_MAJOR   := $(word 1,$(VERSION_PARTS))
-APP_VERSION_MINOR   := $(word 2,$(VERSION_PARTS))
-APP_VERSION_MICRO   := $(word 3,$(VERSION_PARTS))
+VERSION_PARTS		:= $(subst ., ,$(APP_VERSION))
+APP_VERSION_MAJOR	:= $(word 1,$(VERSION_PARTS))
+APP_VERSION_MINOR	:= $(word 2,$(VERSION_PARTS))
+APP_VERSION_MICRO	:= $(word 3,$(VERSION_PARTS))
 
 # One spritesheet, loaded at runtime with C2D_SpriteSheetLoad("romfs:/gfx.t3x").
-GFX_T3S             := $(ASSETS)/bitmaps/gfx.t3s
-GFX_T3X             := $(ROMFS)/bitmaps/gfx.t3x
-GFX_H               := $(BUILD)/gfx.h
-GFX_ROMFS_H := $(ROMFS)/bitmaps/gfx.h
-GFX_IMAGES          := $(shell find $(GRAPHICS) -type f -name '*.png' 2>/dev/null)
+GFX_T3S				:= $(ASSETS)/bitmaps/gfx.t3s
+GFX_T3X				:= $(ROMFS)/bitmaps/gfx.t3x
+GFX_H				:= $(BUILD)/gfx.h
+GFX_ROMFS_H			:= $(ROMFS)/bitmaps/gfx.h
+GFX_IMAGES			:= $(shell find $(GRAPHICS) -type f -name '*.png' 2>/dev/null)
 
 # Copy sounds and theme descriptions to RomFS without converting them.
-RAW_ASSET_DIRS      := $(SOUNDS) $(THEMES) $(LANGUAGES)
-RAW_ASSETS          := $(foreach dir,$(RAW_ASSET_DIRS),$(shell find $(dir) -type f 2>/dev/null))
-ROMFS_ASSETS        := $(patsubst $(ASSETS)/%,$(ROMFS)/%,$(RAW_ASSETS))
+RAW_ASSET_DIRS		:= $(SOUNDS) $(THEMES) $(LANGUAGES) $(GRIDS)
+RAW_ASSETS			:= $(foreach dir,$(RAW_ASSET_DIRS),$(shell find $(dir) -type f 2>/dev/null))
+ROMFS_ASSETS		:= $(patsubst $(ASSETS)/%,$(ROMFS)/%,$(RAW_ASSETS))
 
 #---------------------------------------------------------------------------------
 # Compiler / linker
 #---------------------------------------------------------------------------------
-ARCH                := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
-LIBDIRS             := $(CTRULIB) $(DEVKITPRO)/portlibs/3ds
+ARCH				:= -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
+LIBDIRS				:= $(CTRULIB) $(DEVKITPRO)/portlibs/3ds
 
-INCLUDE             := $(foreach dir,$(INCLUDES),-I$(TOPDIR)/$(dir)) \
-                       $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-                       -I$(TOPDIR)/$(BUILD)
+INCLUDE				:=	$(foreach dir,$(INCLUDES),-I$(TOPDIR)/$(dir)) \
+						$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+						-I$(TOPDIR)/$(BUILD)
 
-CFLAGS              := -g -Wall -O2 -mword-relocations -ffunction-sections $(ARCH) \
-                       $(INCLUDE) -D__3DS__ -DVERSION=\"$(APP_VERSION)\"
+CFLAGS				:= -g -Wall -O2 -mword-relocations -ffunction-sections $(ARCH) \
+						-Wextra $(INCLUDE) -D__3DS__ -DVERSION=\"$(APP_VERSION)\"
 ifeq ($(DEBUG),1)
-CFLAGS              += -DDEBUG
+CFLAGS				+= -DDEBUG
 endif
 
-CXXFLAGS            := $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
-ASFLAGS             := -g $(ARCH)
-LDFLAGS             = -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
-LIBS                := -lcitro2d -lcitro3d -lctru -lm -lvorbisidec -logg
+CXXFLAGS			:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
+ASFLAGS				:= -g $(ARCH)
+LDFLAGS				= -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LIBS				:= -lcitro2d -lcitro3d -lctru -lm -lvorbisidec -logg
 
 #---------------------------------------------------------------------------------
 # Outer make: prepare RomFS, then compile from build/
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 
-export TOPDIR        := $(CURDIR)
-export OUTPUT        := $(TOPDIR)/$(TARGET)
-export DEPSDIR       := $(TOPDIR)/$(BUILD)
+export TOPDIR			:= $(CURDIR)
+export OUTPUT			:= $(TOPDIR)/$(TARGET)
+export DEPSDIR			:= $(TOPDIR)/$(BUILD)
 
-CFILES              := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES            := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-SFILES              := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+CFILES					:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CPPFILES				:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+SFILES					:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 
-export VPATH         := $(foreach dir,$(SOURCES),$(TOPDIR)/$(dir))
-export OFILES        := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
-export OFILES_SOURCES := $(OFILES)
-export HFILES        := $(TOPDIR)/$(GFX_H)
-export LIBPATHS      := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
-export LD := $(CC)
+export VPATH			:= $(foreach dir,$(SOURCES),$(TOPDIR)/$(dir))
+export OFILES			:= $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES_SOURCES	:= $(OFILES)
+export HFILES			:= $(TOPDIR)/$(GFX_H)
+export LIBPATHS			:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+export LD				:= $(CC)
 
 # The 3DSX must be repackaged when RomFS contents change, even if C code doesn't.
-export ROMFS_DEPS    := $(addprefix $(TOPDIR)/,$(GFX_T3X) $(GFX_ROMFS_H) $(ROMFS_ASSETS))
-export _3DSXDEPS     := $(if $(NO_SMDH),,$(OUTPUT).smdh)
-export _3DSXFLAGS    += --romfs=$(TOPDIR)/$(ROMFS)
-export APP_ICON      := $(TOPDIR)/$(ICON)
+export ROMFS_DEPS		:= $(addprefix $(TOPDIR)/,$(GFX_T3X) $(GFX_ROMFS_H) $(ROMFS_ASSETS))
+export _3DSXDEPS		:= $(if $(NO_SMDH),,$(OUTPUT).smdh)
+export _3DSXFLAGS		+= --romfs=$(TOPDIR)/$(ROMFS)
+export APP_ICON			:= $(TOPDIR)/$(ICON)
 ifeq ($(strip $(NO_SMDH)),)
-export _3DSXFLAGS    += --smdh=$(OUTPUT).smdh
+export _3DSXFLAGS		+= --smdh=$(OUTPUT).smdh
 endif
 
 .PHONY: all build-project banner cia clean lint run

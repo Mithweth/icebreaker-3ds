@@ -24,21 +24,28 @@ score, high score, lives and how much ice has been cleared.
 | Input                  | Action                                                                   |
 |------------------------|--------------------------------------------------------------------------|
 | Swipe with the stylus  | Start two lines from where the swipe begins: a vertical swipe draws up and down, a horizontal swipe draws left and right |
-| Swipe on a penguin     | "Ouch!" — nothing happens, no life lost                                  |
+| Swipe on a penguin     | "Ouch!" - nothing happens, no life lost                                  |
 | Tap the touch screen   | Skip the intro, or continue after the end-of-level screen                |
 | START                  | Open / close the menu (pauses the game)                                  |
 | D-Pad up / down        | Move through the menu                                                    |
-| D-Pad left / right     | Change the difficulty or the theme                                       |
+| D-Pad left / right     | Change the difficulty, the board or the theme                            |
 | A                      | Confirm                                                                  |
 
 ## Menu
 
-- **New game** — start over from level 1.
-- **Language** — change the current language.
-- **Difficulty** — Changing it ends the current game.
-- **Theme** — change the look of the game.
-- **High scores** — the five best scores.
-- **Help** — a short summary of the rules.
+### Main
+
+- **New game** - start over from level 1.
+- **Options** - open the options menu.
+- **High scores** - the five best scores.
+- **Help** - a short summary of the rules.
+
+### Options
+- **Language** - change the current language.
+- **Difficulty** - Changing it ends the current game.
+- **Theme** - change the look of the game.
+- **Grid** - change the current board. It ends the current game.
+- **Back** - to the main menu.
 
 Options and high scores are saved on the SD card, in `sdmc:/.icebreaker` and
 `sdmc:/.icebreaker.scores`.
@@ -48,9 +55,9 @@ Options and high scores are saved on the SD card, in `sdmc:/.icebreaker` and
 Download the latest `.3dsx` or `.cia` from the
 [releases page](https://github.com/Mithweth/icebreaker-3ds/releases).
 
-- **`.3dsx`** — copy it to the `/3ds/` folder of your SD card and start it
+- **`.3dsx`** - copy it to the `/3ds/` folder of your SD card and start it
   from the Homebrew Launcher.
-- **`.cia`** — install it with a CIA installer such as FBI. The game then
+- **`.cia`** - install it with a CIA installer such as FBI. The game then
   appears on the HOME Menu.
 
 ## Building
@@ -108,6 +115,12 @@ game's log messages.
 Themes are plain text files in `assets/themes/`. They set the colours, the
 penguin sprite and the sounds. See [README.themes.md](README.themes.md) to
 write your own.
+
+## Grids
+
+Grids set the shape of the iceberg. They are plain text files in
+`assets/grids/`, drawn with `#` for ice and `.` for open sea. See
+[README.grids.md](README.grids.md) to draw your own.
 
 ## Languages
 

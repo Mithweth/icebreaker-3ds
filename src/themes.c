@@ -32,7 +32,6 @@
 #include "gfxmap.h"
 #include "game.h"
 #include "sound.h"
-#include "grid.h"
 
 Theme theme;
 static char* themes[MAX_THEMES];
@@ -121,9 +120,9 @@ bool themes_settheme(const char* themename) {
 	foundcolor.boardfillmaxb = 0;
 	sound_reset();
 
-	snprintf(themefilename, 256,"romfs:/themes/%s.ibt",themename);
+	snprintf(themefilename, 256, "%s/%s.ibt", THEME_DIRECTORY, themename);
 	
-	themefile=fopen(themefilename,"r");
+	themefile = fopen(themefilename, "r");
 	if (!themefile) {
 		// FIX -- ??? question: should this actually change the
 		// current setting, or is leaving it at the currently-unavailable
@@ -364,12 +363,11 @@ bool themes_settheme(const char* themename) {
 	}
 	
 	printf("theme loaded successfully: %s\n", themename);
-	grid_generate_colors();
 	return true;
 }
 
-bool themes_load(const char *directory) {
-    DIR *dir = opendir(directory);
+bool themes_load(void) {
+    DIR *dir = opendir(THEME_DIRECTORY);
     if (!dir) return false;
 
     for (size_t i = 0; i < theme_count; i++) free(themes[i]);
@@ -384,7 +382,7 @@ bool themes_load(const char *directory) {
         }
 
         if (theme_count >= MAX_THEMES) {
-            printf("Too many themes in %s (max %d)\n", directory, MAX_THEMES);
+            printf("Too many themes in %s (max %d)\n", THEME_DIRECTORY, MAX_THEMES);
             break;
         }
 
@@ -402,7 +400,7 @@ bool themes_load(const char *directory) {
 
     closedir(dir);
     qsort(themes, theme_count, sizeof(themes[0]), alphasortstringarray);
-    printf("%s: Found %d themes\n", directory, theme_count);
+    printf("%s: Found %d themes\n", THEME_DIRECTORY, theme_count);
     return true;
 }
 

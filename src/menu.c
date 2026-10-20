@@ -32,18 +32,31 @@
 #include "text.h"
 #include "options.h"
 #include "grid.h"
+#include "grid_maps.h"
 #include "hiscore.h"
 #include "lang.h"
 #include "flying_sprite.h"
 #include "snowflake.h"
 
-typedef enum { DIALOG_NORMAL, DIALOG_CONFIRM, DIALOG_HIGHSCORES, DIALOG_HELP } DialogType;
+typedef enum {
+	CONFIRM_DIFFICULTY,
+	CONFIRM_GRID,
+} DialogConfirmType;
+
+typedef enum {
+	DIALOG_NORMAL,
+	DIALOG_CONFIRM,
+	DIALOG_HIGHSCORES,
+	DIALOG_HELP,
+} DialogType;
+
 typedef enum {
 	MENU_NEW_GAME,
 	MENU_OPTIONS,
 	MENU_LANGUAGE,
 	MENU_DIFFICULTY,
 	MENU_THEME,
+	MENU_GRID,
 	MENU_BACK,
 	MENU_HIGHSCORES,
 	MENU_HELP,
@@ -59,6 +72,7 @@ static bool yes_selected;
 static const char *logo_chars = "ICEBRAK";
 static size_t selected;
 static bool options_selected;
+static DialogConfirmType dialog_confirm_type;
 
 static MenuEntry main_menu[] = {
 	{"MENU_NEW_GAME", MENU_NEW_GAME},
@@ -69,6 +83,7 @@ static MenuEntry main_menu[] = {
 static MenuEntry options_menu[] = {
 	{"MENU_LANGUAGE", MENU_LANGUAGE},
 	{"MENU_DIFFICULTY", MENU_DIFFICULTY},
+	{"MENU_GRID", MENU_GRID},
 	{"MENU_THEME", MENU_THEME},
 	{"MENU_BACK", MENU_BACK},
 };
@@ -157,7 +172,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	text_cput(200 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->level);
 	text_put(20 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
-	snprintf(tmptext,30,"%ld",hiscore_get(0)->score);
+	snprintf(tmptext,30,"%ld",hiscore_get(grid_maps_current_name(), 0)->score);
 	text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	for(int i = 0; i < stats->lives; i++) {
 		C2D_DrawImageAt(theme.spriteimage, 80.0f + (16.0f * i) + parallax, 205.0f - (theme.spriteimage.subtex->height / 2), 0.3f, NULL, 1.0f, 1.0f);
@@ -204,6 +219,9 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 					}
 					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, difficulty);
 					break;
+				case MENU_GRID:
+					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, grid_maps_selected_name());
+					break;
 				case MENU_THEME:
 					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, themes_current_name());
 					break;
@@ -216,9 +234,18 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		C2D_DrawRectSolid(50.0f, 40.0f, 0.3f, 300.0f, 155.0f, theme.color.menuhighlight);
 		C2D_DrawRectSolid(52.0f, 42.0f, 0.31f, 296.0f, 151.0f, theme.color.background);
 		for(int i = 0; i < 3; i++) {
-			char restartkey[24];
-			snprintf(restartkey, 24, "QUESTION_RESTART_%d", i + 1);
-			text_put(60, 60 + 22 * i, 0.4f, 3, theme.color.normaltext, lang_get(restartkey));
+			char confirm_key[24];
+			switch(dialog_confirm_type) {
+			case CONFIRM_DIFFICULTY:
+				snprintf(confirm_key, 24, "QUESTION_DIFFICULTY_%d", i + 1);
+				break;
+			case CONFIRM_GRID:
+				snprintf(confirm_key, 24, "QUESTION_GRID_%d", i + 1);
+				break;
+			default:
+				break;
+			}
+			text_put(60, 60 + 22 * i, 0.4f, 3, theme.color.normaltext, lang_get(confirm_key));
 		}
 		int yes_w = text_getwidth(3, lang_get("CHOICE_YES"));
 		int no_w = text_getwidth(3, lang_get("CHOICE_NO"));
@@ -237,9 +264,10 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		C2D_DrawRectSolid(50.0f, 40.0f, 0.3f, 300.0f, 155.0f, theme.color.menuhighlight);
 		C2D_DrawRectSolid(52.0f, 42.0f, 0.31f, 296.0f, 151.0f, theme.color.background);
 		text_cput(200, 50, 0.4f, 3, theme.color.bonusscrolltext, lang_get("MENU_HIGH_SCORES"));
+		text_cput(200, 70, 0.4f, 3, theme.color.normaltext, grid_maps_selected_name());
 		for(int i = 0; i < HISCORENUM; i++) {
-			int y = 90 + 20 * i;
-			HighScore* user = hiscore_get(i);
+			int y = 95 + 20 * i;
+			HighScore* user = hiscore_get(grid_maps_selected_name(), i);
 			char nb[4];
 			snprintf(nb, 4, "%d.", i + 1);
 			char score[10];
@@ -289,7 +317,11 @@ bool menu_update(bool pause, u32 keys) {
 				break;
 			case MENU_THEME:
 				themes_prev();
+				grid_generate_colors();
 				options_write();
+				break;
+			case MENU_GRID:
+				grid_maps_prev();
 				break;
 			default:
 				break;
@@ -305,7 +337,11 @@ bool menu_update(bool pause, u32 keys) {
 				break;
 			case MENU_THEME:
 				themes_next();
+				grid_generate_colors();
 				options_write();
+				break;
+			case MENU_GRID:
+				grid_maps_next();
 				break;
 			default:
 				break;
@@ -324,6 +360,7 @@ bool menu_update(bool pause, u32 keys) {
 			case MENU_DIFFICULTY:
 				if (options_difficulty_selected() != options_difficulty_current()) {
 					dialog_type = DIALOG_CONFIRM;
+					dialog_confirm_type = CONFIRM_DIFFICULTY;
 					yes_selected = false;
 				}
 				break;
@@ -334,6 +371,13 @@ bool menu_update(bool pause, u32 keys) {
 			case MENU_BACK:
 				options_selected = false;
 				selected = 0;
+				break;
+			case MENU_GRID:
+				if (strcmp(grid_maps_selected_name(), grid_maps_current_name()) != 0) {
+					dialog_type = DIALOG_CONFIRM;
+					dialog_confirm_type = CONFIRM_GRID;
+					yes_selected = false;
+				}
 				break;
 			case MENU_HIGHSCORES:
 				dialog_type = DIALOG_HIGHSCORES;
@@ -347,8 +391,15 @@ bool menu_update(bool pause, u32 keys) {
 		}
 		break;
 	case DIALOG_HIGHSCORES:
-		if (keys & KEY_A) {
+		if (keys & (KEY_A | KEY_B)) {
 			dialog_type = DIALOG_NORMAL;
+			grid_maps_selected_reset();
+		}
+		if (keys & KEY_LEFT) {
+			grid_maps_prev();
+		}
+		if (keys & KEY_RIGHT) {
+			grid_maps_next();
 		}
 		break;
 	case DIALOG_CONFIRM:
@@ -356,19 +407,36 @@ bool menu_update(bool pause, u32 keys) {
 			yes_selected = !yes_selected;
 		}
 		if (keys & KEY_A) {
+			dialog_type = DIALOG_NORMAL;
 			if (yes_selected) {
-				dialog_type = DIALOG_NORMAL;
-				options_difficulty_apply();
+				switch(dialog_confirm_type) {
+				case CONFIRM_DIFFICULTY:
+					options_difficulty_apply();
+					break;
+				case CONFIRM_GRID:
+					grid_maps_apply(grid_maps_selected_name());
+					break;
+				default:
+					break;
+				}
 				options_write();
 				game_start();
 			} else {
-				options_difficulty_selected_reset();
-				dialog_type = DIALOG_NORMAL;
+				switch(dialog_confirm_type) {
+				case CONFIRM_DIFFICULTY:
+					options_difficulty_selected_reset();
+					break;
+				case CONFIRM_GRID:
+					grid_maps_selected_reset();
+					break;
+				default:
+					break;
+				}
 			}
 		}
 		break;
 	case DIALOG_HELP:
-		if (keys & KEY_A) {
+		if (keys & (KEY_A | KEY_B)) {
 			dialog_type = DIALOG_NORMAL;
 		}
 		break;
@@ -383,6 +451,7 @@ void menu_init(void) {
 	dialog_type = DIALOG_NORMAL;
 	options_difficulty_selected_reset();
 	lang_selected_reset();
+	grid_maps_selected_reset();
 	flying_sprite_init();
 	options_selected = false;
 }

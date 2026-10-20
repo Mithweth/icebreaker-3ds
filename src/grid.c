@@ -32,11 +32,13 @@
 #include "themes.h"
 
 static long rcount;
+
 #define MAXRCOUNT 80000
 
 char grid[WIDTH][HEIGHT];
 char maskgrid[WIDTH][HEIGHT];
 static u32 block_colors[COLS][ROWS];
+static long total_blocks;
 
 char grid_at(int x, int y) {
 	if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT)
@@ -59,15 +61,15 @@ static void grid_squarefill(int x, int y)
 	}
 }
 
-long grid_countcleared(void) {
-	int i, j;
+int grid_countcleared(void) {
 	long c;
-	c=0;
-	for (i=0;i<WIDTH;i++)
-		for (j=0;j<HEIGHT;j++)
+	c = 0;
+	for (int i=0;i<WIDTH;i++)
+		for (int j=0;j<HEIGHT;j++)
 			if (grid_at(i,j) == ' ' || grid_at(i,j) == '*')
 				c++;
-	return c;
+
+	return 100 - (100 * c / total_blocks);
 }
 
 void grid_reset(char c) {
@@ -77,11 +79,10 @@ void grid_reset(char c) {
 			grid[x][y]=c;
 		}
 	}
+	total_blocks = WIDTH * HEIGHT;
 }
 
 void grid_mark(int x, int y, int w, int h, char fillchar) {
-	int i;
-	
 	// Optimizing this routine much further seems about impossible to me
 	// but if you know how to do it, let me know. This is by far the
 	// most frequently-called function in the whole game. Short of
@@ -93,8 +94,11 @@ void grid_mark(int x, int y, int w, int h, char fillchar) {
 	if (x + w > WIDTH)  w = WIDTH - x;
 	if (y + h > HEIGHT) h = HEIGHT - y;
 	if (w <= 0 || h <= 0) return;
-	for (i=x;i<x+w;i++)
-		memset(&grid[i][y],fillchar,h);
+	for (int i=x;i<x+w;i++)
+		for (int j=y;j<y+h;j++)
+			// ice should remain ice whatsoever, otherwise it can cause
+			// graphical issues when the shape is not a square
+			if (grid[i][j] != '.') grid[i][j] = fillchar;
 }
 
 void grid_generate_colors(void) {
@@ -193,4 +197,29 @@ void grid_checkempty(int x, int y)
 		// safe to use this isntead of grid_floodfill here. really. :)
 		grid_squarefill(x / BLOCKWIDTH * BLOCKWIDTH, y / BLOCKHEIGHT * BLOCKHEIGHT);
 	}
+}
+
+bool grid_expand(int cols, int rows, const char tmpgrid[cols][rows]) {
+	int w = WIDTH / cols;
+	int h = HEIGHT / rows; 
+	total_blocks = 0;
+	for (int j = 0; j < rows; j++) {
+		for (int i = 0; i < cols; i++) {
+			for (int y = j * h; y < (j + 1) * h; y++) {
+				for (int x = i * w; x < (i + 1) * w; x++) {
+					if (tmpgrid[i][j] == '.') {
+						grid[x][y] =  '.';
+					} else {
+						grid[x][y] = ' ';
+						total_blocks++;
+					}
+				}
+			}
+		}
+	}
+	if (total_blocks == 0) {
+		return false;
+	}
+	memcpy(maskgrid,grid,WIDTH*HEIGHT);
+	return true;
 }

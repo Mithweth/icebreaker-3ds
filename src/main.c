@@ -66,7 +66,7 @@ static void debug_init(void) {}
 static void debug_close(void) {}
 #endif
 
-int main(int argc, char **argv) {
+int main(void) {
 	int ret = 0;
 	gfxInitDefault();
 	gfxSet3D(true);
