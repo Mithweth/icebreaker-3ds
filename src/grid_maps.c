@@ -46,7 +46,7 @@ bool grid_maps_apply(const char* gridname) {
 	int potential_grid = grid_maps_get_index(gridname);
 	if (potential_grid < 0) {
 		printf("Error: unknown grid %s. Reverse to default\n", gridname);
-		grid_reset(' ');
+		grid_reset();
 		return false;
 	}
 
@@ -58,7 +58,7 @@ bool grid_maps_apply(const char* gridname) {
 	FILE* file = fopen(gridfilename, "r");
 	if (!file) {
 		printf("Error: Can't open grid file %s. Reverse to default\n", gridfilename);
-		grid_reset(' ');
+		grid_reset();
 		return false;
 	}
 
@@ -70,13 +70,13 @@ bool grid_maps_apply(const char* gridname) {
 		if (len != GRID_MAPS_COLS) {
 			printf("%s:%zu: invalid grid row length\n", gridfilename, current_row + 1);
 			fclose(file);
-			grid_reset(' ');
+			grid_reset();
 			return false;
 		}
 		for (int i = 0; i < GRID_MAPS_COLS; i++) {
 			if (line[i] != '.' && line[i] != '#') {
 				printf("%s:%zu: only '.' and '#' are supported. Reverse to default\n", gridfilename, current_row + 1);
-				grid_reset(' ');
+				grid_reset();
 				fclose(file);
 				return false;
 			}
@@ -87,12 +87,12 @@ bool grid_maps_apply(const char* gridname) {
 	fclose(file);
 	if (current_row < GRID_MAPS_ROWS) {
 		printf("%s: the grid file is not complete. Reverse to default\n", gridfilename);
-		grid_reset(' ');
+		grid_reset();
 		return false;
 	}
 	if (!grid_expand(GRID_MAPS_COLS, GRID_MAPS_ROWS, tmpgrid)) {
 		printf("%s: No valid ground has been found in that grid. Reverse to default\n", gridfilename);
-		grid_reset(' ');
+		grid_reset();
 		return false;
 	}
 	current_grid = potential_grid;

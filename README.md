@@ -28,7 +28,7 @@ score, high score, lives and how much ice has been cleared.
 | Tap the touch screen   | Skip the intro, or continue after the end-of-level screen                |
 | START                  | Open / close the menu (pauses the game)                                  |
 | D-Pad up / down        | Move through the menu                                                    |
-| D-Pad left / right     | Change the difficulty, the board or the theme                            |
+| D-Pad left / right     | Change the difficulty, the board or the theme, and browse the highscores |
 | A                      | Confirm                                                                  |
 
 ## Menu
