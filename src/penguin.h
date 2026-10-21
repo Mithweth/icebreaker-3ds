@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 typedef struct
 {
 	int x;
@@ -31,6 +33,8 @@ typedef struct
 	int xdelta;
 	int ydelta;
 	int speedslower;
+	size_t current_image;
+	size_t image_tick;
 } Penguin;
 
 typedef enum {

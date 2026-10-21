@@ -22,6 +22,7 @@
 
 #include <citro2d.h>
 #include <math.h>
+#include <stddef.h>
 #include "themes.h"
 
 typedef enum {
@@ -38,6 +39,8 @@ typedef struct {
 	float boost;
 	float speed;
 	float progress;
+	size_t current_image;
+	size_t image_tick;
 	FlyingSpriteStatus status;
 	float fall_speed;
 } FlyingSprite;
@@ -50,6 +53,8 @@ void flying_sprite_init(void) {
 	sprite.boost = 0.0f;
 	sprite.status = SPRITE_NORMAL;
 	sprite.fall_speed = 0.0f;
+	sprite.current_image = 0;
+	sprite.image_tick = 0;
 }
 
 void flying_sprite_gameover(void) {
@@ -77,6 +82,12 @@ void flying_sprite_watch(void) {
 }
 
 void flying_sprite_update(void) {
+	// Update the sprite in update since with stereoscopic 3d,
+	// flying_sprite_draw() is called twice a frame
+	if (sprite.image_tick++ >= 20) { // 8 seems to be a correct value
+		sprite.image_tick = 0;
+		sprite.current_image = (sprite.current_image + 1) % theme.sprite_count;
+	}
 	switch(sprite.status) {
 	case SPRITE_NORMAL:
 		sprite.angle += sprite.speed + sprite.boost;
@@ -110,7 +121,11 @@ void flying_sprite_update(void) {
 
 void flying_sprite_draw(float parallax) {
 	float scale = exp2f(sprite.z) * 0.75f;
-	float x = sprite.x + sprite.z * parallax - (theme.spriteimage.subtex->width / 2.0f) * scale;
-	float y = sprite.y - (theme.spriteimage.subtex->height / 2.0f) * scale;
-	C2D_DrawImageAt(theme.spriteimage, x, y, 0.4f + sprite.z * 0.2f, NULL, scale, scale);
+	float x = sprite.x + sprite.z * parallax - (theme.spriteimage[sprite.current_image].subtex->width / 2.0f) * scale;
+	float y = sprite.y - (theme.spriteimage[sprite.current_image].subtex->height / 2.0f) * scale;
+	if (sinf(sprite.angle) > 0) {
+		C2D_DrawImageAt(theme.spriteimage[sprite.current_image], x, y, 0.4f + sprite.z * 0.2f, NULL, -scale, scale);
+	} else {
+		C2D_DrawImageAt(theme.spriteimage[sprite.current_image], x, y, 0.4f + sprite.z * 0.2f, NULL, scale, scale);
+	}
 }

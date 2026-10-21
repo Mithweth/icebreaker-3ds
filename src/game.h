@@ -30,7 +30,7 @@
 
 #define MAXPENGUINS 100
 #define PENGUINSPEED 2
-#define SPRITE_SIZE 0.75f
+#define SPRITE_SIZE 1.0f
 
 #define BLOCKWIDTH 10
 #define BLOCKHEIGHT 10

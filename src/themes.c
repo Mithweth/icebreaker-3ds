@@ -93,7 +93,7 @@ bool themes_settheme(const char* themename) {
 	ThemeColorsType foundcolor;
 	
 	themes_setdefaultcolors();
-	theme.spriteimage = (C2D_Image){0};
+	theme.sprite_count = 0;
 	theme.fallingparticle = (C2D_Image){0};
 	
 	foundcolor.background      = 0;
@@ -263,9 +263,14 @@ bool themes_settheme(const char* themename) {
 		else if (sscanf(linebuf,"%20s %255s",optbuf,valbuf)==2)
 		{
 			if (!strcmp(optbuf,"spritebitmap"))
-			{
-				theme.spriteimage=gfxmap_get_image(valbuf);
-				if (!theme.spriteimage.tex) {
+			{	
+				if (theme.sprite_count >= MAX_SPRITES) {
+					printf("Error while loading sprite: too many sprites: %s", valbuf);
+					fclose(themefile);
+					return false;					
+				}
+				theme.spriteimage[theme.sprite_count] = gfxmap_get_image(valbuf);
+				if (!theme.spriteimage[theme.sprite_count++].tex) {
 					printf("Error while loading sprite: No image found: %s\n", valbuf);
 					fclose(themefile);
 					return false;
@@ -273,7 +278,7 @@ bool themes_settheme(const char* themename) {
 			}
 			else if (!strcmp(optbuf,"fallingparticle"))
 			{
-				theme.fallingparticle=gfxmap_get_image(valbuf);
+				theme.fallingparticle = gfxmap_get_image(valbuf);
 				if (!theme.fallingparticle.tex) {
 					printf("Error while loading sprite: No image found: %s\n", valbuf);
 					fclose(themefile);
@@ -308,6 +313,10 @@ bool themes_settheme(const char* themename) {
 	}	
 	fclose(themefile);
 
+	if (theme.sprite_count == 0) {
+		printf("Error: no spritebitmap found in theme %s. Using default.\n", themename);
+		return false;
+	}
 	if (foundcolor.background == 0)
 		{ printf("Warning: Background not correctly defined in theme %s. Using default.\n",themename); }
 	if (foundcolor.normaltext == 0)

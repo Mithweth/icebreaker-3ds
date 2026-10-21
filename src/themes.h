@@ -27,6 +27,8 @@
 #include <3ds.h>
 #include <citro2d.h>
 
+#define MAX_SPRITES	4
+
 typedef struct
 {
 	u32 background;
@@ -56,7 +58,8 @@ typedef struct
 typedef struct {
 	char name[64];
 	ThemeColorsType color;
-	C2D_Image spriteimage;
+	C2D_Image spriteimage[MAX_SPRITES];
+	size_t sprite_count;
 	C2D_Image fallingparticle;
 } Theme;
 
