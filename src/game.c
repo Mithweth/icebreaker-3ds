@@ -84,7 +84,7 @@ void game_start(void) {
 }
 
 static void game_over(void) {
-	if (hiscore_check_high(grid_maps_current_name(), stats.score)) {
+	if (!grid_maps_random(grid_maps_current_name()) && hiscore_check_high(grid_maps_current_name(), stats.score)) {
 		hiscore_dialog_init();
 		game_mode = GAME_HIGH_SCORE;
 	} else {
