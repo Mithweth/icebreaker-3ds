@@ -75,14 +75,14 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 		if (vertical)
 		{
 			if (!line1.on)
-				(ydif<BLOCKHEIGHT/2) ? line_start(&line1,UP,x,y) : line_start(&line1,UP,x,y+BLOCKHEIGHT);
+				(ydif<BLOCKHEIGHT/2) ? line_start(&line1, UP, x, y, 0) : line_start(&line1, UP, x, y+BLOCKHEIGHT, 0);
 			if (!line2.on)
-				(ydif<BLOCKHEIGHT/2) ? line_start(&line2,DOWN,x,y) : line_start(&line2,DOWN,x,y+BLOCKHEIGHT);
+				(ydif<BLOCKHEIGHT/2) ? line_start(&line2, DOWN, x, y, 0) : line_start(&line2, DOWN, x, y+BLOCKHEIGHT, 0);
 		} else {
 			if (!line1.on) 
-				(xdif<BLOCKWIDTH/2) ? line_start(&line1,LEFT,x,y) : line_start(&line1,LEFT,x+BLOCKWIDTH,y);
+				(xdif<BLOCKWIDTH/2) ? line_start(&line1, LEFT, x, y, 0) : line_start(&line1, LEFT, x+BLOCKWIDTH,y, 0);
 			if (!line2.on)
-				(xdif<BLOCKWIDTH/2) ? line_start(&line2,RIGHT,x,y) : line_start(&line2,RIGHT,x+BLOCKWIDTH,y);
+				(xdif<BLOCKWIDTH/2) ? line_start(&line2, RIGHT, x, y, 0) : line_start(&line2, RIGHT, x+BLOCKWIDTH,y, 0);
 		}
 	}
 }

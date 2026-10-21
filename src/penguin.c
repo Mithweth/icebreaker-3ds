@@ -36,10 +36,7 @@
 static bool penguin_occupy_block(int x, int y) {
 	const int r = x + BLOCKWIDTH - 1;
 	const int b = y + BLOCKHEIGHT - 1;
-	return (grid_at(x, y) == ' ' || grid_at(x, y) == 'w')
-		&& (grid_at(r, y) == ' ' || grid_at(r, y) == 'w')
-		&& (grid_at(x, b) == ' ' || grid_at(x, b) == 'w')
-		&& (grid_at(r, b) == ' ' || grid_at(r, b) == 'w');
+	return (grid_at(x, y) == ' ' && grid_at(r, y) == ' ' && grid_at(x, b) == ' ' && grid_at(r, b) == ' ');
 }
 
 Penguin penguin_create(void) {
@@ -138,13 +135,6 @@ PenguinHit penguin_move(Penguin* p)
 		hitline2=true;
 		p->x+=movex;	
 	}
-	else if ((grid_at(checkx,p->y)=='w' || grid_at(checkx,p->y)==' ' ) 
-	      && (grid_at(checkx,p->y+BLOCKHEIGHT-1)=='w' || grid_at(checkx,p->y+BLOCKHEIGHT-1)==' '))
-	{
-		// this is used in the intro. maybe some place else too in the future.
-		// should it be merged into the first line above? maybe.
-		p->x+=movex;
-	}
 	else
 	{
 		p->xdelta=-p->xdelta;
@@ -159,24 +149,14 @@ PenguinHit penguin_move(Penguin* p)
 	}
 	else if (grid_at(p->x,checky)=='1' || grid_at(p->x+BLOCKWIDTH-1,checky)=='1')
 	{
-		//printf("Hit 1\n");
 		hitline1=true;
 		p->y+=movey;		
 	}
 	else if (grid_at(p->x,checky)=='2' || grid_at(p->x+BLOCKWIDTH-1,checky)=='2')
 	{
-		//printf("Hit 2\n");
 		hitline2=true;
 		p->y+=movey;		
 	}
-	else if ((grid_at(p->x,checky)=='w' || grid_at(p->x,checky)==' ') 
-	      && (grid_at(p->x+BLOCKWIDTH-1,checky)=='w' || grid_at(p->x+BLOCKWIDTH-1,checky)==' '))
-	{
-		// this is used in the intro. maybe some place else too in the future.
-		// should it be merged into the first line above? maybe.
-		p->y+=movey;
-	}
-
 	else
 	{
 		p->ydelta=-p->ydelta;

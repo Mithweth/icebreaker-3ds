@@ -102,8 +102,7 @@ static void line_finish(Line * l)
 	}
 }
 
-Line line_create(int linenum)
-{
+Line line_create(int linenum) {
 	Line l;
 	l.id = '0' + linenum;
 	l.on=false;
@@ -119,11 +118,11 @@ Line line_create(int linenum)
 	return(l);
 }
 
-void line_start(Line * l, LineDir d, int x, int y)
-{
+void line_start(Line * l, LineDir d, int x, int y, int end) {
 	l->on=true;
 	l->dir=d;
 	l->stuckcount=0;
+	l->end = end;
 
 	switch (d)
 	{
@@ -131,19 +130,19 @@ void line_start(Line * l, LineDir d, int x, int y)
 			l->geom.w=BLOCKWIDTH;
 			l->geom.h=1;
 			l->geom.x=x;
-			l->geom.y=y-1; 
+			l->geom.y=y-1;
 		break;
 		case DOWN:
 			l->geom.w=BLOCKWIDTH;
 			l->geom.h=1;
 			l->geom.x=x;
-			l->geom.y=y; 
+			l->geom.y=y;
 		break;
 		case LEFT: 
 			l->geom.w=1;
 			l->geom.h=BLOCKHEIGHT;
 			l->geom.x=x-1;
-			l->geom.y=y;			
+			l->geom.y=y;
 		break;
 		case RIGHT:
 			l->geom.w=1;
@@ -155,7 +154,6 @@ void line_start(Line * l, LineDir d, int x, int y)
 	l->mark = l->geom;
 }
 
-
 int line_move(Line * l)
 {
 	int finish=false;
@@ -163,24 +161,27 @@ int line_move(Line * l)
 	char check2;
 
 	grid_mark(l->mark.x,l->mark.y,l->mark.w,l->mark.h,l->id);
-	
 	switch (l->dir)
 	{
 		case UP:
 			check1=grid_at(l->geom.x,l->geom.y-1);
 			check2=grid_at(l->geom.x+BLOCKWIDTH-1,l->geom.y-1);
+			if (l->end && l->geom.y <= l->end) finish=true;
 		break;
 		case DOWN:
 			check1=grid_at(l->geom.x,l->geom.y+l->geom.h);
 			check2=grid_at(l->geom.x+BLOCKWIDTH-1,l->geom.y+l->geom.h);
+			if (l->end && l->geom.y + l->geom.h >= l->end) finish=true;
 		break;
 		case LEFT:
 			check1=grid_at(l->geom.x-1,l->geom.y);
 			check2=grid_at(l->geom.x-1,l->geom.y+BLOCKHEIGHT-1);
+			if (l->end && l->geom.x <= l->end) finish=true;
 		break;
 		case RIGHT:
 			check1=grid_at(l->geom.x+l->geom.w,l->geom.y);
 			check2=grid_at(l->geom.x+l->geom.w,l->geom.y+BLOCKHEIGHT-1);
+			if (l->end && l->geom.x + l->geom.w >= l->end) finish=true;
 		break;
 		default: // this will never happen. really.
 			fprintf(stderr,"Line has no direction. That shouldn't have happened.\n");
@@ -189,64 +190,63 @@ int line_move(Line * l)
 		break;
 	}
 
-	if (check1 == ' ' && check2 == ' ')
-	{ // next space is empty
-		switch (l->dir)
-		{
-			case UP:
-				l->geom.y--;
-				l->geom.h++;
-				l->mark.y--;
-				l->mark.h=1;
-			break;
-			case DOWN:
-				l->geom.h++; // increase length of line -- top stays same 
-				l->mark.y+=l->mark.h;
-				l->mark.h=1;
-			break;
-			case LEFT:
-				l->geom.x--;
-				l->geom.w++;
-				l->mark.x--;
-				l->mark.w=1;
-			break;
-			case RIGHT:
-				l->geom.w++; // increase width of line -- left side stays same 
-				l->mark.x+=l->mark.w;
-				l->mark.w=1;
-			break;
+	if (!finish) {
+		if (check1 == ' ' && check2 == ' ')
+		{ // next space is empty
+			switch (l->dir)
+			{
+				case UP:
+					l->geom.y--;
+					l->geom.h++;
+					l->mark.y--;
+					l->mark.h=1;
+				break;
+				case DOWN:
+					l->geom.h++; // increase length of line -- top stays same 
+					l->mark.y+=l->mark.h;
+					l->mark.h=1;
+				break;
+				case LEFT:
+					l->geom.x--;
+					l->geom.w++;
+					l->mark.x--;
+					l->mark.w=1;
+				break;
+				case RIGHT:
+					l->geom.w++; // increase width of line -- left side stays same 
+					l->mark.x+=l->mark.w;
+					l->mark.w=1;
+				break;
+			}
 		}
-	}
-	else if (check1 == '*' || check2 == '*')
-	{ // hit a penguin. kills line.
-		l->dead=true;
-	}
-	else if (check1 == '1' || check2 == '1' || check1 == '2' || check2 == '2')
-	{
-		if (l->stuckcount>LINEMAXSTUCK)
+		else if (check1 == '*' || check2 == '*')
+		{ // hit a penguin. kills line.
+			l->dead=true;
+		}
+		else if (check1 == '1' || check2 == '1' || check1 == '2' || check2 == '2')
 		{
-			// FIX -- should play sound when this happens, to
-			// let users know that this isn't a mistake.
-			finish=true;
+			if (l->stuckcount>LINEMAXSTUCK)
+			{
+				// FIX -- should play sound when this happens, to
+				// let users know that this isn't a mistake.
+				finish=true;
+			}
+			else
+			{
+				l->stuckcount++;
+				// FIX: kludge-o-rama!!
+				// this could work around the irritating thing where
+				// a line gets started 'on top' of another line. but it
+				// is totally repairing the symptom, not the bug. *sigh*
+				//if (l->geom.w==1 || l->geom.h==1) finish=true;
+			}
 		}
 		else
-		{
-			l->stuckcount++;
-			
-			// FIX: kludge-o-rama!!
-			// this could work around the irritating thing where
-			// a line gets started 'on top' of another line. but it
-			// is totally repairing the symptom, not the bug. *sigh*
-			//if (l->geom.w==1 || l->geom.h==1) finish=true;
+		{ // hit something else
+			finish=true;
 		}
 	}
-	else
-	{ // hit something else
-		finish=true;
-	}
-	
-	if (finish)
-	{
+	if (finish) {
 		grid_mark(l->mark.x,l->mark.y,l->mark.w,l->mark.h,l->id);
 		line_finish(l);
 		return 1;

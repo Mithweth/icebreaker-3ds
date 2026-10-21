@@ -40,6 +40,7 @@ typedef struct
 	int on;
 	Coordinate geom;
 	Coordinate mark;
+	int end;
 	LineDir dir;
 	char id;
 	int dead;
@@ -47,13 +48,8 @@ typedef struct
 	int stuckcount;
 } Line;
 
-
-//extern Line line_create(int linenum);
-void line_start(Line * l, LineDir d, int x, int y);
+void line_start(Line * l, LineDir d, int x, int y, int end);
 Line line_create(int linenum);
 int line_move(Line * l);
 void line_draw(const Line *l, u32 color);
 void line_kill(Line * l);
-// extern int line_move(Line * l);
-// extern void line_finish(Line * l);
-// extern void line_kill(Line * l);

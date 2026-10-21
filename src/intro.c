@@ -46,30 +46,16 @@ static int penguincount;
 static bool frozen;
 
 void intro_init(void) {
-	grid_reset('w');
+	grid_reset();
 	grid_generate_colors();
 	letterstep = 0;
 	line1=line_create(1);
 	line2=line_create(2);
 	tux = penguin_create();
+	grid_mark(tux.x,tux.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
 	penguincount = 0;
 	frozen = true;
 	/// Here's the fun part where we set up the letters.
-	// I
-	grid_mark(LXPOS(1),LYPOS(2),BLOCKWIDTH*3,BLOCKHEIGHT  ,' ');
-	grid_mark(LXPOS(1),LYPOS(7),BLOCKWIDTH*3,BLOCKHEIGHT  ,' ');
-	grid_mark(LXPOS(2),LYPOS(2),BLOCKWIDTH  ,BLOCKHEIGHT*6,' ');
-	
-	//C
-	grid_mark(LXPOS(5),LYPOS(2),BLOCKWIDTH*4,BLOCKHEIGHT  ,' ');
-	grid_mark(LXPOS(5),LYPOS(3),BLOCKWIDTH  ,BLOCKHEIGHT*5,' ');
-	grid_mark(LXPOS(6),LYPOS(7),BLOCKWIDTH*3,BLOCKHEIGHT,  ' ');
-	
-	//E
-	grid_mark(LXPOS(10),LYPOS(2),BLOCKWIDTH*4,BLOCKHEIGHT  ,' ');
-	grid_mark(LXPOS(10),LYPOS(3),BLOCKWIDTH  ,BLOCKHEIGHT*5,' ');	
-	grid_mark(LXPOS(11),LYPOS(7),BLOCKWIDTH*3,BLOCKHEIGHT,  ' ');
-	grid_mark(LXPOS(11),LYPOS(4),BLOCKWIDTH*2,BLOCKHEIGHT  ,' ');
 	//B
 	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(11)); penguincount++;
 	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(12)); penguincount++; 
@@ -226,67 +212,51 @@ bool intro_update(u32 keys) {
 		{
 			// I
 			case 0:
-				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(2),LYPOS(2));
-				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(2),LYPOS(2));
+				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(2),LYPOS(2),LXPOS(1));
+				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(2),LYPOS(2),LXPOS(4));
 			break;
 			case 1:
-				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(2),LYPOS(7));
-				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(2),LYPOS(7));
+				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(2),LYPOS(7),LXPOS(1));
+				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(2),LYPOS(7),LXPOS(4));
 			break;
 			case 2:
-				if (!linedone1 && !line1.on) line_start(&line1,UP,LXPOS(2),LYPOS(5));
-				if (!linedone2 && !line2.on) line_start(&line2,DOWN,LXPOS(2),LYPOS(5));
+				if (!linedone1 && !line1.on) line_start(&line1,UP,LXPOS(2),LYPOS(5),LYPOS(3));
+				if (!linedone2 && !line2.on) line_start(&line2,DOWN,LXPOS(2),LYPOS(5),LYPOS(7));
 			break;
 			// C
 			case 3:
-				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(7),LYPOS(2));
-				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(7),LYPOS(2));
+				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(7),LYPOS(2),LXPOS(5));
+				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(7),LYPOS(2),LXPOS(9));
 			break;
 			case 4:
-				if (!linedone1 && !line1.on) line_start(&line1,UP,LXPOS(5),LYPOS(5));
-				if (!linedone2 && !line2.on) line_start(&line2,DOWN,LXPOS(5),LYPOS(5));
+				if (!linedone1 && !line1.on) line_start(&line1,UP,LXPOS(5),LYPOS(5),LYPOS(3));
+				if (!linedone2 && !line2.on) line_start(&line2,DOWN,LXPOS(5),LYPOS(5),LYPOS(8));
 			break;
 			case 5:
-				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(7),LYPOS(7));
-				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(7),LYPOS(7));
+				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(7),LYPOS(7),LXPOS(6));
+				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(7),LYPOS(7),LXPOS(9));
 			break;
 			// E
 			case 6:
-				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(11),LYPOS(2));
-				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(11),LYPOS(2));
+				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(11),LYPOS(2),LXPOS(10));
+				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(11),LYPOS(2),LXPOS(14));
 			break;
 			case 7:
-				if (!linedone1 && !line1.on) line_start(&line1,UP,LXPOS(10),LYPOS(5));
-				if (!linedone2 && !line2.on) line_start(&line2,DOWN,LXPOS(10),LYPOS(5));
+				if (!linedone1 && !line1.on) line_start(&line1,UP,LXPOS(10),LYPOS(5),LYPOS(3));
+				if (!linedone2 && !line2.on) line_start(&line2,DOWN,LXPOS(10),LYPOS(5),LYPOS(8));
 			break;
 			case 8:
-				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(13),LYPOS(7));
-				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(13),LYPOS(7));
+				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(13),LYPOS(7),LXPOS(11));
+				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(13),LYPOS(7),LXPOS(14));
 			break;
 			case 9:
-				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(12),LYPOS(4));
-				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(12),LYPOS(4));
+				if (!linedone1 && !line1.on) line_start(&line1,LEFT,LXPOS(12),LYPOS(4),LXPOS(11));
+				if (!linedone2 && !line2.on) line_start(&line2,RIGHT,LXPOS(12),LYPOS(4),LXPOS(13));
 			break;
 		}
 	}
 	else if (letterstep==10)
 	{
-		for (int x=0;x<WIDTH;x++)
-			for (int y=0;y<HEIGHT;y++)
-				if (grid_at(x,y)=='w')
-				{
-					grid_mark(x, y, 1, 1, ' ');
-				}
-				// FIX: known bug -- if a line stops partway through a grid cell,
-				// the space left over is not cleared properly later. this isn't 
-				// an issue in the game, as lines aways stop on cell boundaries, but
-				// sometimes shows up in the intro. this is a kludge
-				// which should fix it.
-				else if ((x % BLOCKWIDTH)==0 && (y % BLOCKHEIGHT)==0)
-				{
-					if (grid_at(x+BLOCKWIDTH-1,y+BLOCKHEIGHT-1)==' ')
-						grid_mark(x, y, 1, 1, ' ');
-				}
 		letterstep++;
 	}
 	else if (letterstep==11)
@@ -335,13 +305,13 @@ bool intro_update(u32 keys) {
 			int y=LYPOS(random() % ROWS);
 			if (random()%2)
 			{
-				line_start(&line1,UP,x,y);
-				line_start(&line2,DOWN,x,y);
+				line_start(&line1, UP, x, y, 0);
+				line_start(&line2, DOWN, x, y, 0);
 			}
 			else
 			{
-				line_start(&line1,LEFT,x,y);
-				line_start(&line2,RIGHT,x,y);
+				line_start(&line1, LEFT, x, y, 0);
+				line_start(&line2, RIGHT, x, y, 0);
 			}
 
 		}
