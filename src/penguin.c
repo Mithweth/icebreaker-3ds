@@ -52,7 +52,8 @@ Penguin penguin_create(void) {
 Penguin penguin_createxy(int x, int y)
 {
 	Penguin p;
-
+	p.current_image = 0;
+	p.image_tick = 0;
 	switch (random() % 4)
 	{
 		case 0:
@@ -84,7 +85,11 @@ Penguin penguin_createxy(int x, int y)
 
 void penguin_draw(Penguin* p)
 {
-	C2D_DrawImageAt(theme.spriteimage, p->x, p->y, 0.3f, NULL, SPRITE_SIZE, SPRITE_SIZE);
+	if (p->xdelta < 0) {
+		C2D_DrawImageAt(theme.spriteimage[p->current_image], p->x, p->y, 0.3f, NULL, -SPRITE_SIZE, SPRITE_SIZE);
+	} else {
+		C2D_DrawImageAt(theme.spriteimage[p->current_image], p->x, p->y, 0.3f, NULL, SPRITE_SIZE, SPRITE_SIZE);
+	}
 }
 
 PenguinHit penguin_move(Penguin* p)
@@ -94,6 +99,13 @@ PenguinHit penguin_move(Penguin* p)
 	int newx, newy;
 	int checkx,checky;
 	int movex=0,movey=0;
+
+	// Update the sprite in update since with stereoscopic 3d,
+	// flying_sprite_draw() is called twice a frame
+	if (p->image_tick++ >= 20) { // 8 seems to be a correct value
+		p->image_tick = 0;
+		p->current_image = (p->current_image + 1) % theme.sprite_count;
+	}
 
 	switch (options_difficulty_current())
 	{

@@ -16,7 +16,8 @@ CopyrightText		165	198	222
 ProgressbarOutline	255	204	77
 ProgressbarInner	12	 38	69
 ProgressbarFill		64	214	165
-SpriteBitmap		cartridge
+SpriteBitmap		cartridge1
+SpriteBitmap		cartridge2
 FallingParticle		paddle
 SoundOuch			8bit-touch
 SoundCrash			8bit-touch

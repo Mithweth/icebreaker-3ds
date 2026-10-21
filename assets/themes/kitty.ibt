@@ -1,22 +1,22 @@
-Background		255  102  153
-NormalText		255  255  255
-BoardFillMin		224  224  224
-BoardFillMax		255  255  255
-Gridline		192  192  192
-GridHighlight           255  255  255
-Line1			164  196  225
-Line2			255  168  255
-MenuHighlight		255  255  255
-GameoverText		255  204   51
-ScorescrollText		 96   96  255
-BonusscrollText		255  204   51
-TextentryBox		 96   96  255
-TextentryText		255  204   51
-CopyrightText		255  204   51
-ProgressbarOutline  255  102  153
-ProgressbarInner    255  255  255
-ProgressbarFill     255 159 205
+Background			255	102	153
+NormalText			255	255	255
+BoardFillMin		224	224	224
+BoardFillMax		255	255	255
+Gridline			192	192	192
+GridHighlight		255	255	255
+Line1				164	196	225
+Line2				255	168	255
+MenuHighlight		255	255	255
+GameoverText		255	204	51
+ScorescrollText		96	96	255
+BonusscrollText		255	204	51
+TextentryBox		96	96	255
+TextentryText		255	204	51
+CopyrightText		255	204	51
+ProgressbarOutline	255	102	153
+ProgressbarInner	255	255	255
+ProgressbarFill		255	159	205
 SpriteBitmap		kitty
 FallingParticle		heart
-SoundOuch		ewww
-SoundCrash		pop
+SoundOuch			ewww
+SoundCrash			pop
