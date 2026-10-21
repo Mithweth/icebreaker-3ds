@@ -35,27 +35,28 @@
 #include "lang.h"
 #include "grid_maps.h"
 
-static HighScore hiscore[MAX_GRIDS][HISCORENUM];
+// +1 to avoid memory issue from random mode
+static HighScore hiscore[MAX_GRIDS + 1][HISCORENUM];
 static char username[50];
 
 static int hiscore_cmpscore(const void *a, const void *b) {
-    long x = ((const HighScore *)a)->score;
-    long y = ((const HighScore *)b)->score;
-    return (x < y) - (x > y);
+	long x = ((const HighScore *)a)->score;
+	long y = ((const HighScore *)b)->score;
+	return (x < y) - (x > y);
 }
 
 void hiscore_read(void) {
 	FILE *hiscorefile;
 	char linebuf[128];
-    char gridname[32];
-    char name[50];
-    long score;
+	char gridname[32];
+	char name[50];
+	long score;
 	// make sure all entries are zeroed out to start.
 	for (size_t g = 0; g < grid_maps_get_count(); g++) {
-	    for (int i = 0; i < HISCORENUM; i++) {
-	        snprintf(hiscore[g][i].name, sizeof(hiscore[g][i].name), "Nobody");
-	        hiscore[g][i].score = 100; //100 is better than 0. :)
-	    }
+		for (int i = 0; i < HISCORENUM; i++) {
+			snprintf(hiscore[g][i].name, sizeof(hiscore[g][i].name), "Nobody");
+			hiscore[g][i].score = 100; //100 is better than 0. :)
+		}
 	}
 
 	hiscorefile=fopen(HISCOREFILE,"r");
@@ -64,34 +65,34 @@ void hiscore_read(void) {
 		return;
 	}
 
-    while (fgets(linebuf, 80, hiscorefile)) {
-        if (sscanf(linebuf, "%31s %ld %49[^\r\n]", gridname, &score, name) == 3) {
-            hiscore_add(gridname, name, score);
-        }
-    }
+	while (fgets(linebuf, sizeof(linebuf), hiscorefile)) {
+		if (sscanf(linebuf, "%31s %ld %49[^\r\n]", gridname, &score, name) == 3) {
+			hiscore_add(gridname, name, score);
+		}
+	}
 	fclose(hiscorefile);
 }
 
 HighScore* hiscore_get(const char *grid, int id) {
-    int g = grid_maps_get_index(grid);
-    if (g < 0 || id < 0 || id >= HISCORENUM) return NULL;
-    return &hiscore[g][id];
+	int g = grid_maps_get_index(grid);
+	if (g < 0 || id < 0 || id >= HISCORENUM) return NULL;
+	return &hiscore[g][id];
 }
 
 bool hiscore_check_high(const char *grid, long score) {
 	// check to see if score is better than the lowest high score
-    return score > hiscore_get(grid, HISCORENUM - 1)->score;
+	return score > hiscore_get(grid, HISCORENUM - 1)->score;
 }
 
 void hiscore_add(const char *grid, const char *name, long score) {
-    int g = grid_maps_get_index(grid);
-    if (g < 0 || score <= hiscore[g][HISCORENUM - 1].score) return;
+	int g = grid_maps_get_index(grid);
+	if (g < 0 || score <= hiscore[g][HISCORENUM - 1].score) return;
 
-    HighScore *worst = &hiscore[g][HISCORENUM - 1];
-    snprintf(worst->name, sizeof(worst->name), "%s", name);
-    worst->score = score;
+	HighScore *worst = &hiscore[g][HISCORENUM - 1];
+	snprintf(worst->name, sizeof(worst->name), "%s", name);
+	worst->score = score;
 
-    qsort(hiscore[g], HISCORENUM, sizeof(HighScore), hiscore_cmpscore);
+	qsort(hiscore[g], HISCORENUM, sizeof(HighScore), hiscore_cmpscore);
 }
 
 void hiscore_write(void) {
@@ -106,9 +107,10 @@ void hiscore_write(void) {
 		return;
 	}
 	for (size_t g = 0; g < grid_maps_get_count(); g++) {
-	    for (int i = 0; i < HISCORENUM; i++) {
-	        fprintf(hiscorefile, "%s %ld %s\n", grid_maps_get_name(g), hiscore[g][i].score, hiscore[g][i].name);
-	    }
+		if (grid_maps_random(grid_maps_get_name(g))) continue;
+		for (int i = 0; i < HISCORENUM; i++) {
+			fprintf(hiscorefile, "%s %ld %s\n", grid_maps_get_name(g), hiscore[g][i].score, hiscore[g][i].name);
+		}
 	}
 	printf("Written highscores in %s successfully\n", filename);
 	fclose(hiscorefile);

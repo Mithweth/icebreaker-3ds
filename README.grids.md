@@ -17,8 +17,14 @@ bottom screen, so the 16 × 12 characters fill the whole 320 × 240 screen.
   in the options file and in the high score file with no extension.
 - Grids whose name is greater than 8 characters will probably not fit in
   the options menu.
+- `random` is reserved for the Random option of the grid menu: a grid file
+  named `random.ibg` can't be played directly, and its high scores are never
+  saved.
 
 ## High scores
 
 High scores are kept separately for each grid, under the grid's name. If you
 rename a grid file, its high scores are lost.
+
+Games played with the Random grid don't record high scores: the board
+changes every level, so the scores wouldn't belong to any single grid.

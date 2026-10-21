@@ -32,6 +32,7 @@ void grid_maps_selected_reset(void);
 bool grid_maps_apply(const char* name);
 const char* grid_maps_selected_name(void);
 const char* grid_maps_current_name(void);
+bool grid_maps_random(const char *name);
 size_t grid_maps_get_count(void);
 const char* grid_maps_get_name(size_t id);
 int grid_maps_get_index(const char *name);

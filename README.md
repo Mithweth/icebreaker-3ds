@@ -44,7 +44,8 @@ score, high score, lives and how much ice has been cleared.
 - **Language** - change the current language.
 - **Difficulty** - Changing it ends the current game.
 - **Theme** - change the look of the game.
-- **Grid** - change the current board. It ends the current game.
+- **Grid** - change the current board. It ends the current game. **Random**
+  picks a new grid at the start of every level.
 - **Back** - to the main menu.
 
 Options and high scores are saved on the SD card, in `sdmc:/.icebreaker` and

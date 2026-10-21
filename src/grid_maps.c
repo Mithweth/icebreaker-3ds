@@ -33,7 +33,7 @@
 #define GRID_MAPS_ROWS 12
 #define GRID_MAPS_COLS 16
 
-static char* grids[MAX_GRIDS];
+static char* grids[MAX_GRIDS + 1];
 static size_t grid_count;
 static size_t current_grid;
 static size_t selected_grid;
@@ -43,9 +43,20 @@ static int alphasortstringarray(const void *a, const void *b) {
 }
 
 bool grid_maps_apply(const char* gridname) {
-	int potential_grid = grid_maps_get_index(gridname);
+	const char* grid_name = gridname;
+	bool random_mode = false;
+	if (grid_maps_random(gridname)) {
+		if (grid_count < 2) {
+			printf("Error: random mode needs at least 2 grids. Reverse to default\n");
+			grid_reset();
+			return false;
+		}
+		random_mode = true;
+		grid_name = grid_maps_get_name(random() % (grid_count - 1));
+	}
+	int potential_grid = grid_maps_get_index(grid_name);
 	if (potential_grid < 0) {
-		printf("Error: unknown grid %s. Reverse to default\n", gridname);
+		printf("Error: unknown grid %s. Reverse to default\n", grid_name);
 		grid_reset();
 		return false;
 	}
@@ -54,7 +65,7 @@ bool grid_maps_apply(const char* gridname) {
 	char gridfilename[256];
 	char tmpgrid[GRID_MAPS_COLS][GRID_MAPS_ROWS];
 	size_t current_row = 0;
-	snprintf(gridfilename, 256, "%s/%s.ibg", GRID_DIRECTORY, gridname);
+	snprintf(gridfilename, 256, "%s/%s.ibg", GRID_DIRECTORY, grid_name);
 	FILE* file = fopen(gridfilename, "r");
 	if (!file) {
 		printf("Error: Can't open grid file %s. Reverse to default\n", gridfilename);
@@ -95,8 +106,8 @@ bool grid_maps_apply(const char* gridname) {
 		grid_reset();
 		return false;
 	}
-	current_grid = potential_grid;
-	printf("grid loaded successfully: %s\n", gridname);
+	current_grid = (random_mode) ? grid_count - 1 : (size_t)potential_grid;
+	printf("grid loaded successfully: %s\n", grid_name);
 	return true;
 }
 
@@ -137,6 +148,9 @@ bool grid_maps_load(void) {
 	printf("%s: Found %zu grids\n", GRID_DIRECTORY, grid_count);
 	if (grid_count == 0) {
 		return false;
+	}
+	if (grid_count > 1) {
+		grids[grid_count++] = strdup("random");
 	}
 	return true;
 }
@@ -186,6 +200,10 @@ const char* grid_maps_selected_name(void) {
 
 const char* grid_maps_current_name(void) {
 	return grid_maps_get_name(current_grid);
+}
+
+bool grid_maps_random(const char *name) {
+	return strcmp("random", name) == 0;
 }
 
 size_t grid_maps_get_count(void) {

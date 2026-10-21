@@ -172,8 +172,10 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	text_cput(200 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->level);
 	text_put(20 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
-	snprintf(tmptext,30,"%ld",hiscore_get(grid_maps_current_name(), 0)->score);
-	text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
+	if (!grid_maps_random(grid_maps_current_name())) {
+		snprintf(tmptext,30,"%ld",hiscore_get(grid_maps_current_name(), 0)->score);
+		text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
+	}
 	for(int i = 0; i < stats->lives; i++) {
 		C2D_DrawImageAt(theme.spriteimage[0], 80.0f + (16.0f * i) + parallax, 205.0f - (theme.spriteimage[0].subtex->height / 2), 0.3f, NULL, 1.0f, 1.0f);
 	}
@@ -347,6 +349,14 @@ bool menu_update(bool pause, u32 keys) {
 				break;
 			}
 		}
+		if ((keys & KEY_B) && options_selected) {
+			options_selected = false;
+			options_difficulty_selected_reset();
+			lang_selected_reset();
+			grid_maps_selected_reset();
+			selected = 0;
+			break;
+		}
 		if (keys & KEY_A) {
 			switch(choices[selected].choice) {
 			case MENU_NEW_GAME:
@@ -370,6 +380,9 @@ bool menu_update(bool pause, u32 keys) {
 				break;
 			case MENU_BACK:
 				options_selected = false;
+				options_difficulty_selected_reset();
+				lang_selected_reset();
+				grid_maps_selected_reset();
 				selected = 0;
 				break;
 			case MENU_GRID:
@@ -381,6 +394,7 @@ bool menu_update(bool pause, u32 keys) {
 				break;
 			case MENU_HIGHSCORES:
 				dialog_type = DIALOG_HIGHSCORES;
+				if (grid_maps_random(grid_maps_selected_name())) grid_maps_next();
 				break;
 			case MENU_HELP:
 				dialog_type = DIALOG_HELP;
@@ -397,9 +411,11 @@ bool menu_update(bool pause, u32 keys) {
 		}
 		if (keys & KEY_LEFT) {
 			grid_maps_prev();
+			if (grid_maps_random(grid_maps_selected_name())) grid_maps_prev();
 		}
 		if (keys & KEY_RIGHT) {
 			grid_maps_next();
+			if (grid_maps_random(grid_maps_selected_name())) grid_maps_next();
 		}
 		break;
 	case DIALOG_CONFIRM:
