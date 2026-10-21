@@ -69,8 +69,11 @@ The SpriteBitmap should be 14x14. If you want, you can make them as
 small as 12x12, but that's basically treated as the top-left of 14x14,
 and support for that may vanish in a future version.
 (If you want smaller, just mask out most of the image.)
-BTW, do not give the .png extension in the ibt file.
+You can repeat the SpriteBitmap directive up to 4 times, so the sprite
+image can switch to the new image 3 times per second, so the sprite looks
+animated.
 The FallingParticle must be tiny: from 5x5 to 9x9.
+BTW, do not give the .png extension in the ibt file.
 
 Don't underestimate how hard it is to make a sprite image look good at such
 a tiny size. Making a theme which represents something in real life rather
