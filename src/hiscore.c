@@ -52,7 +52,7 @@ void hiscore_read(void) {
 	char name[50];
 	long score;
 	// make sure all entries are zeroed out to start.
-	for (size_t g = 0; g < grid_maps_get_count(); g++) {
+	for (size_t g = 0; g < grid_maps_count(); g++) {
 		for (int i = 0; i < HISCORENUM; i++) {
 			snprintf(hiscore[g][i].name, sizeof(hiscore[g][i].name), "Nobody");
 			hiscore[g][i].score = 100; //100 is better than 0. :)
@@ -106,7 +106,7 @@ void hiscore_write(void) {
 		printf("Can't open %s for writing\n", filename);
 		return;
 	}
-	for (size_t g = 0; g < grid_maps_get_count(); g++) {
+	for (size_t g = 0; g < grid_maps_count(); g++) {
 		if (grid_maps_random(grid_maps_get_name(g))) continue;
 		for (int i = 0; i < HISCORENUM; i++) {
 			fprintf(hiscorefile, "%s %ld %s\n", grid_maps_get_name(g), hiscore[g][i].score, hiscore[g][i].name);

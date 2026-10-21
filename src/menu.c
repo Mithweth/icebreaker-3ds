@@ -57,6 +57,7 @@ typedef enum {
 	MENU_DIFFICULTY,
 	MENU_THEME,
 	MENU_GRID,
+	MENU_EDITOR,
 	MENU_BACK,
 	MENU_HIGHSCORES,
 	MENU_HELP,
@@ -78,6 +79,7 @@ static MenuEntry main_menu[] = {
 	{"MENU_NEW_GAME", MENU_NEW_GAME},
 	{"MENU_OPTIONS", MENU_OPTIONS},
 	{"MENU_HIGH_SCORES", MENU_HIGHSCORES},
+	{"MENU_EDITOR", MENU_EDITOR},
 	{"MENU_HELP", MENU_HELP},
 };
 static MenuEntry options_menu[] = {
@@ -373,6 +375,9 @@ bool menu_update(bool pause, u32 keys) {
 					dialog_confirm_type = CONFIRM_DIFFICULTY;
 					yes_selected = false;
 				}
+				break;
+			case MENU_EDITOR:
+				game_editor_start();
 				break;
 			case MENU_OPTIONS:
 				options_selected = true;
