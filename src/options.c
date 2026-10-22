@@ -128,7 +128,7 @@ bool options_read(void) {
 			}
 			else if (!strcmp(optbuf,"theme"))
 			{
-				if (themes_exists(valbuf) && themes_settheme(valbuf)) {
+				if (themes_exists(valbuf) && themes_settheme(valbuf, false)) {
 					theme_found = true;
 				}
 			}
@@ -157,7 +157,7 @@ bool options_read(void) {
 	}
 	if (!theme_found) {
 		printf("Theme not found or not loaded. Setting to default\n");
-		themes_settheme("linux");
+		themes_settheme("linux", false);
 	}
 	if (!language_found) {
 		printf("Language not found. Setting to default\n");

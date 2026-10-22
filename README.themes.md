@@ -28,6 +28,7 @@ complaint.
 The default theme is "linux", and the file linux.ibt looks approximately
 like this:
 ```
+  #Include  default
   Background              0   64  128
   NormalText            255  255  255
   BoardFillMin          224  224  224
@@ -89,6 +90,20 @@ They are expected to be converted as RAW files :
 ffmpeg -i "<wav file>" -ac 1 -ar 22050 -f s16le "assets/sounds/<raw file>"
 ```
 Do not give the .png extension in the ibt file.
+
+Custom themes go in `sdmc:/icebreaker/`, next to custom grids. A custom theme
+can't have the same name as a built-in one: the built-in theme always wins.
+
+Include uses another theme as a base. It must be the first directive of the
+file: the included theme is loaded first, then every following directive
+overrides it (except SpriteBitmap and FallingParticle). An Include inside
+the included theme is ignored.
+
+```
+  Include       retroice
+  Background    255   0  32
+  Line1         255 225  78
+```
 
 If you do produce a good theme, let me know -- send it to 
 <mattdm@mattdm.org>, and I'll consider including it with the main

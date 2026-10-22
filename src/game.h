@@ -61,6 +61,7 @@
 #define THEME_DIRECTORY		"romfs:/themes"
 #define LANGUAGE_DIRECTORY	"romfs:/lang"
 #define GRID_DIRECTORY		"romfs:/grids"
+#define CUSTOM_THEME_DIRECTORY "sdmc:/icebreaker"
 
 typedef struct {
 	long basescore;
