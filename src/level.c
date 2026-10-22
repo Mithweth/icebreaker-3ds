@@ -145,7 +145,7 @@ void level_draw(void) {
 		line_draw(&line1, theme.color.line1);
 	}
 	if (line2.on) {
-    	line_draw(&line2, theme.color.line2);
+		line_draw(&line2, theme.color.line2);
 	}
 	for (int i=0;i<penguincount;i++) {
 		penguin_draw(&flock[i]);
@@ -156,29 +156,29 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (done) {
 		return false;
 	}
-    if (keys & KEY_TOUCH) {
-        gesture_start = touch;
-        gesture_last = touch;
-        gesture_active = true;
-        flying_sprite_watch();
-    }
+	if (keys & KEY_TOUCH) {
+		gesture_start = touch;
+		gesture_last = touch;
+		gesture_active = true;
+		flying_sprite_watch();
+	}
 
-    if (gesture_active && (hidKeysHeld() & KEY_TOUCH)) {
-        gesture_last = touch;
-    }
+	if (gesture_active && (hidKeysHeld() & KEY_TOUCH)) {
+		gesture_last = touch;
+	}
 
-    if (gesture_active && (hidKeysUp() & KEY_TOUCH)) {
-        int dx = (int)gesture_last.px - (int)gesture_start.px;
-        int dy = (int)gesture_last.py - (int)gesture_start.py;
+	if (gesture_active && (hidKeysUp() & KEY_TOUCH)) {
+		int dx = (int)gesture_last.px - (int)gesture_start.px;
+		int dy = (int)gesture_last.py - (int)gesture_start.py;
 
-        if (abs(dx) >= GESTURE_THRESHOLD || abs(dy) >= GESTURE_THRESHOLD) {
-            bool vertical = abs(dy) > abs(dx);
+		if (abs(dx) >= GESTURE_THRESHOLD || abs(dy) >= GESTURE_THRESHOLD) {
+			bool vertical = abs(dy) > abs(dx);
 
-            level_action_startclick(gesture_start.px, gesture_start.py, vertical);
-        }
+			level_action_startclick(gesture_start.px, gesture_start.py, vertical);
+		}
 
-        gesture_active = false;
-    }
+		gesture_active = false;
+	}
 
 	if (line1.on)
 	{

@@ -200,13 +200,13 @@ bool options_write(void) {
 	fprintf(optionfile,"Theme %s\n",themes_current_name());
 
 	fprintf(optionfile,"\n# Language. Ensure a file which contains NAME=<your language>\n");
-	fprintf(optionfile,"\n# is present in %s directory\n", LANGUAGE_DIRECTORY);	
+	fprintf(optionfile,"# is present in %s directory\n", LANGUAGE_DIRECTORY);	
 
 	fprintf(optionfile,"Language %s\n",lang_current_name());
 
 	fprintf(optionfile,"\n# Grid. If unset, will fallback to the initial behaviour.\n");
-	fprintf(optionfile,"\n# The grid file must be .ibg file located in %s.\n", GRID_DIRECTORY);
-	fprintf(optionfile,"\n# Size must be 16x12. '#' are ground, '.' is emptiness\n");	
+	fprintf(optionfile,"# The grid file must be .ibg file located in %s.\n", CUSTOM_GRID_DIRECTORY);
+	fprintf(optionfile,"# Size must be 16x12. '#' are ground, '.' is emptiness\n");	
 	const char *grid_name = grid_maps_current_name();
 	if (grid_name) {
 		fprintf(optionfile,"Grid %s\n",grid_name);

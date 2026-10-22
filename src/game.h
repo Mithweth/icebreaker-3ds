@@ -41,17 +41,22 @@
 #define WIDTH (COLS*BLOCKWIDTH)
 #define HEIGHT (ROWS*BLOCKHEIGHT)
 
+#define GRID_MAPS_ROWS (ROWS/2)
+#define GRID_MAPS_COLS (COLS/2)
+
 #define LINEMAXSTUCK 750
 
 #define PERCENTREQUIRED 80
 #define PERCENTBONUS 80
 #define PERCENTEXTRABONUS 85
 
-#define MAX_THEMES	16
-#define MAX_GRIDS	16
+#define MAX_THEMES		16
+#define MAX_GRIDS		32
+#define MAX_SAVED_GRIDS	16
 
-#define OPTIONFILE "sdmc:/.icebreaker"
-#define HISCOREFILE "sdmc:/.icebreaker.scores"
+#define OPTIONFILE "sdmc:/icebreaker/icebreaker.cfg"
+#define HISCOREFILE "sdmc:/icebreaker/icebreaker.scores"
+#define CUSTOM_GRID_DIRECTORY "sdmc:/icebreaker"
 
 #define THEME_DIRECTORY		"romfs:/themes"
 #define LANGUAGE_DIRECTORY	"romfs:/lang"
@@ -69,6 +74,8 @@ typedef struct {
 } GameStats;
 
 bool game_init(void);
+void game_editor_start(void);
+void game_editor_stop(void);
 void game_start(void);
 bool game_update(u32 keys, touchPosition touch);
 void game_draw_bottom(C3D_RenderTarget *bottom);

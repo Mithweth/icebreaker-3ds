@@ -30,16 +30,104 @@
 #include "grid_maps.h"
 #include "game.h"
 
-#define GRID_MAPS_ROWS 12
-#define GRID_MAPS_COLS 16
+typedef enum {
+	GRID_BUILTIN,
+	GRID_CUSTOM,
+} GridType;
 
-static char* grids[MAX_GRIDS + 1];
+typedef struct {
+	char *filename;
+	char *name;
+	GridType type;
+} GridFile;
+
+static GridFile grids[MAX_GRIDS + 1];
 static size_t grid_count;
 static size_t current_grid;
 static size_t selected_grid;
 
 static int alphasortstringarray(const void *a, const void *b) {
-	return strcmp(*(const char *const *)a, *(const char *const *)b);
+	const char* x = ((const GridFile *)a)->name;
+	const char* y = ((const GridFile *)b)->name;
+	return strcmp(x, y);
+}
+
+void grid_maps_next(void) {
+	if (grid_count == 0) {
+		return;
+	}
+	selected_grid++;
+	if (selected_grid == grid_count) {
+		selected_grid = 0;
+	}
+}
+
+void grid_maps_prev(void) {
+	if (grid_count == 0) {
+		return;
+	}
+	if (selected_grid == 0) {
+		selected_grid = grid_count - 1;
+	} else {
+		selected_grid--;
+	}
+}
+
+void grid_maps_selected_reset(void) {
+	selected_grid = current_grid;
+}
+
+const char* grid_maps_get_name(size_t id) {
+	if (id >= grid_count) {
+		return NULL;
+	}
+	return grids[id].name;
+}
+
+const char* grid_maps_get_filename(size_t id) {
+	if (id >= grid_count) {
+		return NULL;
+	}
+	return grids[id].filename;
+}
+
+int grid_maps_get_index(const char *name) {
+	for (size_t i = 0; i < grid_count; i++) {
+		if (strcmp(grids[i].name, name) == 0) return i;
+	}
+	return -1;
+}
+
+bool grid_maps_set_current_name(const char *name) {
+	int id = grid_maps_get_index(name);
+	if (id < 0) return false;
+	current_grid = id;
+	return true;
+}
+
+const char* grid_maps_selected_name(void) {
+	return grid_maps_get_name(selected_grid);
+}
+
+const char* grid_maps_current_name(void) {
+	return grid_maps_get_name(current_grid);
+}
+
+bool grid_maps_random(const char *name) {
+	return strcmp("random", name) == 0;
+}
+
+size_t grid_maps_count(void) {
+	return grid_count;
+}
+
+bool grid_maps_custom(const char *name) {
+	for (size_t i = 0; i < grid_count; i++) {
+		if (strcmp(grids[i].name, name) == 0) {
+			return (grids[i].type == GRID_CUSTOM);
+		}
+	}
+	return false;
 }
 
 bool grid_maps_apply(const char* gridname) {
@@ -65,7 +153,7 @@ bool grid_maps_apply(const char* gridname) {
 	char gridfilename[256];
 	char tmpgrid[GRID_MAPS_COLS][GRID_MAPS_ROWS];
 	size_t current_row = 0;
-	snprintf(gridfilename, 256, "%s/%s.ibg", GRID_DIRECTORY, grid_name);
+	snprintf(gridfilename, 256, "%s", grid_maps_get_filename(potential_grid));
 	FILE* file = fopen(gridfilename, "r");
 	if (!file) {
 		printf("Error: Can't open grid file %s. Reverse to default\n", gridfilename);
@@ -111,14 +199,10 @@ bool grid_maps_apply(const char* gridname) {
 	return true;
 }
 
-bool grid_maps_load(void) {
-	DIR *dir = opendir(GRID_DIRECTORY);
+static bool grid_maps_load_from_directory(const char* dirname, GridType type) {
+	DIR *dir = opendir(dirname);
 	if (!dir) return false;
-
-	for (size_t i = 0; i < grid_count; i++) free(grids[i]);
-	grid_count = 0;
-	current_grid = 0;
-
+	size_t dirlen = strlen(dirname);
 	struct dirent *entry;
 	while ((entry = readdir(dir))) {
 		size_t len = strlen(entry->d_name);
@@ -127,7 +211,7 @@ bool grid_maps_load(void) {
 		}
 
 		if (grid_count >= MAX_GRIDS) {
-			printf("Too many grids in %s (max %d)\n", GRID_DIRECTORY, MAX_GRIDS);
+			printf("Too many grids in %s (max %d)\n", dirname, MAX_GRIDS);
 			break;
 		}
 
@@ -136,76 +220,59 @@ bool grid_maps_load(void) {
 			closedir(dir);
 			return false;
 		}
-
 		memcpy(grid_name, entry->d_name, len - 4);
 		grid_name[len - 4] = '\0';
-		grids[grid_count++] = grid_name;
+		if (grid_maps_get_index(grid_name) != -1) {
+			printf("Warning: the grid %s already exists. Skipping\n", grid_name);
+			free(grid_name);
+			continue;
+		}
+		char *file_name = malloc(len + dirlen + 2);
+		if (!file_name) {
+			free(grid_name);
+			closedir(dir);
+			return false;
+		}
+		snprintf(file_name, len + dirlen + 2, "%s/%s", dirname, entry->d_name);
+		grids[grid_count].name = grid_name;
+		grids[grid_count].type = type;
+		grids[grid_count++].filename = file_name;
 		printf("Found grid: %s\n", grid_name);
 	}
-
 	closedir(dir);
+	return true;
+}
+
+bool grid_maps_load(void) {
+	char current_name[64] = "";
+	if (current_grid < grid_count) {
+		snprintf(current_name, sizeof(current_name), "%s", grids[current_grid].name);
+	}
+	for (size_t i = 0; i < grid_count; i++) {
+		free(grids[i].name);
+		free(grids[i].filename);
+	}
+	grid_count = 0;
+	current_grid = 0;
+
+	if (!grid_maps_load_from_directory(GRID_DIRECTORY, GRID_BUILTIN)) return false;
+	if (!grid_maps_load_from_directory(CUSTOM_GRID_DIRECTORY, GRID_CUSTOM)) {
+		printf("Warning: cannot load custom grids\n");
+	}
+
 	qsort(grids, grid_count, sizeof(grids[0]), alphasortstringarray);
-	printf("%s: Found %zu grids\n", GRID_DIRECTORY, grid_count);
+	printf("Found %zu grids\n", grid_count);
+
 	if (grid_count == 0) {
 		return false;
 	}
 	if (grid_count > 1) {
-		grids[grid_count++] = strdup("random");
+		grids[grid_count].name = strdup("random");
+		grids[grid_count++].filename = NULL;
 	}
-	return true;
-}
-
-void grid_maps_next(void) {
-	if (grid_count == 0) {
-		return;
+	if (!grid_maps_set_current_name(current_name)) {
+		grid_maps_set_current_name("classic");
 	}
-	selected_grid++;
-	if (selected_grid == grid_count) {
-		selected_grid = 0;
-	}
-}
-
-void grid_maps_prev(void) {
-	if (grid_count == 0) {
-		return;
-	}
-	if (selected_grid == 0) {
-		selected_grid = grid_count - 1;
-	} else {
-		selected_grid--;
-	}
-}
-
-void grid_maps_selected_reset(void) {
 	selected_grid = current_grid;
-}
-
-const char* grid_maps_get_name(size_t id) {
-	if (id >= grid_count) {
-		return NULL;
-	}
-	return grids[id];
-}
-
-int grid_maps_get_index(const char *name) {
-	for (size_t i = 0; i < grid_count; i++) {
-		if (strcmp(grids[i], name) == 0) return i;
-	}
-	return -1;
-}
-
-const char* grid_maps_selected_name(void) {
-	return grid_maps_get_name(selected_grid);
-}
-
-const char* grid_maps_current_name(void) {
-	return grid_maps_get_name(current_grid);
-}
-
-bool grid_maps_random(const char *name) {
-	return strcmp("random", name) == 0;
-}
-
-size_t grid_maps_get_count(void) {
-	return grid_count;
+	return true;
 }

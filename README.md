@@ -38,6 +38,7 @@ score, high score, lives and how much ice has been cleared.
 - **New game** - start over from level 1.
 - **Options** - open the options menu.
 - **High scores** - the five best scores.
+- **Editor** - the grid editor.
 - **Help** - a short summary of the rules.
 
 ### Options

@@ -24,6 +24,9 @@
 #include <citro2d.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include "gfxmap.h"
 #include "intro.h"
 #include "grid_maps.h"
@@ -35,20 +38,51 @@
 #include "hiscore.h"
 #include "options.h"
 #include "snowflake.h"
+#include "editor.h"
 
 typedef enum {
-    GAME_INTRO,
-    GAME_LEVEL,
-    GAME_HIGH_SCORE,
-    GAME_INTERMISSION,
-    GAME_OVER
+	GAME_INTRO,
+	GAME_LEVEL,
+	GAME_HIGH_SCORE,
+	GAME_EDITOR,
+	GAME_INTERMISSION,
+	GAME_OVER
 } GameMode;
 
 static GameMode game_mode;
+static GameMode previous_game_mode;
+
 static bool pause;
 static GameStats stats;
 
+static bool ensure_data_dir(void) {
+	if (mkdir(CUSTOM_GRID_DIRECTORY, 0777) != 0 && errno != EEXIST) {
+		printf("Can't create directory %s\n", CUSTOM_GRID_DIRECTORY);
+		return false;
+	}
+	char path_hiscore[] = HISCOREFILE;
+	char *slash = strrchr(path_hiscore, '/');
+	if (slash) {
+		*slash = '\0';
+		if (mkdir(path_hiscore, 0777) != 0 && errno != EEXIST) {
+			printf("Can't create directory %s\n", path_hiscore);
+			return false;
+		}
+	}
+	char path_options[] = OPTIONFILE;
+	slash = strrchr(path_options, '/');
+	if (slash) {
+		*slash = '\0';
+		if (mkdir(path_options, 0777) != 0 && errno != EEXIST) {
+			printf("Can't create directory %s\n", path_options);
+			return false;
+		}
+	}
+	return true;
+}
+
 bool game_init(void) {
+	ensure_data_dir();
 	game_mode = GAME_INTRO;
 	sound_init();
 	if (!gfxmap_init()) {
@@ -70,6 +104,30 @@ bool game_init(void) {
 	snowflake_init();
 	pause = false;
 	return true;
+}
+
+void game_editor_start(void) {
+	previous_game_mode = game_mode;
+	game_mode = GAME_EDITOR;
+	pause = false;
+	editor_init();
+}
+
+void game_editor_stop(void) {
+	if (!grid_maps_load()) {
+		return;
+	}
+	hiscore_read();
+	editor_close();
+	game_mode = previous_game_mode;
+	if (editor_current_grid_changed()) {
+		options_write();
+		if (game_mode == GAME_LEVEL || game_mode == GAME_INTERMISSION) {
+			game_start();
+			return;
+		}
+	}
+	pause = true;
 }
 
 void game_start(void) {
@@ -111,7 +169,7 @@ bool game_update(u32 keys, touchPosition touch) {
 		return false;
 	}
 #endif
-	if ((keys & KEY_START) && (game_mode != GAME_HIGH_SCORE)) {
+	if ((keys & KEY_START) && game_mode != GAME_HIGH_SCORE && game_mode != GAME_EDITOR) {
 		pause = !pause;
 		if (pause) {
 			menu_init();
@@ -129,6 +187,11 @@ bool game_update(u32 keys, touchPosition touch) {
 	case GAME_LEVEL:
 		if (!level_update(keys, touch, &stats)) {
 			game_intermission_start();
+		}
+		break;
+	case GAME_EDITOR:
+		if (!editor_update(keys, touch)) {
+			game_editor_stop();
 		}
 		break;
 	case GAME_INTERMISSION:
@@ -161,6 +224,9 @@ void game_draw_bottom(C3D_RenderTarget *bottom) {
 	case GAME_INTRO:
 		intro_draw();
 		break;
+	case GAME_EDITOR:
+		editor_draw();
+		return;
 	case GAME_LEVEL:
 		level_draw();
 		break;
