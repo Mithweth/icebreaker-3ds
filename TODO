@@ -1,6 +1,5 @@
 - original and modern behaviour
 - grid preview
-- small enhancement in victory
 - music ?
 - custom theme resources from the SD card:
   - sounds: accept an absolute path in Sound* (raw PCM16 mono 22050 Hz)

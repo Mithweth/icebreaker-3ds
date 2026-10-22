@@ -73,6 +73,8 @@ static bool yes_selected;
 static const char *logo_chars = "ICEBRAK";
 static size_t selected;
 static bool options_selected;
+static float logo_scale;
+static float logo_parallax;
 static DialogConfirmType dialog_confirm_type;
 
 static MenuEntry main_menu[] = {
@@ -99,7 +101,7 @@ static const u8 logo_glyphs[][7] = {
 	{17, 18, 20, 24, 20, 18, 17}  // K
 };
 
-static void logo_drawtext(const char *text, float x, float y, float scale) {
+static void logo_drawtext(const char *text, float y, float parallax, float scale) {
 	const u32 gradient[8] = {
 		C2D_Color32(245, 253, 255, 255),
 		C2D_Color32(218, 245, 255, 255),
@@ -111,12 +113,14 @@ static void logo_drawtext(const char *text, float x, float y, float scale) {
 		C2D_Color32(25, 75, 145, 255)
 	};
 
+	float logo_width = (strlen(text) * 6 - 1) * scale;
+	float x = (400.0f - logo_width) / 2.0f + parallax / 2;
+	y -= 7.0f * (scale - 1.0f) / 2.0f;
 	for (int i = 0; text[i]; i++) {
 		const char *p = strchr(logo_chars, text[i]);
 		if (!p) continue;
 
 		int glyph = p - logo_chars;
-
 		for (int row = 0; row < 7; row++) {
 			for (int col = 0; col < 5;) {
 				if (!(logo_glyphs[glyph][row] & (1 << (4 - col)))) {
@@ -126,7 +130,6 @@ static void logo_drawtext(const char *text, float x, float y, float scale) {
 
 				int start = col;
 				while (col < 5 && (logo_glyphs[glyph][row] & (1 << (4 - col)))) col++;
-
 				C2D_DrawRectangle(x + (i * 6 + start) * scale, y + row * scale, 0.3f, (col - start) * scale, scale, gradient[row], gradient[row], gradient[row + 1], gradient[row + 1]);
 				for (int c = start; c < col; c++) {
 					if (row == 0 || !(logo_glyphs[glyph][row - 1] & (1 << (4 - c)))) {
@@ -184,8 +187,17 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	progress_bar_draw(stats->clear);
 	snowflake_draw(parallax);
 	if (!pause) {
-		logo_drawtext("ICE", 148 + parallax / 2, 55, 6);
-		logo_drawtext("BREAKER", 77 + parallax / 2, 110, 6);
+		if (flying_sprite_celebrating()) {
+			logo_scale += 0.04f;
+			logo_parallax += (parallax > 0.0f) ? 0.01f : -0.01f;
+		} else {
+			if (logo_scale > 6.0f) {
+				logo_scale -= 0.04f;
+				logo_parallax -= (parallax > 0.0f) ? 0.01f : -0.01f;
+			}
+		}
+		logo_drawtext("ICE", 75, logo_parallax + parallax, logo_scale);
+		logo_drawtext("BREAKER", 130, logo_parallax + parallax, logo_scale);
 		flying_sprite_draw(parallax);
 		return;
 	}
@@ -474,6 +486,8 @@ void menu_init(void) {
 	lang_selected_reset();
 	grid_maps_selected_reset();
 	flying_sprite_init();
+	logo_scale = 6.0f;
+	logo_parallax = 0.0f;
 	options_selected = false;
 }
 

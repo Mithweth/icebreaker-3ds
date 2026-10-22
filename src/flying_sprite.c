@@ -83,6 +83,10 @@ void flying_sprite_watch(void) {
 	sprite.boost = -sprite.speed * 0.8f;
 }
 
+bool flying_sprite_celebrating(void) {
+	return sprite.status == SPRITE_CELEBRATING;
+}
+
 void flying_sprite_update(void) {
 	// Update the sprite in update since with stereoscopic 3d,
 	// flying_sprite_draw() is called twice a frame
