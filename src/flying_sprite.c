@@ -33,6 +33,7 @@ typedef enum {
 
 typedef struct {
 	float angle;
+	float death_angle;
 	float x;
 	float y;
 	float z;
@@ -60,6 +61,7 @@ void flying_sprite_init(void) {
 void flying_sprite_gameover(void) {
     sprite.status = SPRITE_FALLING;
     sprite.fall_speed = 0.0f;
+    sprite.death_angle = 0.0f;
 }
 
 void flying_sprite_victory(void) {
@@ -103,6 +105,7 @@ void flying_sprite_update(void) {
 	case SPRITE_FALLING:
 		sprite.fall_speed += 0.15f;
 		sprite.y += sprite.fall_speed;
+		sprite.death_angle += 0.12f;
 		break;
 	case SPRITE_CELEBRATING:
 	    sprite.progress += 1.0f / 45.0f;
@@ -123,7 +126,9 @@ void flying_sprite_draw(float parallax) {
 	float scale = exp2f(sprite.z) * 0.75f;
 	float x = sprite.x + sprite.z * parallax - (theme.spriteimage[sprite.current_image].subtex->width / 2.0f) * scale;
 	float y = sprite.y - (theme.spriteimage[sprite.current_image].subtex->height / 2.0f) * scale;
-	if (sinf(sprite.angle) > 0) {
+	if (sprite.status) {
+		C2D_DrawImageAtRotated(theme.spriteimage[sprite.current_image], x, y, 0.4f + sprite.z * 0.2f, sprite.death_angle, NULL, scale, scale);
+	} else if (sinf(sprite.angle) > 0) {
 		C2D_DrawImageAt(theme.spriteimage[sprite.current_image], x, y, 0.4f + sprite.z * 0.2f, NULL, -scale, scale);
 	} else {
 		C2D_DrawImageAt(theme.spriteimage[sprite.current_image], x, y, 0.4f + sprite.z * 0.2f, NULL, scale, scale);
