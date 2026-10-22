@@ -30,3 +30,4 @@ void flying_sprite_death(void);
 void flying_sprite_watch(void);
 void flying_sprite_update(void);
 void flying_sprite_draw(float parallax);
+bool flying_sprite_celebrating(void);
