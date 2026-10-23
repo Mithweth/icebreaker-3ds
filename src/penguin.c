@@ -41,10 +41,10 @@ static bool penguin_occupy_block(int x, int y) {
 
 Penguin penguin_create(void) {
 	int x = random() % (WIDTH - BLOCKWIDTH);
-	int y = random() % (HEIGHT - BLOCKWIDTH);
+	int y = random() % (HEIGHT - BLOCKHEIGHT);
 	while(!penguin_occupy_block(x, y)) {
 		x = random() % (WIDTH - BLOCKWIDTH);
-		y = random() % (HEIGHT - BLOCKWIDTH);
+		y = random() % (HEIGHT - BLOCKHEIGHT);
 	}
 	return penguin_createxy(x, y);
 }
@@ -57,45 +57,47 @@ Penguin penguin_createxy(int x, int y)
 	switch (random() % 4)
 	{
 		case 0:
-			p.xdelta= PENGUINSPEED;p.ydelta= PENGUINSPEED;
+			p.state.xdelta= PENGUINSPEED;p.state.ydelta= PENGUINSPEED;
 		break;
 		case 1:
-			p.xdelta= PENGUINSPEED;p.ydelta=-PENGUINSPEED;
+			p.state.xdelta= PENGUINSPEED;p.state.ydelta=-PENGUINSPEED;
 		break;
 		case 2:
-			p.xdelta=-PENGUINSPEED;p.ydelta= PENGUINSPEED;
+			p.state.xdelta=-PENGUINSPEED;p.state.ydelta= PENGUINSPEED;
 		break;
 		case 3:
-			p.xdelta=-PENGUINSPEED;p.ydelta=-PENGUINSPEED;
+			p.state.xdelta=-PENGUINSPEED;p.state.ydelta=-PENGUINSPEED;
 		break;
 		default: // this won't happen, but it shuts up the warning.
-			p.xdelta=-PENGUINSPEED;p.ydelta=-PENGUINSPEED;
+			p.state.xdelta=-PENGUINSPEED;p.state.ydelta=-PENGUINSPEED;
 		break;
 	}
 	
 	// For debugging only, of course -- this makes crippled penguins.
-	//p.xdelta=0; p.ydelta=0;
+	//p.state.xdelta=0; p.state.ydelta=0;
 	
-	p.speedslower=0;
-	p.x=x;
-	p.y=y;
+	p.state.speedslower=0;
+	p.state.x=x;
+	p.state.y=y;
+	p.history_count = 0;
 
 	return p;
 }
 
 void penguin_draw(Penguin* p)
 {
-	if (p->xdelta < 0) {
-		C2D_DrawImageAt(theme.spriteimage[p->current_image], p->x, p->y, 0.3f, NULL, -SPRITE_SIZE, SPRITE_SIZE);
+	if (p->state.xdelta < 0) {
+		C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, NULL, -SPRITE_SIZE, SPRITE_SIZE);
 	} else {
-		C2D_DrawImageAt(theme.spriteimage[p->current_image], p->x, p->y, 0.3f, NULL, SPRITE_SIZE, SPRITE_SIZE);
+		C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, NULL, SPRITE_SIZE, SPRITE_SIZE);
 	}
 }
 
 PenguinHit penguin_move(Penguin* p)
 {
-	bool hitline1=false;
-	bool hitline2=false;
+	bool hitline1 = false;
+	bool hitline2 = false;
+	bool bounced = false;
 	int newx, newy;
 	int checkx,checky;
 	int movex=0,movey=0;
@@ -110,72 +112,100 @@ PenguinHit penguin_move(Penguin* p)
 	switch (options_difficulty_current())
 	{
 		case NORMAL:
-			if (p->speedslower)
-				{ movex=p->xdelta/2; movey=p->ydelta/2; }
+			if (p->state.speedslower)
+				{ movex=p->state.xdelta/2; movey=p->state.ydelta/2; }
 			else
-				{ movex=p->xdelta; movey=p->ydelta; }
-			p->speedslower=!p->speedslower;
+				{ movex=p->state.xdelta; movey=p->state.ydelta; }
+			p->state.speedslower=!p->state.speedslower;
 		break;
 		case HARD:
-			movex=p->xdelta; movey=p->ydelta;
+			movex=p->state.xdelta; movey=p->state.ydelta;
 		break;
 		case EASY:
-			movex=p->xdelta/2; movey=p->ydelta/2;
+			movex=p->state.xdelta/2; movey=p->state.ydelta/2;
 		break;
 	}
-		
-	newx=p->x+movex;
-	newy=p->y+movey;
 
-	
-	grid_mark(p->x,p->y,BLOCKWIDTH,BLOCKHEIGHT,' ');
-	
+	newx=p->state.x+movex;
+	newy=p->state.y+movey;
+
+	grid_mark(p->state.x,p->state.y,BLOCKWIDTH,BLOCKHEIGHT,' ');
+
 	if (movex>0) checkx = newx+BLOCKWIDTH;
 	else checkx = newx;
 
-	if (grid_at(checkx,p->y)==' ' && grid_at(checkx,p->y+BLOCKHEIGHT-1)==' ')
+	if (grid_at(checkx,p->state.y)==' ' && grid_at(checkx,p->state.y+BLOCKHEIGHT-1)==' ')
 	{
-		p->x+=movex;
+		p->state.x+=movex;
 	}
-	else if (grid_at(checkx,p->y)=='1' || grid_at(checkx,p->y+BLOCKHEIGHT-1)=='1')
+	else if (grid_at(checkx,p->state.y)=='1' || grid_at(checkx,p->state.y+BLOCKHEIGHT-1)=='1')
 	{
 		hitline1=true;
-		p->x+=movex;	
+		p->state.x+=movex;
 	}
-	else if (grid_at(checkx,p->y)=='2' || grid_at(checkx,p->y+BLOCKHEIGHT-1)=='2')
+	else if (grid_at(checkx,p->state.y)=='2' || grid_at(checkx,p->state.y+BLOCKHEIGHT-1)=='2')
 	{
 		hitline2=true;
-		p->x+=movex;	
+		p->state.x+=movex;
 	}
 	else
 	{
-		p->xdelta=-p->xdelta;
+		p->state.xdelta=-p->state.xdelta;
+		bounced = true;
 	}
 
 	if (movey>0) checky = newy+BLOCKHEIGHT;
 	else checky = newy;
 	
-	if (grid_at(p->x,checky)==' ' && grid_at(p->x+BLOCKWIDTH-1,checky)==' ')
+	if (grid_at(p->state.x,checky)==' ' && grid_at(p->state.x+BLOCKWIDTH-1,checky)==' ')
 	{
-		p->y+=movey;
+		p->state.y+=movey;
 	}
-	else if (grid_at(p->x,checky)=='1' || grid_at(p->x+BLOCKWIDTH-1,checky)=='1')
+	else if (grid_at(p->state.x,checky)=='1' || grid_at(p->state.x+BLOCKWIDTH-1,checky)=='1')
 	{
 		hitline1=true;
-		p->y+=movey;		
+		p->state.y+=movey;
 	}
-	else if (grid_at(p->x,checky)=='2' || grid_at(p->x+BLOCKWIDTH-1,checky)=='2')
+	else if (grid_at(p->state.x,checky)=='2' || grid_at(p->state.x+BLOCKWIDTH-1,checky)=='2')
 	{
 		hitline2=true;
-		p->y+=movey;		
+		p->state.y+=movey;
 	}
 	else
 	{
-		p->ydelta=-p->ydelta;
+		p->state.ydelta=-p->state.ydelta;
+		bounced = true;
 	}
 
-	grid_mark(p->x,p->y,BLOCKWIDTH,BLOCKHEIGHT,'*');
+	grid_mark(p->state.x,p->state.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
 
+	if (bounced) {
+		bool trapped = false;
+		for (size_t i = 0; i < p->history_count; i++) {
+			PenguinState *old = &p->history[i];
+			if (old->x == p->state.x && old->y == p->state.y && old->xdelta == p->state.xdelta && old->ydelta == p->state.ydelta && old->speedslower == p->state.speedslower) {
+				trapped = true;
+				break;
+			}
+		}
+		if (trapped) {
+			int nudge = (random() % 2) ? 1 : -1;
+			grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, ' ');
+			if (penguin_occupy_block(p->state.x, p->state.y + nudge)) {
+				p->state.y += nudge;
+			} else if (penguin_occupy_block(p->state.x + nudge, p->state.y)) {
+				p->state.x += nudge;
+			}
+			grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, '*');
+			p->history_count = 0;
+		} else {
+			if (p->history_count == MAX_STATE_HISTORY) {
+				for (size_t i = 1; i < p->history_count; i++) p->history[i - 1] = p->history[i];
+				p->history_count--;
+			}
+			p->history[p->history_count++] = p->state;
+		}
+	}
 	if (hitline1 && hitline2) return PENGUIN_HIT_BOTH;
 	if (hitline1) return PENGUIN_HIT_LINE1;
 	if (hitline2) return PENGUIN_HIT_LINE2;
