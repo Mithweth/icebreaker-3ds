@@ -52,7 +52,7 @@ void intro_init(void) {
 	line1=line_create(1);
 	line2=line_create(2);
 	tux = penguin_create();
-	grid_mark(tux.x,tux.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
+	grid_mark(tux.state.x,tux.state.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
 	penguincount = 0;
 	frozen = true;
 	/// Here's the fun part where we set up the letters.
@@ -263,7 +263,7 @@ bool intro_update(u32 keys) {
 	{
 		for (int i=0;i<penguincount;i++)
 		{
-			grid_mark(flock[i].x,flock[i].y,BLOCKWIDTH,BLOCKHEIGHT,'*');
+			grid_mark(flock[i].state.x,flock[i].state.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
 		}
 		
 		letterstep++;
@@ -277,7 +277,7 @@ bool intro_update(u32 keys) {
 		frozen=false;
 		for (int i=0;i<penguincount;i++)
 		{
-			grid_mark(flock[i].x,flock[i].y,BLOCKWIDTH,BLOCKHEIGHT,' ');
+			grid_mark(flock[i].state.x,flock[i].state.y,BLOCKWIDTH,BLOCKHEIGHT,' ');
 		}
 		letterstep++;
 	}
@@ -290,7 +290,7 @@ bool intro_update(u32 keys) {
 		if (penguincount)
 		{
 			penguincount--;
-			grid_mark(flock[penguincount].x,flock[penguincount].y,BLOCKWIDTH,BLOCKHEIGHT,' ');
+			grid_mark(flock[penguincount].state.x,flock[penguincount].state.y,BLOCKWIDTH,BLOCKHEIGHT,' ');
 		}
 		else
 		{
@@ -320,7 +320,7 @@ bool intro_update(u32 keys) {
 	if (letterstep>11)
 		for (int i=0;i<penguincount;i++)
 		{
-			grid_mark(flock[i].x,flock[i].y,BLOCKWIDTH,BLOCKHEIGHT,'*');	
+			grid_mark(flock[i].state.x,flock[i].state.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
 		}
 
 	if (line1.on) {
