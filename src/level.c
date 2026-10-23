@@ -39,8 +39,9 @@
 #include "flying_sprite.h"
 #include "penguin.h"
 
-#define GESTURE_THRESHOLD 12
-#define FPS 60 // C3D_FRAME_SYNCDRAW locks the main loop to the 3DS refresh rate
+#define GESTURE_THRESHOLD 		12
+#define FREEZE_DURATION_SECONDS	2.0f
+#define SPEED_DURATION_SECONDS	1.0f
 
 static Line line1;
 static Line line2;
@@ -57,6 +58,10 @@ static bool done;
 static int percentextrabonus;
 static int percentbonus;
 static int tick;
+static size_t freeze_tick;
+static size_t speed_tick;
+static bool shield_enabled;
+static bool shield_used;
 
 static void level_action_startclick(int mousex, int mousey, bool vertical)
 {
@@ -74,15 +79,23 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 	{
 		if (vertical)
 		{
-			if (!line1.on)
+			if (!line1.on) {
 				(ydif<BLOCKHEIGHT/2) ? line_start(&line1, UP, x, y, 0) : line_start(&line1, UP, x, y+BLOCKHEIGHT, 0);
-			if (!line2.on)
+				line_enable_shield(&line1, shield_enabled);
+			}
+			if (!line2.on) {
 				(ydif<BLOCKHEIGHT/2) ? line_start(&line2, DOWN, x, y, 0) : line_start(&line2, DOWN, x, y+BLOCKHEIGHT, 0);
+				line_enable_shield(&line2, shield_enabled);
+			}
 		} else {
-			if (!line1.on) 
+			if (!line1.on) {
 				(xdif<BLOCKWIDTH/2) ? line_start(&line1, LEFT, x, y, 0) : line_start(&line1, LEFT, x+BLOCKWIDTH,y, 0);
-			if (!line2.on)
+				line_enable_shield(&line1, shield_enabled);
+			}
+			if (!line2.on) {
 				(xdif<BLOCKWIDTH/2) ? line_start(&line2, RIGHT, x, y, 0) : line_start(&line2, RIGHT, x+BLOCKWIDTH,y, 0);
+				line_enable_shield(&line2, shield_enabled);
+			}
 		}
 	}
 }
@@ -91,13 +104,17 @@ void level_init(GameStats *stats) {
 	grid_generate_colors();
 	grid_maps_apply(grid_maps_current_name());
 	flying_sprite_init();
-	scoremod=1.0f;
-	bonusmod=1.0f;
-	percentextrabonus=PERCENTEXTRABONUS-(stats->level-1)/5; // this needs to decrease, or else the bonus disintegrates as the space required to actually trap penguins increases
-	percentbonus=PERCENTBONUS; // right now, there's really no point in making this a variable but it doesn't hurt, and keeps things consistant
-	timepenalty=0;
+	scoremod = 1.0f;
+	bonusmod = 1.0f;
+	freeze_tick = 0;
+	speed_tick = 0;
+	shield_enabled = false;
+	shield_used = false;
+	percentextrabonus = PERCENTEXTRABONUS - (stats->level - 1) / 5; // this needs to decrease, or else the bonus disintegrates as the space required to actually trap penguins increases
+	percentbonus = PERCENTBONUS; // right now, there's really no point in making this a variable but it doesn't hurt, and keeps things consistant
+	timepenalty = 0;
 	done = false;
-	penguincount = stats->level+1;
+	penguincount = stats->level + 1;
 	if (penguincount > MAXPENGUINS) {
 		penguincount = MAXPENGUINS;
 	}
@@ -125,8 +142,9 @@ void level_init(GameStats *stats) {
 		break;
 	}
 	stats->basescore = 0;
-	stats->clearbonus=0;
-	stats->lifebonus=0;
+	stats->clearbonus = 0;
+	stats->lifebonus = 0;
+	stats->energybonus = 0;
 	stats->clear = 0;
 	line1=line_create(1);
 	line2=line_create(2);
@@ -152,12 +170,55 @@ void level_draw(void) {
 	for (int i=0;i<penguincount;i++) {
 		penguin_draw(&flock[i]);
 	}
+	if (freeze_tick > 0) {
+		size_t max_freeze_tick = (size_t)(FREEZE_DURATION_SECONDS * FPS);
+		if (freeze_tick > max_freeze_tick - 5) {
+			C2D_DrawRectSolid(0, 0, 0.45f, WIDTH, HEIGHT, C2D_Color32(255, 255, 255, 255));
+		} else {
+			C2D_DrawRectSolid(0, 0, 0.45f, WIDTH, HEIGHT, C2D_Color32(255, 255, 255, 128 * freeze_tick / max_freeze_tick));		
+		}
+	} else if (speed_tick > 0) {
+		size_t max_speed_tick = (size_t)(SPEED_DURATION_SECONDS * FPS);
+		if (speed_tick > max_speed_tick - 5) {
+			C2D_DrawRectSolid(0, 0, 0.45f, WIDTH, HEIGHT, C2D_Color32(255, 0, 0, 255));
+		} else {
+			C2D_DrawRectSolid(0, 0, 0.45f, WIDTH, HEIGHT, C2D_Color32(255, 0, 0, 128 * speed_tick / max_speed_tick));		
+		}
+	} else if (shield_enabled) {
+		C2D_DrawRectSolid(0, 0, 0.45f, WIDTH, HEIGHT, C2D_Color32(0, 0, 255, 64));
+		C2D_ImageTint tint;
+		C2D_AlphaImageTint(&tint, 0.15f);
+		C2D_DrawImageAt(theme.shieldbitmap, 160.0f - theme.shieldbitmap.subtex->width / 2, 120.0f - theme.shieldbitmap.subtex->height / 2, 0.46f, &tint, 1.0f, 1.0f);
+	}
 }
 
 bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (done) {
 		return false;
 	}
+	if (shield_used && !line1.on && !line2.on) {
+		shield_enabled = false;
+		shield_used = false;
+		sound_play(SNDSHIELDOFF);
+	}
+	if (options_modern_mode() && stats->energy > 0  && speed_tick + freeze_tick == 0) {
+		if ((keys & (KEY_DLEFT | KEY_Y)) && stats->energy > 1 && !shield_enabled) { // Shield
+			stats->energy -= 2;
+			shield_enabled = true;
+			if (line1.on) line_enable_shield(&line1, true);
+			if (line2.on) line_enable_shield(&line2, true);
+			sound_play(SNDSHIELD);
+		} else if (keys & (KEY_DUP | KEY_X)) { // Freeze
+			stats->energy--;
+			freeze_tick = (size_t)(FREEZE_DURATION_SECONDS * FPS);
+			sound_play(SNDFREEZE);
+		} else if (keys & (KEY_DDOWN | KEY_B)) { // Speed
+			stats->energy--;
+			speed_tick = (size_t)(SPEED_DURATION_SECONDS * FPS);
+			sound_play(SNDSPEED);
+		}
+	}
+
 	if (keys & KEY_TOUCH) {
 		gesture_start = touch;
 		gesture_last = touch;
@@ -178,103 +239,104 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 
 			level_action_startclick(gesture_start.px, gesture_start.py, vertical);
 		}
-
 		gesture_active = false;
 	}
 
-	if (line1.on)
-	{
-		// kludgy crap to implement speed = 1 1/2
-		bool linedoneflag=line_move(&line1);
-		if (!linedoneflag && line1.speedslower)
-		{
-			line1.speedslower=false;
-			linedoneflag=line_move(&line1);
-		}
-		else
-		{
-			line1.speedslower=true;
-		}
-			
-		if (linedoneflag)
-		{
+	if (freeze_tick > 0) freeze_tick--;
+	if (speed_tick > 0) speed_tick--;
 
-			flying_sprite_capture();
-			stats->clear=grid_countcleared();
-			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
-			tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+	int speed = (speed_tick > 0) ? 3 : 1;
+	for(int i = 0; i < speed; i++) {
+		if (line1.on) {
+			// kludgy crap to implement speed = 1 1/2
+			bool linedoneflag = line_move(&line1);
+			if (!linedoneflag && line1.speedslower) {
+				line1.speedslower = false;
+				linedoneflag = line_move(&line1);
+			} else {
+				line1.speedslower = true;
+			}
+			if (linedoneflag) {
+				flying_sprite_capture();
+				stats->clear = grid_countcleared();
+				stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
+				tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+			}
+			if (line1.dead)  {
+				sound_play(SNDBREAK);
+				flying_sprite_death();
+				line_kill(&line1);
+				stats->lives--;
+				if (stats->lives < 0) stats->lives = 0;
+			}
 		}
-
-		if (line1.dead) 
-		{
-			sound_play(SNDBREAK);
-			flying_sprite_death();
-			line_kill(&line1);
-			stats->lives--;
-			if (stats->lives<0) stats->lives=0;
+		if (line2.on) {
+			bool linedoneflag = line_move(&line2);
+			if (!linedoneflag && line2.speedslower) {
+				line2.speedslower = false;
+				linedoneflag = line_move(&line2);
+			} else {
+				line2.speedslower = true;
+			}
+			if (linedoneflag) {
+				flying_sprite_capture();
+				stats->clear = grid_countcleared();
+				stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
+				tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+			}
+			if (line2.dead) { 
+				sound_play(SNDBREAK);
+				flying_sprite_death();
+				line_kill(&line2);
+				stats->lives--;
+				if (stats->lives < 0) stats->lives = 0;
+			}
 		}
 	}
-	if (line2.on)
+	if (line1.shield_hit || line2.shield_hit) shield_used = true;
+	for (int i = 0; i < penguincount; i++)
 	{
-		bool linedoneflag=line_move(&line2);
-		if (!linedoneflag && line2.speedslower)
-		{
-			line2.speedslower=false;
-			linedoneflag=line_move(&line2);
-		}
-		else
-		{
-			line2.speedslower=true;
-		}
-
-		if (linedoneflag)
-		{
-			flying_sprite_capture();
-			stats->clear=grid_countcleared();
-			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
-			tick=0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
-		}
-
-		if (line2.dead)
-		{ 
-			sound_play(SNDBREAK);
-			flying_sprite_death();
-			line_kill(&line2);
-			stats->lives--;
-			if (stats->lives<0) stats->lives=0;
-
-		}
-	}
-	for (int i=0;i<penguincount;i++)
-	{
-		PenguinHit hit = penguin_move(&flock[i], stats->level, &line1, &line2);
-		if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead=true;
-		if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead=true;
+		PenguinHit hit = penguin_move(&flock[i], stats->level, &line1, &line2, freeze_tick > 0);
+		if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead = true;
+		if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead = true;
+		if (hit == PENGUIN_HIT_SHIELD) shield_used = true;
 	}
 
-	if (stats->lives<=0) // game over
+	if (stats->lives <= 0) // game over
 	{
 		stats->dead = true;
+		speed_tick = 0;
+		freeze_tick = 0;
+		shield_enabled = false;
 		flying_sprite_gameover();
 		done = true;
 		return true;
 	}
-	if (!line1.on && !line2.on && stats->clear>=PERCENTREQUIRED) // success!
+	if (!line1.on && !line2.on && stats->clear >= PERCENTREQUIRED) // success!
 	{ 
 		flying_sprite_victory();
+		speed_tick = 0;
+		freeze_tick = 0;
+		shield_enabled = false;
 		done = true;
-		stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
+		stats->basescore=(int)(stats->clear * scoremod) - timepenalty;
 
 		stats->clearbonus=0;
 		// bonuses for clearing lots
-		if (stats->clear>percentbonus)
-			stats->clearbonus+=(int)((stats->clear-percentbonus)*bonusmod);
-		if (stats->clear>percentextrabonus)
-			stats->clearbonus+=(int)((stats->clear-percentextrabonus)*(stats->clear-percentextrabonus)*bonusmod);
+		if (stats->clear > percentbonus) {
+			stats->clearbonus += (int)((stats->clear-percentbonus) * bonusmod);
+		}
+		if (stats->clear > percentextrabonus) {
+			stats->clearbonus += (int)((stats->clear - percentextrabonus) * (stats->clear - percentextrabonus) * bonusmod);
+			stats->energybonus += 1;
+		}
+		if (stats->lives == stats->level + 1) {
+			stats->energybonus += 1;
+		}
 			
 		// bonuses for leftover stats->lives
-		stats->lifebonus=(int)((stats->lives-1)*3*bonusmod);
-	} 
+		stats->lifebonus = (int)((stats->lives - 1) * 3 * bonusmod);
+	}
 
 	tick++;
 	if (tick >= timepenaltyinterval * FPS / 100) {

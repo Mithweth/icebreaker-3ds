@@ -113,6 +113,8 @@ bool themes_settheme(const char* themename, bool included) {
 	themes_setdefaultcolors();
 	theme.sprite_count = 0;
 	theme.particlebitmap = (C2D_Image){0};
+	theme.energybitmap = (C2D_Image){0};
+	theme.shieldbitmap = (C2D_Image){0};
 	
 	foundcolor.background      = 0;
 	foundcolor.normaltext      = 0;
@@ -326,6 +328,32 @@ bool themes_settheme(const char* themename, bool included) {
 					return false;
 				}
 			}
+			else if (!strcmp(optbuf,"energybitmap"))
+			{
+				if (includes) {
+					printf("Warning: energybitmap is ignored in a file using an include directive\n");
+					continue;
+				}
+				theme.energybitmap = gfxmap_get_image(valbuf);
+				if (!theme.energybitmap.tex) {
+					printf("Error while loading sprite: No image found: %s\n", valbuf);
+					fclose(themefile);
+					return false;
+				}
+			}
+			else if (!strcmp(optbuf,"shieldbitmap"))
+			{
+				if (includes) {
+					printf("Warning: shieldbitmap is ignored in a file using an include directive\n");
+					continue;
+				}
+				theme.shieldbitmap = gfxmap_get_image(valbuf);
+				if (!theme.shieldbitmap.tex) {
+					printf("Error while loading sprite: No image found: %s\n", valbuf);
+					fclose(themefile);
+					return false;
+				}
+			}
 			else if (!strcmp(optbuf,"soundouch"))
 			{
 				if (!sound_load(SNDOUCH, valbuf)) {
@@ -350,6 +378,30 @@ bool themes_settheme(const char* themename, bool included) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
+			else if (!strcmp(optbuf,"soundfreeze"))
+			{
+				if (!sound_load(SNDFREEZE, valbuf)) {
+					printf("Error while loading sound file: %s\n", valbuf);
+				}
+			}
+			else if (!strcmp(optbuf,"soundspeed"))
+			{
+				if (!sound_load(SNDSPEED, valbuf)) {
+					printf("Error while loading sound file: %s\n", valbuf);
+				}
+			}
+			else if (!strcmp(optbuf,"soundshield"))
+			{
+				if (!sound_load(SNDSHIELD, valbuf)) {
+					printf("Error while loading sound file: %s\n", valbuf);
+				}
+			}
+			else if (!strcmp(optbuf,"soundshieldoff"))
+			{
+				if (!sound_load(SNDSHIELDOFF, valbuf)) {
+					printf("Error while loading sound file: %s\n", valbuf);
+				}
+			}
 		}	
 	}	
 	fclose(themefile);
@@ -357,6 +409,14 @@ bool themes_settheme(const char* themename, bool included) {
 	if (theme.sprite_count == 0) {
 		printf("Error: no spritebitmap found in theme %s. Using default.\n", themename);
 		return false;
+	}
+	if (!theme.energybitmap.tex) {
+		printf("Warning: no energybitmap found in theme %s. Using default.\n", themename);
+		theme.energybitmap = gfxmap_get_image("energy");
+	}
+	if (!theme.shieldbitmap.tex) {
+		printf("Warning: no shieldbitmap found in theme %s. Using default.\n", themename);
+		theme.shieldbitmap = gfxmap_get_image("shield");
 	}
 	if (foundcolor.background == 0)
 		{ printf("Warning: Background not correctly defined in theme %s. Using default.\n",themename); }

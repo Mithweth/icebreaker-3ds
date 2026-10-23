@@ -19,5 +19,9 @@ ProgressbarFill		34	80	172
 SpriteCharge		255	60	60
 SpriteBitmap		star
 ParticleBitmap		fallingstar
+EnergyBitmap		energy
 SoundOuch			nbwoanp
 SoundCrash			scrunch
+SoundFreeze			energy
+SoundSpeed			energy
+SoundShield			energy

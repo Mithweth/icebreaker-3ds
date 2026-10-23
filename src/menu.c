@@ -161,6 +161,7 @@ static void progress_bar_draw(int pct) {
 	menu_draw_rounded_rect(12.0f, 222.0f, (376.0f) * pct / 100.0f, 10.0f, theme.color.progressbarfill);
 }
 
+
 void menu_bottom_draw(bool pause) {
 	if (pause) {
 		C2D_DrawRectSolid(0, 0, 0.9f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
@@ -174,19 +175,24 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	text_put(175 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_SCORE"));
 	text_put(10 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LEVEL"));
 	text_rput(385 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_HIGH_SCORE"));
-	text_put(10 + parallax, 200, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LIVES"));
 	snprintf(tmptext,30,"%d %%",stats->clear);
 	text_rput(390 + parallax, 200, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%ld",stats->score + stats->basescore);
 	text_cput(200 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	snprintf(tmptext,30,"%d",stats->level);
 	text_put(20 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
-	if (!grid_maps_random(grid_maps_current_name())) {
-		snprintf(tmptext,30,"%ld",hiscore_get(grid_maps_current_name(), 0)->score);
-		text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
+
+	C2D_DrawImageAt(theme.spriteimage[0], 10.0f + parallax, 205.0f - theme.spriteimage[0].subtex->height / 2, 0.1f, NULL, 1.0f, 1.0f);
+	snprintf(tmptext,30,"%d",stats->lives);
+	text_put(30.0f + parallax, 200.0f, 0.1f, 2, theme.color.normaltext, tmptext);
+	if (options_modern_mode()) {
+		C2D_DrawImageAt(theme.energybitmap, 10.0f + parallax, 180.0f, 0.1f, NULL, 1.0f, 1.0f);
+		snprintf(tmptext, 30, "%zu", stats->energy);
+		text_put(30.0f + parallax, 184.0f, 0.1f, 2, theme.color.normaltext, tmptext);
 	}
-	for(int i = 0; i < stats->lives; i++) {
-		C2D_DrawImageAt(theme.spriteimage[0], 80.0f + (16.0f * i) + parallax, 205.0f - (theme.spriteimage[0].subtex->height / 2), 0.3f, NULL, 1.0f, 1.0f);
+	if (!grid_maps_random(grid_maps_current_name())) {
+		snprintf(tmptext, 30,"%ld", hiscore_get(grid_maps_current_name(), 0)->score);
+		text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	}
 	progress_bar_draw(stats->clear);
 	snowflake_draw(parallax);

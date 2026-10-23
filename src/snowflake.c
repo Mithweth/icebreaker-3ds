@@ -40,7 +40,7 @@ static Snowflake snowflakes[SNOWFLAKE_COUNT];
 void snowflake_init(void) {
 	for (int i = 0; i < SNOWFLAKE_COUNT; i++) {
 		snowflakes[i].depth = (rand() % 100) / 100.0f - 1.0f;
-		snowflakes[i].size = 0.5f + (snowflakes[i].depth + 1.0f) * 0.5f;
+		snowflakes[i].size = 0.5f + (snowflakes[i].depth + 1.0f) * 0.25f;
 		snowflakes[i].speed = 0.2f + (snowflakes[i].depth + 1.0f) * 0.6f;
 		snowflakes[i].drift = ((rand() % 100) / 100.0f - 0.5f) * 0.3f;
 		snowflakes[i].y = -3.0f;
@@ -62,7 +62,7 @@ void snowflake_update(void) {
 void snowflake_draw(float parallax) {
 	if (!theme.particlebitmap.tex) {
 		return;
-	}   
+	}
 	for (int i = 0; i < SNOWFLAKE_COUNT; i++) {
 		float x = snowflakes[i].x + snowflakes[i].depth * parallax;
 		C2D_DrawImageAt(theme.particlebitmap, x, snowflakes[i].y, 0.1f, NULL, snowflakes[i].size, snowflakes[i].size);

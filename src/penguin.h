@@ -57,6 +57,7 @@ typedef struct {
 
 typedef enum {
 	PENGUIN_HIT_NONE,
+	PENGUIN_HIT_SHIELD,
 	PENGUIN_HIT_LINE1,
 	PENGUIN_HIT_LINE2,
 	PENGUIN_HIT_BOTH 
@@ -65,4 +66,4 @@ typedef enum {
 Penguin penguin_create(void);
 Penguin penguin_createxy(int x, int y);
 void penguin_draw(Penguin* p);
-PenguinHit penguin_move(Penguin* p, int level, const Line *line1, const Line *line2);
+PenguinHit penguin_move(Penguin* p, int level, const Line *line1, const Line *line2, bool freezed);

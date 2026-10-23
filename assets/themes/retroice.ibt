@@ -20,7 +20,12 @@ SpriteCharge		255	60	60
 SpriteBitmap		ice_cube1
 SpriteBitmap		ice_cube2
 ParticleBitmap		snowflake
-SoundOuch			8bit-touch
-SoundCrash			8bit-touch
-SoundVictory		8bit-win
-SoundDefeat			8bit-lose
+EnergyBitmap		8bit_energy
+SoundOuch			8bit_touch
+SoundCrash			8bit_touch
+SoundVictory		8bit_win
+SoundDefeat			8bit_lose
+SoundFreeze			8bit_freeze
+SoundSpeed			8bit_zap
+SoundShield			8bit_enable
+SoundShieldOff		8bit_disable

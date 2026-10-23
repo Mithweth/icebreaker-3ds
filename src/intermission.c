@@ -30,22 +30,32 @@
 #include "text.h"
 #include "sound.h"
 #include "lang.h"
+#include "options.h"
 
 static char first_line_text[30];
-static char second_line_text[30];
 static float first_line_x;
 static float first_line_y;
+static size_t first_line_size;
+static char second_line_text[30];
 static float second_line_x;
 static float second_line_y;
-static bool done;
-static size_t first_line_size;
 static size_t second_line_size;
 static u32 second_line_color;
+static char third_line_text[30];
+static float third_line_x;
+static float third_line_y;
+static size_t third_line_size;
+static bool done;
+static size_t energybonus;
+static bool dead;
 
 void intermission_init(const GameStats *stats) {
-	if (!stats->dead) {
+	energybonus = stats->energybonus;
+	dead = stats->dead;
+	if (!dead) {
 		snprintf(first_line_text,30,"%s: %ld", lang_get("INTERMISSION_SCORE"), stats->basescore);
 		snprintf(second_line_text,30, "%s: %d", lang_get("INTERMISSION_BONUS"), stats->clearbonus + stats->lifebonus);
+		snprintf(third_line_text,30, "%s: %zu", lang_get("INTERMISSION_ENERGY"), energybonus);
 		second_line_color = theme.color.bonusscrolltext;
 		sound_play(SNDVICTORY);
 	} else {
@@ -55,7 +65,6 @@ void intermission_init(const GameStats *stats) {
 		sound_play(SNDDEFEAT);
 	}
 	int first_line_w;
-	int second_line_w;
 	for(size_t size = 4; size > 0; size--) {
 		first_line_w = text_getwidth(size, first_line_text);
 		if (first_line_w < WIDTH) {
@@ -63,10 +72,19 @@ void intermission_init(const GameStats *stats) {
 			break;
 		}
 	}
+	int second_line_w;
 	for(size_t size = 4; size > 0; size--) {
 		second_line_w = text_getwidth(size, second_line_text);
 		if (second_line_w < WIDTH) {
 			second_line_size = size;
+			break;
+		}
+	}
+	int third_line_w;
+	for(size_t size = 4; size > 0; size--) {
+		third_line_w = text_getwidth(size, third_line_text);
+		if (third_line_w < WIDTH) {
+			third_line_size = size;
 			break;
 		}
 	}
@@ -76,13 +94,19 @@ void intermission_init(const GameStats *stats) {
 
 	second_line_x = (WIDTH - second_line_w) / 2;
 	second_line_y = HEIGHT;
+
+	third_line_x = (WIDTH - third_line_w) / 2;
+	third_line_y = HEIGHT;
 	done = false;
 }
 
 void intermission_draw(void) {
-	C2D_DrawRectSolid(0, 0, 0.4f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
-	text_put(first_line_x, first_line_y, 0.5f, first_line_size, theme.color.scorescrolltext, first_line_text);
-	text_put(second_line_x, second_line_y, 0.5f, second_line_size, second_line_color, second_line_text);
+	C2D_DrawRectSolid(0, 0, 0.5f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
+	text_put(first_line_x, first_line_y, 0.51f, first_line_size, theme.color.scorescrolltext, first_line_text);
+	text_put(second_line_x, second_line_y, 0.51f, second_line_size, second_line_color, second_line_text);
+	if (options_modern_mode() && energybonus > 0 && !dead) {
+		text_put(third_line_x, third_line_y, 0.51f, third_line_size, theme.color.bonusscrolltext, third_line_text);
+	}
 }
 
 bool intermission_update(u32 keys) {
@@ -91,9 +115,11 @@ bool intermission_update(u32 keys) {
 	}
 	if (done) return false;
 	if (first_line_y > 100) {
-		first_line_y-=2;
+		first_line_y -= 2;
 	} else if (second_line_y > 130) {
-		second_line_y-=2;
+		second_line_y -= 2;
+	} else if (third_line_y > 160) {
+		third_line_y -= 2;
 	}
 	return true;
 }

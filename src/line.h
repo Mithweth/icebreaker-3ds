@@ -46,6 +46,8 @@ typedef struct
 	int dead;
 	int speedslower;
 	int stuckcount;
+	bool shield_enabled;
+	bool shield_hit;
 } Line;
 
 void line_start(Line * l, LineDir d, int x, int y, int end);
@@ -53,3 +55,5 @@ Line line_create(int linenum);
 int line_move(Line * l);
 void line_draw(const Line *l, u32 color);
 void line_kill(Line * l);
+bool line_shield_enabled(const Line *l);
+void line_enable_shield(Line *l, bool v);

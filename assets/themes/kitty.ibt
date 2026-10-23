@@ -19,5 +19,6 @@ ProgressbarFill		255	159	205
 SpriteCharge		173	0	160
 SpriteBitmap		kitty
 ParticleBitmap		heart
+EnergyBitmap		heart
 SoundOuch			ewww
 SoundCrash			pop
