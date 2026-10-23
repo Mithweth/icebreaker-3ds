@@ -26,15 +26,22 @@
 
 #include <stddef.h>
 
-typedef struct
-{
+#define MAX_STATE_HISTORY	16
+
+typedef struct {
 	int x;
 	int y;
 	int xdelta;
 	int ydelta;
 	int speedslower;
+} PenguinState;
+
+typedef struct {
+	PenguinState state;
 	size_t current_image;
 	size_t image_tick;
+	PenguinState history[MAX_STATE_HISTORY];
+	size_t history_count;
 } Penguin;
 
 typedef enum {
