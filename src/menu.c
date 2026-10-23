@@ -263,17 +263,18 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 			}
 			text_put(60, 60 + 22 * i, 0.4f, 3, theme.color.normaltext, lang_get(confirm_key));
 		}
-		int yes_w = text_getwidth(3, lang_get("CHOICE_YES"));
-		int no_w = text_getwidth(3, lang_get("CHOICE_NO"));
-		int box_w = (yes_w > no_w) ? 20.0f + yes_w : 20.0f + no_w;
+
+		int yes_w = 20.0f + text_getwidth(3, lang_get("CHOICE_YES"));
+		int no_w = 20.0f + text_getwidth(3, lang_get("CHOICE_NO"));
+		int box_w = (yes_w > no_w) ? yes_w : no_w;
 		if (yes_selected) {
-			C2D_DrawRectSolid(70.0f, 145, 0.35f, box_w, 23.0f, theme.color.menuhighlight);
-			text_cput(70 + box_w / 2, 150, 0.4f, 3, theme.color.background, lang_get("CHOICE_YES"));
-			text_cput(250 + box_w / 2, 150, 0.4f, 3, theme.color.normaltext, lang_get("CHOICE_NO"));
+			C2D_DrawRectSolid(110.0f - box_w / 2, 145, 0.35f, box_w, 23.0f, theme.color.menuhighlight);
+			text_cput(110.0f, 150, 0.4f, 3, theme.color.background, lang_get("CHOICE_YES"));
+			text_cput(280.0f, 150, 0.4f, 3, theme.color.normaltext, lang_get("CHOICE_NO"));
 		} else {
-			C2D_DrawRectSolid(250.0f, 145, 0.35f, box_w, 23.0f, theme.color.menuhighlight);
-			text_cput(70 + box_w / 2, 150, 0.4f, 3, theme.color.normaltext, lang_get("CHOICE_YES"));
-			text_cput(250 + box_w / 2, 150, 0.4f, 3, theme.color.background, lang_get("CHOICE_NO"));
+			C2D_DrawRectSolid(280.0f - box_w / 2, 145, 0.35f, box_w, 23.0f, theme.color.menuhighlight);
+			text_cput(110.0f, 150, 0.4f, 3, theme.color.normaltext, lang_get("CHOICE_YES"));
+			text_cput(280.0f, 150, 0.4f, 3, theme.color.background, lang_get("CHOICE_NO"));
 		}
 		break;
 	case DIALOG_HIGHSCORES:

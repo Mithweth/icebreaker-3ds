@@ -283,7 +283,11 @@ bool dialog_update(u32 keys, touchPosition touch) {
 
 	if (keys & (KEY_LEFT | KEY_RIGHT)) yes_selected = !yes_selected;
 
-	if ((keys & KEY_TOUCH) && touch.px >= 60 && touch.px <= 110 && touch.py >= 160 && touch.py <= 178) {
+	int box_ok = 10.0f + text_getwidth(3, lang_get("CHOICE_OK"));
+	int box_cancel = 10.0f + text_getwidth(3, lang_get("CHOICE_CANCEL"));
+	int box_size = (box_ok > box_cancel) ? box_ok : box_cancel;
+
+	if ((keys & KEY_TOUCH) && touch.px >= 110.0f - box_size / 2 && touch.px <= 110.0f + box_size / 2 && touch.py >= 160 && touch.py <= 178) {
 		return true;
 	}
 	switch(dialog_type) {
@@ -312,7 +316,7 @@ bool dialog_update(u32 keys, touchPosition touch) {
 			}
 			return false;
 		}
-		if ((keys & KEY_A) || ((keys & KEY_TOUCH) && touch.px >= 210 && touch.px <= 260 && touch.py >= 160 && touch.py <= 178)) {
+		if ((keys & KEY_A) || ((keys & KEY_TOUCH) && touch.px >= 210.0f - box_size / 2 && touch.px <= 210.0f + box_size / 2 && touch.py >= 160 && touch.py <= 178)) {
 			if (!editor_save_read(grids[current_grid])) {
 				dialog_type = DIALOG_ERROR;
 				error_message = ERROR_MESSAGE;
@@ -324,7 +328,7 @@ bool dialog_update(u32 keys, touchPosition touch) {
 		break;
 	case DIALOG_CONFIRM_SAVE_CURRENT:
 	case DIALOG_CONFIRM_SAVE:
-		if ((keys & KEY_A) || ((keys & KEY_TOUCH) && touch.px >= 210 && touch.px <= 260 && touch.py >= 160 && touch.py <= 178)) {
+		if ((keys & KEY_A) || ((keys & KEY_TOUCH) && touch.px >= 210.0f - box_size / 2 && touch.px <= 210.0f + box_size / 2 && touch.py >= 160 && touch.py <= 178)) {
 			if (!editor_save_write()) {
 				dialog_type = DIALOG_ERROR;
 				error_message = ERROR_MESSAGE;
@@ -336,11 +340,11 @@ bool dialog_update(u32 keys, touchPosition touch) {
 		}
 		break;		
 	case DIALOG_SAVE:
-		if ((keys & KEY_TOUCH) && touch.px >= 60 && touch.px <= 260 && touch.py >= 102 && touch.py <= 123) {
+		if ((keys & KEY_TOUCH) && touch.px >= 60 && touch.px <= 260 && touch.py >= 92 && touch.py <= 113) {
 			dialog_save_prompt();
 			return false;
 		}
-		if ((keys & KEY_A) || ((keys & KEY_TOUCH) && touch.px >= 210 && touch.px <= 260 && touch.py >= 160 && touch.py <= 178)) {
+		if ((keys & KEY_A) || ((keys & KEY_TOUCH) && touch.px >= 210.0f - box_size / 2 && touch.px <= 210.0f + box_size / 2 && touch.py >= 160 && touch.py <= 178)) {
 			if (grid_maps_get_index(grid_name) != -1) {
 				if (grid_maps_custom(grid_name)) {
 					if (strcmp(grid_maps_current_name(), grid_name) == 0) {
@@ -373,7 +377,7 @@ bool dialog_update(u32 keys, touchPosition touch) {
 		break;
 	case DIALOG_CONFIRM_DELETE_CURRENT:
 	case DIALOG_CONFIRM_DELETE:
-		if ((keys & KEY_A) || ((keys & KEY_TOUCH) && touch.px >= 210 && touch.px <= 260 && touch.py >= 160 && touch.py <= 178)) {
+		if ((keys & KEY_A) || ((keys & KEY_TOUCH) && touch.px >= 210.0f - box_size / 2 && touch.px <= 210.0f + box_size / 2 && touch.py >= 160 && touch.py <= 178)) {
 			if (!editor_save_delete(grids[current_grid])) {
 				dialog_type = DIALOG_ERROR;
 				error_message = ERROR_MESSAGE;
@@ -425,26 +429,29 @@ static void dialog_draw(void) {
 	C2D_DrawRectSolid(0, 0, 0.4f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
 	C2D_DrawRectSolid(50.0f, 50.0f, 0.41f, 220.0f, 140.0f, theme.color.menuhighlight);
 	C2D_DrawRectSolid(52.0f, 52.0f, 0.42f, 216.0f, 136.0f, theme.color.background);
-	int box_ok = 20.0f + text_getwidth(3, lang_get("CHOICE_OK"));
-	int box_cancel = 20.0f + text_getwidth(3, lang_get("CHOICE_CANCEL"));
+	int box_ok = 10.0f + text_getwidth(3, lang_get("CHOICE_OK"));
+	int box_cancel = 10.0f + text_getwidth(3, lang_get("CHOICE_CANCEL"));
+	int box_size = (box_ok > box_cancel) ? box_ok : box_cancel;
 	if (yes_selected) {
-		text_cput(60 + box_cancel / 2, 162, 0.44f, 3, theme.color.menuhighlight, lang_get("CHOICE_CANCEL"));
-		C2D_DrawRectSolid(260.0f - box_ok, 160.0f, 0.43f, box_ok, 18.0f, theme.color.menuhighlight);
-		text_cput(260.0f - box_ok + box_ok / 2, 162, 0.44f, 3, theme.color.background, lang_get("CHOICE_OK"));
+		text_cput(110.0f, 162, 0.44f, 3, theme.color.menuhighlight, lang_get("CHOICE_CANCEL"));
+		C2D_DrawRectSolid(210.0f - box_size / 2, 160.0f, 0.43f, box_size, 18.0f, theme.color.menuhighlight);
+		text_cput(210.0f, 162, 0.44f, 3, theme.color.background, lang_get("CHOICE_OK"));
 	} else {
-		C2D_DrawRectSolid(60.0f, 160.0f, 0.43f, box_cancel, 18.0f, theme.color.menuhighlight);
-		text_cput(60 + box_cancel / 2, 162, 0.44f, 3, theme.color.background, lang_get("CHOICE_CANCEL"));
-		text_cput(200 + box_ok / 2, 162, 0.44f, 3, theme.color.menuhighlight, lang_get("CHOICE_OK"));		
+		C2D_DrawRectSolid(110.0f - box_size / 2, 160.0f, 0.43f, box_size, 18.0f, theme.color.menuhighlight);
+		text_cput(110.0f, 162, 0.44f, 3, theme.color.background, lang_get("CHOICE_CANCEL"));
+		text_cput(210.0f, 162, 0.44f, 3, theme.color.menuhighlight, lang_get("CHOICE_OK"));		
 	}
 	switch(dialog_type) {
 	case DIALOG_SAVE:
 		text_put(60.0f, 60.0f, 0.43f, 2, theme.color.normaltext, lang_get("EDITOR_PROMPT"));
-		C2D_DrawRectSolid(60.0f, 102.0f, 0.43f, 200.0f, 21.0f, theme.color.textentrybox);
-		text_put(70, 104, 0.44f, 3, theme.color.textentrytext, grid_name);
+		C2D_DrawRectSolid(60.0f, 92.0f, 0.43f, 200.0f, 21.0f, theme.color.textentrybox);
+		text_put(70, 94, 0.44f, 3, theme.color.textentrytext, grid_name);
 		break;
 	case DIALOG_LOAD:
 		text_put(60.0f, 60.0f, 0.43f, 2, theme.color.normaltext, lang_get("EDITOR_PROMPT"));
-		text_put(70, 104, 0.44f, 3, theme.color.normaltext, grids[current_grid]);
+		text_put(70, 94, 0.44f, 3, theme.color.normaltext, grids[current_grid]);
+		text_put(60.0f, 135.0f, 0.43f, 1, theme.color.normaltext, lang_get("EDITOR_LOAD_HELP_1"));
+		text_put(60.0f, 145.0f, 0.43f, 1, theme.color.normaltext, lang_get("EDITOR_LOAD_HELP_2"));
 		break;
 	case DIALOG_CONFIRM_DELETE_CURRENT:
 		text_put(60.0f, 60.0f, 0.43f, 2, theme.color.normaltext, lang_get("EDITOR_CONFIRM_CURRENT_DELETE_1"));
@@ -587,14 +594,14 @@ void editor_draw(void) {
 	int bw = WIDTH - GRID_WIDTH - GRID_SPACING;
 	for(size_t i = 0; i < buttons; i++) {
 		C2D_DrawRectSolid(GRID_WIDTH + GRID_SPACING, i * (bh + GRID_SPACING), 0.01f, bw, bh, theme.color.progressbaroutline);
-		C2D_DrawRectSolid(GRID_WIDTH + GRID_SPACING + GRID_SPACING, i * (bh + GRID_SPACING) + GRID_SPACING, 0.02f, bw - 2 * GRID_SPACING, bh - 2 * GRID_SPACING, theme.color.background);
-		text_cput(GRID_WIDTH + GRID_SPACING + bw / 2, i * (bh + GRID_SPACING) + bh / 2 - 5.0f, 0.03f, 2, theme.color.normaltext, lang_get(choices[i].label));
+		C2D_DrawRectSolid(GRID_WIDTH + GRID_SPACING + GRID_SPACING, i * (bh + GRID_SPACING) + GRID_SPACING, 0.02f, bw - 2 * GRID_SPACING, bh - 2 * GRID_SPACING, theme.color.menuhighlight);
+		text_cput(GRID_WIDTH + GRID_SPACING + bw / 2, i * (bh + GRID_SPACING) + bh / 2 - 5.0f, 0.03f, 2, theme.color.background, lang_get(choices[i].label));
 	}
 	C2D_DrawRectSolid(0, GRID_HEIGHT + GRID_SPACING, 0.01f, WIDTH, HEIGHT - GRID_HEIGHT - GRID_SPACING, theme.color.textentrytext);
-	text_put(10.0f, GRID_HEIGHT + GRID_SPACING + 5.0f, 0.02f, 2, theme.color.normaltext, grid_name);
+	text_put(10.0f, GRID_HEIGHT + GRID_SPACING + 5.0f, 0.02f, 2, theme.color.textentrybox, grid_name);
 	char blocks[8];
 	snprintf(blocks, sizeof(blocks), "%zu/%d", block_count(), GRID_MAPS_COLS * GRID_MAPS_ROWS);
-	text_rput(310.0f, GRID_HEIGHT + GRID_SPACING + 5.0f, 0.02f, 3, theme.color.normaltext, blocks);
+	text_rput(310.0f, GRID_HEIGHT + GRID_SPACING + 5.0f, 0.02f, 3, theme.color.textentrybox, blocks);
 	char comment[100];
 	switch(comment_type) {
 	case COMMENT_PLAIN:
@@ -612,7 +619,7 @@ void editor_draw(void) {
 	default:
 		break;
 	}
-	text_put(10.0f, HEIGHT - 15.0f, 0.02f, 1, theme.color.normaltext, comment);
+	text_put(10.0f, HEIGHT - 15.0f, 0.02f, 1, theme.color.textentrybox, comment);
 	
 	switch(dialog_type) {
 	case DIALOG_ERROR:
