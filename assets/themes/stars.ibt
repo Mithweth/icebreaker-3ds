@@ -16,7 +16,8 @@ CopyrightText		160	160	192
 ProgressbarOutline	255	255	255
 ProgressbarInner	0	0	48
 ProgressbarFill		34	80	172
+SpriteCharge		255	60	60
 SpriteBitmap		star
-FallingParticle		fallingstar
+ParticleBitmap		fallingstar
 SoundOuch			nbwoanp
 SoundCrash			scrunch

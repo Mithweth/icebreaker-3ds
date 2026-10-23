@@ -34,6 +34,15 @@
 
 static GameDifficultyType current_difficulty;
 static GameDifficultyType selected_difficulty;
+static bool modern_mode;
+
+bool options_modern_mode(void) {
+	return modern_mode;
+}
+
+void options_set_modern_mode(bool v) {
+	modern_mode = v;
+}
 
 void options_difficulty_next(void) {
     if (selected_difficulty == HARD) {
@@ -108,6 +117,7 @@ bool options_read(void) {
 	bool theme_found = false;
 	bool language_found = false;
 	bool grid_found = false;
+	bool mode_found = false;
 
 	optionfile=fopen(OPTIONFILE,"r");
 	while(optionfile && fgets(linebuf,50,optionfile)) {
@@ -144,6 +154,11 @@ bool options_read(void) {
 					grid_found = true;
 				}
 			}
+			else if (!strcmp(optbuf,"gamemode"))
+			{
+				options_set_modern_mode(strcmp(valbuf, "modern") == 0);
+				mode_found = true;
+			}
 		}
 	}
 	if (!optionfile) {
@@ -166,6 +181,10 @@ bool options_read(void) {
 	if (!grid_found) {
 		printf("Grid not found. Set to default\n");
 		grid_maps_apply("classic");
+	}
+	if (!mode_found) {
+		printf("Mode not found. Set to original\n");
+		options_set_modern_mode(false);
 	}
 	return true;
 }
@@ -209,9 +228,18 @@ bool options_write(void) {
 	fprintf(optionfile,"# Size must be 16x12. '#' are ground, '.' is emptiness\n");	
 	const char *grid_name = grid_maps_current_name();
 	if (grid_name) {
-		fprintf(optionfile,"Grid %s\n",grid_name);
+		fprintf(optionfile,"Grid %s\n", grid_name);
 	} else {
 		fprintf(optionfile,"# Grid classic\n");	
+	}
+	fprintf(optionfile,"\n# Game mode. If unset, will fallback to the 'original' mode.\n");
+	fprintf(optionfile,"# Original mode is the exact same as Matthew Miller designed it.\n");
+	fprintf(optionfile,"# Modern mode is a new penguin behaviour and some power-ups to\n");
+	fprintf(optionfile,"# collect.\n");	
+	if (options_modern_mode()) {
+		fprintf(optionfile,"GameMode modern\n");
+	} else {
+		fprintf(optionfile,"GameMode original\n");
 	}
 	fclose(optionfile);
 	

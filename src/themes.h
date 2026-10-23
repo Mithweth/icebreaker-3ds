@@ -53,6 +53,7 @@ typedef struct
 	u32 progressbaroutline;
 	u32 progressbarinner;
 	u32 progressbarfill;
+	u32 spritecharge;
 } ThemeColorsType;
 
 typedef struct {
@@ -60,7 +61,7 @@ typedef struct {
 	ThemeColorsType color;
 	C2D_Image spriteimage[MAX_SPRITES];
 	size_t sprite_count;
-	C2D_Image fallingparticle;
+	C2D_Image particlebitmap;
 } Theme;
 
 extern Theme theme;
