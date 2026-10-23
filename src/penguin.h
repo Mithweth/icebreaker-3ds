@@ -29,16 +29,25 @@
 
 #define MAX_STATE_HISTORY	16
 
+typedef enum {
+	SLOW_NONE,
+	SLOW_X,
+	SLOW_Y,
+	SLOW_AXIS_COUNT
+} SlowAxis;
+
 typedef struct {
 	int x;
 	int y;
 	int xdelta;
 	int ydelta;
 	int speedslower;
+	int phase;
 } PenguinState;
 
 typedef struct {
 	PenguinState state;
+	SlowAxis slow_axis;
 	size_t current_image;
 	size_t image_tick;
 	PenguinState history[MAX_STATE_HISTORY];

@@ -134,6 +134,9 @@ void level_init(GameStats *stats) {
 	for (int i=0;i<penguincount;i++)
 	{
 		flock[i] = penguin_create();
+		if (options_modern_mode()) {
+			flock[i].slow_axis = random() % SLOW_AXIS_COUNT;
+		}
 	}
 	tick = 0;
 }

@@ -33,6 +33,7 @@
 #include "level.h"
 
 #define CHARGE_TICKS    30
+#define ANGLE_PHASES	3
 
 // Since the play field is not square anymore, checking only the block
 // first pixel is not enough. We need to ensure the penguin to hold
@@ -83,6 +84,8 @@ Penguin penguin_createxy(int x, int y)
 	p.state.speedslower=0;
 	p.state.x=x;
 	p.state.y=y;
+	p.state.phase = 0;
+	p.slow_axis = SLOW_NONE;
 	p.history_count = 0;
 	p.charge_tick = 0;
 	return p;
@@ -156,6 +159,17 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 	if (attract_radius > 200) attract_radius = 200;
 	movex *= speed_mod;
 	movey *= speed_mod;
+
+	if (p->slow_axis != SLOW_NONE) {
+		p->state.phase = (p->state.phase + 1) % ANGLE_PHASES;
+		if (p->state.phase == 0) {	// Don't move X or Y which impacts the angle
+			if (p->slow_axis == SLOW_X) {
+				movex = 0;
+			} else {
+				movey = 0;
+			}
+		}
+	}
 
 	newx=p->state.x+movex;
 	newy=p->state.y+movey;
@@ -245,15 +259,15 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 			if (p->charge_tick == 0 && bounced_y && best_dx != attract_radius) {
 				if ((best_dx > 0 && p->state.xdelta < 0) || (best_dx < 0 && p->state.xdelta > 0)) {
 					p->state.xdelta = -p->state.xdelta;
-					p->history_count = 0;
 				}
+				p->history_count = 0;
 				p->charge_tick = CHARGE_TICKS;
 			}
 			if (p->charge_tick == 0 && bounced_x && best_dy != attract_radius) {
 				if ((best_dy > 0 && p->state.ydelta < 0) || (best_dy < 0 && p->state.ydelta > 0)) {
 					p->state.ydelta = -p->state.ydelta;
-					p->history_count = 0;
 				}
+				p->history_count = 0;
 				p->charge_tick = CHARGE_TICKS;
 			}
 		}
@@ -261,7 +275,12 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 		if (p->charge_tick == 0 && speed_mod == 1) {
 			for (size_t i = 0; i < p->history_count; i++) {
 				PenguinState *old = &p->history[i];
-				if (old->x == p->state.x && old->y == p->state.y && old->xdelta == p->state.xdelta && old->ydelta == p->state.ydelta && old->speedslower == p->state.speedslower) {
+				if (old->x == p->state.x && 
+					old->y == p->state.y && 
+					old->xdelta == p->state.xdelta && 
+					old->ydelta == p->state.ydelta && 
+					old->speedslower == p->state.speedslower &&
+					old->phase == p->state.phase) {
 					trapped = true;
 					break;
 				}
