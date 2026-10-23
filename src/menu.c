@@ -41,6 +41,7 @@
 typedef enum {
 	CONFIRM_DIFFICULTY,
 	CONFIRM_GRID,
+	CONFIRM_MODE,
 } DialogConfirmType;
 
 typedef enum {
@@ -57,6 +58,7 @@ typedef enum {
 	MENU_DIFFICULTY,
 	MENU_THEME,
 	MENU_GRID,
+	MENU_MODE,
 	MENU_EDITOR,
 	MENU_BACK,
 	MENU_HIGHSCORES,
@@ -75,6 +77,7 @@ static size_t selected;
 static bool options_selected;
 static float logo_scale;
 static float logo_parallax;
+static bool selected_modern_mode;
 static DialogConfirmType dialog_confirm_type;
 
 static MenuEntry main_menu[] = {
@@ -87,6 +90,7 @@ static MenuEntry main_menu[] = {
 static MenuEntry options_menu[] = {
 	{"MENU_LANGUAGE", MENU_LANGUAGE},
 	{"MENU_DIFFICULTY", MENU_DIFFICULTY},
+	{"MENU_MODE", MENU_MODE},
 	{"MENU_GRID", MENU_GRID},
 	{"MENU_THEME", MENU_THEME},
 	{"MENU_BACK", MENU_BACK},
@@ -235,6 +239,9 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 					}
 					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, difficulty);
 					break;
+				case MENU_MODE:
+					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, (selected_modern_mode) ? lang_get("MODE_MODERN") : lang_get("MODE_ORIGINAL"));
+					break;
 				case MENU_GRID:
 					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, grid_maps_selected_name());
 					break;
@@ -257,6 +264,9 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 				break;
 			case CONFIRM_GRID:
 				snprintf(confirm_key, 24, "QUESTION_GRID_%d", i + 1);
+				break;
+			case CONFIRM_MODE:
+				snprintf(confirm_key, 24, "QUESTION_MODE_%d", i + 1);
 				break;
 			default:
 				break;
@@ -339,6 +349,9 @@ bool menu_update(bool pause, u32 keys) {
 			case MENU_GRID:
 				grid_maps_prev();
 				break;
+			case MENU_MODE:
+				selected_modern_mode = !selected_modern_mode;
+				break;
 			default:
 				break;
 			}
@@ -359,6 +372,9 @@ bool menu_update(bool pause, u32 keys) {
 			case MENU_GRID:
 				grid_maps_next();
 				break;
+			case MENU_MODE:
+				selected_modern_mode = !selected_modern_mode;
+				break;
 			default:
 				break;
 			}
@@ -368,6 +384,7 @@ bool menu_update(bool pause, u32 keys) {
 			options_difficulty_selected_reset();
 			lang_selected_reset();
 			grid_maps_selected_reset();
+			selected_modern_mode = options_modern_mode();
 			selected = 0;
 			break;
 		}
@@ -388,6 +405,13 @@ bool menu_update(bool pause, u32 keys) {
 					yes_selected = false;
 				}
 				break;
+			case MENU_MODE:
+				if (options_modern_mode() != selected_modern_mode) {
+					dialog_type = DIALOG_CONFIRM;
+					dialog_confirm_type = CONFIRM_MODE;
+					yes_selected = false;
+				}
+				break;
 			case MENU_EDITOR:
 				game_editor_start();
 				break;
@@ -400,6 +424,7 @@ bool menu_update(bool pause, u32 keys) {
 				options_difficulty_selected_reset();
 				lang_selected_reset();
 				grid_maps_selected_reset();
+				selected_modern_mode = options_modern_mode();
 				selected = 0;
 				break;
 			case MENU_GRID:
@@ -446,6 +471,9 @@ bool menu_update(bool pause, u32 keys) {
 				case CONFIRM_DIFFICULTY:
 					options_difficulty_apply();
 					break;
+				case CONFIRM_MODE:
+					options_set_modern_mode(selected_modern_mode);
+					break;
 				case CONFIRM_GRID:
 					grid_maps_apply(grid_maps_selected_name());
 					break;
@@ -461,6 +489,9 @@ bool menu_update(bool pause, u32 keys) {
 					break;
 				case CONFIRM_GRID:
 					grid_maps_selected_reset();
+					break;
+				case CONFIRM_MODE:
+					selected_modern_mode = options_modern_mode();
 					break;
 				default:
 					break;
@@ -489,6 +520,7 @@ void menu_init(void) {
 	logo_scale = 6.0f;
 	logo_parallax = 0.0f;
 	options_selected = false;
+	selected_modern_mode = options_modern_mode();
 }
 
 void menu_close(void) {

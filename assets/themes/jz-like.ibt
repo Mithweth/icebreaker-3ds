@@ -16,6 +16,7 @@ CopyrightText		192	192	192
 ProgressbarOutline	192	192	192
 ProgressbarInner	192	192	192
 ProgressbarFill		32	32	32
+SpriteCharge		255	60	60
 SpriteBitmap		atom
 SoundOuch			pop
 SoundCrash			drum

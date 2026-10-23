@@ -60,11 +60,11 @@ void snowflake_update(void) {
 }
 
 void snowflake_draw(float parallax) {
-	if (!theme.fallingparticle.tex) {
+	if (!theme.particlebitmap.tex) {
 		return;
 	}   
 	for (int i = 0; i < SNOWFLAKE_COUNT; i++) {
 		float x = snowflakes[i].x + snowflakes[i].depth * parallax;
-		C2D_DrawImageAt(theme.fallingparticle, x, snowflakes[i].y, 0.1f, NULL, snowflakes[i].size, snowflakes[i].size);
+		C2D_DrawImageAt(theme.particlebitmap, x, snowflakes[i].y, 0.1f, NULL, snowflakes[i].size, snowflakes[i].size);
 	}
 }

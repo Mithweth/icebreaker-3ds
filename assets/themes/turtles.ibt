@@ -16,6 +16,7 @@ CopyrightText		192	192	192
 ProgressbarOutline	255	250	192
 ProgressbarInner	0	92	48
 ProgressbarFill		182	204	134
+SpriteCharge		255	60	60
 SpriteBitmap		turtle
 SoundOuch			ouch
 SoundCrash			splash

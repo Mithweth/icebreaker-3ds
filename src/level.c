@@ -97,12 +97,11 @@ void level_init(GameStats *stats) {
 	percentbonus=PERCENTBONUS; // right now, there's really no point in making this a variable but it doesn't hurt, and keeps things consistant
 	timepenalty=0;
 	done = false;
-	penguincount=stats->level+1;
+	penguincount = stats->level+1;
 	if (penguincount > MAXPENGUINS) {
 		penguincount = MAXPENGUINS;
 	}
-	stats->lives=stats->level+1;
-	
+	stats->lives = stats->level + 1;
 	switch(options_difficulty_current())
 	{
 		case NORMAL:
@@ -245,7 +244,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	}
 	for (int i=0;i<penguincount;i++)
 	{
-		PenguinHit hit = penguin_move(&flock[i]);
+		PenguinHit hit = penguin_move(&flock[i], stats->level, &line1, &line2);
 		if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead=true;
 		if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead=true;
 	}

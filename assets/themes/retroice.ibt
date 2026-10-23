@@ -16,9 +16,10 @@ CopyrightText		187	173	215
 ProgressbarOutline	255 110	145
 ProgressbarInner	30	20	55
 ProgressbarFill		255	199	74
+SpriteCharge		255	60	60
 SpriteBitmap		ice_cube1
 SpriteBitmap		ice_cube2
-FallingParticle		snowflake
+ParticleBitmap		snowflake
 SoundOuch			8bit-touch
 SoundCrash			8bit-touch
 SoundVictory		8bit-win
