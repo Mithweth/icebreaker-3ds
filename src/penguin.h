@@ -25,6 +25,7 @@
 #pragma once
 
 #include <stddef.h>
+#include "line.h"
 
 #define MAX_STATE_HISTORY	16
 
@@ -42,6 +43,7 @@ typedef struct {
 	size_t image_tick;
 	PenguinState history[MAX_STATE_HISTORY];
 	size_t history_count;
+	size_t charge_tick;
 } Penguin;
 
 typedef enum {
@@ -54,4 +56,4 @@ typedef enum {
 Penguin penguin_create(void);
 Penguin penguin_createxy(int x, int y);
 void penguin_draw(Penguin* p);
-PenguinHit penguin_move(Penguin* p);
+PenguinHit penguin_move(Penguin* p, int level, const Line *line1, const Line *line2);

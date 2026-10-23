@@ -356,12 +356,12 @@ bool intro_update(u32 keys) {
 	
 	if (!frozen) {
 		for (int i=0;i<penguincount;i++) {
-			PenguinHit hit = penguin_move(&flock[i]);
+			PenguinHit hit = penguin_move(&flock[i], 1, NULL, NULL);
 			if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead=true;
 			if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead=true;
 		}
 	}
-	PenguinHit hit = penguin_move(&tux);
+	PenguinHit hit = penguin_move(&tux, 1, NULL, NULL);
 	if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead=true;
 	if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead=true;
 	return true;

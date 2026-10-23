@@ -16,7 +16,8 @@ CopyrightText		255	204	51
 ProgressbarOutline	255	102	153
 ProgressbarInner	255	255	255
 ProgressbarFill		255	159	205
+SpriteCharge		173	0	160
 SpriteBitmap		kitty
-FallingParticle		heart
+ParticleBitmap		heart
 SoundOuch			ewww
 SoundCrash			pop

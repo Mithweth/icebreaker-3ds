@@ -29,6 +29,10 @@
 #include "themes.h"
 #include "grid.h"
 #include "options.h"
+#include "line.h"
+#include "level.h"
+
+#define CHARGE_TICKS    30
 
 // Since the play field is not square anymore, checking only the block
 // first pixel is not enough. We need to ensure the penguin to hold
@@ -80,51 +84,78 @@ Penguin penguin_createxy(int x, int y)
 	p.state.x=x;
 	p.state.y=y;
 	p.history_count = 0;
-
+	p.charge_tick = 0;
 	return p;
 }
 
 void penguin_draw(Penguin* p)
 {
-	if (p->state.xdelta < 0) {
-		C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, NULL, -SPRITE_SIZE, SPRITE_SIZE);
-	} else {
-		C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, NULL, SPRITE_SIZE, SPRITE_SIZE);
+	C2D_ImageTint tint;
+	const C2D_ImageTint *t = NULL;
+	if (options_modern_mode() && p->charge_tick > 0) {
+		C2D_PlainImageTint(&tint, theme.color.spritecharge, 0.5f);
+		t = &tint;
 	}
+	float scale_x = (p->state.xdelta < 0) ? -SPRITE_SIZE : SPRITE_SIZE;
+	C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, t, scale_x, SPRITE_SIZE);
 }
 
-PenguinHit penguin_move(Penguin* p)
+PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* line2)
 {
+	const Line *lines[] = { line1, line2 };
 	bool hitline1 = false;
 	bool hitline2 = false;
-	bool bounced = false;
+	bool bounced_x = false;
+	bool bounced_y = false;
 	int newx, newy;
-	int checkx,checky;
-	int movex=0,movey=0;
+	int checkx, checky;
+	int movex = 0;
+	int movey = 0;
+	int attract_radius = (level - 1) * 10;
+	int speed_mod = 1;
 
 	// Update the sprite in update since with stereoscopic 3d,
 	// flying_sprite_draw() is called twice a frame
-	if (p->image_tick++ >= 20) { // 8 seems to be a correct value
+	if (p->image_tick++ >= 20) { // 20 seems to be a correct value
 		p->image_tick = 0;
 		p->current_image = (p->current_image + 1) % theme.sprite_count;
+	}
+
+	if (p->charge_tick > 0) {
+		p->charge_tick--;
 	}
 
 	switch (options_difficulty_current())
 	{
 		case NORMAL:
-			if (p->state.speedslower)
-				{ movex=p->state.xdelta/2; movey=p->state.ydelta/2; }
-			else
-				{ movex=p->state.xdelta; movey=p->state.ydelta; }
-			p->state.speedslower=!p->state.speedslower;
+			if (p->state.speedslower) {
+				movex = p->state.xdelta / 2;
+				movey = p->state.ydelta / 2;
+				if (p->charge_tick > 0) speed_mod = 2;
+			} else {
+				movex=p->state.xdelta;
+				movey=p->state.ydelta;
+			}
+			p->state.speedslower = !p->state.speedslower;
+			attract_radius += 90;
 		break;
 		case HARD:
-			movex=p->state.xdelta; movey=p->state.ydelta;
+			movex = p->state.xdelta;
+			movey = p->state.ydelta;
+			if (p->charge_tick > 0) speed_mod = 2;
+			attract_radius += 120;
 		break;
 		case EASY:
-			movex=p->state.xdelta/2; movey=p->state.ydelta/2;
+			movex = p->state.xdelta / 2;
+			movey = p->state.ydelta / 2;
+			if (p->charge_tick > 0) speed_mod = 1 + (p->charge_tick % 2);
+			attract_radius += 60;
 		break;
 	}
+
+	if (attract_radius > 200) attract_radius = 200;
+	movex *= speed_mod;
+	movey *= speed_mod;
 
 	newx=p->state.x+movex;
 	newy=p->state.y+movey;
@@ -151,7 +182,7 @@ PenguinHit penguin_move(Penguin* p)
 	else
 	{
 		p->state.xdelta=-p->state.xdelta;
-		bounced = true;
+		bounced_x = true;
 	}
 
 	if (movey>0) checky = newy+BLOCKHEIGHT;
@@ -174,36 +205,84 @@ PenguinHit penguin_move(Penguin* p)
 	else
 	{
 		p->state.ydelta=-p->state.ydelta;
-		bounced = true;
+		bounced_y = true;
 	}
 
 	grid_mark(p->state.x,p->state.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
 
-	if (bounced) {
-		bool trapped = false;
-		for (size_t i = 0; i < p->history_count; i++) {
-			PenguinState *old = &p->history[i];
-			if (old->x == p->state.x && old->y == p->state.y && old->xdelta == p->state.xdelta && old->ydelta == p->state.ydelta && old->speedslower == p->state.speedslower) {
-				trapped = true;
-				break;
+	if (bounced_x || bounced_y) {
+		if (options_modern_mode() && ((line1 && line1->on) || (line2 && line2->on))) {
+			int best_dx = attract_radius;
+			int best_dy = attract_radius;
+			int px = p->state.x + BLOCKWIDTH / 2;
+			int py = p->state.y + BLOCKHEIGHT / 2;
+			for (int i = 0; i < 2; i++) {
+				const Line *l = lines[i];
+				if (!l || !l->on || l->dead) continue;
+				int dx = l->mark.x - px;
+				int dy = l->mark.y - py;
+
+				if (dx * dx + dy * dy > attract_radius * attract_radius) continue;
+
+				// No need to charge if the line cannot be seen.
+				// So, if there's a hole between the penguin and the line
+				// it is considered as not visible.
+				bool visible = true;
+				for (int s = 1; s < 10; s++) {
+					if (!visible) break;
+					char c = grid_at(px + dx * s / 10, py + dy * s / 10);
+					if (c != ' ' && c != '*' && c != '1' && c != '2') visible = false;
+				}
+				if (!visible) continue;
+
+				if (bounced_y && dx * dx < best_dx * best_dx) {
+					best_dx = dx;
+				}
+				if (bounced_x && dy * dy < best_dy * best_dy) {
+					best_dy = dy;
+				}
+			}
+			if (p->charge_tick == 0 && bounced_y && best_dx != attract_radius) {
+				if ((best_dx > 0 && p->state.xdelta < 0) || (best_dx < 0 && p->state.xdelta > 0)) {
+					p->state.xdelta = -p->state.xdelta;
+					p->history_count = 0;
+				}
+				p->charge_tick = CHARGE_TICKS;
+			}
+			if (p->charge_tick == 0 && bounced_x && best_dy != attract_radius) {
+				if ((best_dy > 0 && p->state.ydelta < 0) || (best_dy < 0 && p->state.ydelta > 0)) {
+					p->state.ydelta = -p->state.ydelta;
+					p->history_count = 0;
+				}
+				p->charge_tick = CHARGE_TICKS;
 			}
 		}
-		if (trapped) {
-			int nudge = (random() % 2) ? 1 : -1;
-			grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, ' ');
-			if (penguin_occupy_block(p->state.x, p->state.y + nudge)) {
-				p->state.y += nudge;
-			} else if (penguin_occupy_block(p->state.x + nudge, p->state.y)) {
-				p->state.x += nudge;
+		bool trapped = false;
+		if (p->charge_tick == 0 && speed_mod == 1) {
+			for (size_t i = 0; i < p->history_count; i++) {
+				PenguinState *old = &p->history[i];
+				if (old->x == p->state.x && old->y == p->state.y && old->xdelta == p->state.xdelta && old->ydelta == p->state.ydelta && old->speedslower == p->state.speedslower) {
+					trapped = true;
+					break;
+				}
 			}
-			grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, '*');
-			p->history_count = 0;
-		} else {
-			if (p->history_count == MAX_STATE_HISTORY) {
-				for (size_t i = 1; i < p->history_count; i++) p->history[i - 1] = p->history[i];
-				p->history_count--;
+			if (trapped) {
+				int nudge = (random() % 2) ? 1 : -1;
+				grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, ' ');
+				if (penguin_occupy_block(p->state.x, p->state.y + nudge)) {
+					p->state.y += nudge;
+				} else if (penguin_occupy_block(p->state.x + nudge, p->state.y)) {
+					p->state.x += nudge;
+				}
+				grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, '*');
+				p->history_count = 0;
+			} else {
+				if (p->history_count == MAX_STATE_HISTORY) {
+					for (size_t i = 1; i < p->history_count; i++) p->history[i - 1] = p->history[i];
+					p->history_count--;
+				}
+				p->history[p->history_count++] = p->state;
 			}
-			p->history[p->history_count++] = p->state;
 		}
 	}
 	if (hitline1 && hitline2) return PENGUIN_HIT_BOTH;

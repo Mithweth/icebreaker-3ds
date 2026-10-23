@@ -24,7 +24,6 @@ All four sounds (SoundOuch, SoundCrash, SoundVictory and SoundDefeat) are
 optional: a theme without them is just silent for those events, with no
 complaint.
 
-
 The default theme is "linux", and the file linux.ibt looks approximately
 like this:
 ```
@@ -47,8 +46,9 @@ like this:
   ProgressbarOutline  180 225 245
   ProgressbarInner    20  50  75
   ProgressbarFill     100  200  240
+  SpriteCharge        255  60   60
   SpriteBitmap          penguin
-  #FallingParticle      particle
+  #ParticleBitmap      particle
   SoundOuch             ouch
   SoundCrash            crash
   SoundVictory          victory
@@ -73,7 +73,7 @@ and support for that may vanish in a future version.
 You can repeat the SpriteBitmap directive up to 4 times, so the sprite
 image can switch to the new image 3 times per second, so the sprite looks
 animated.
-The FallingParticle must be tiny: from 5x5 to 9x9.
+The ParticleBitmap must be tiny: from 5x5 to 9x9.
 BTW, do not give the .png extension in the ibt file.
 
 Don't underestimate how hard it is to make a sprite image look good at such
@@ -96,7 +96,7 @@ can't have the same name as a built-in one: the built-in theme always wins.
 
 Include uses another theme as a base. It must be the first directive of the
 file: the included theme is loaded first, then every following directive
-overrides it (except SpriteBitmap and FallingParticle). An Include inside
+overrides it (except SpriteBitmap and ParticleBitmap). An Include inside
 the included theme is ignored.
 
 ```

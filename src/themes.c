@@ -67,6 +67,7 @@ static void themes_setdefaultcolors(void)
 	theme.color.progressbaroutline = C2D_Color32(180, 225, 245, 255);
 	theme.color.progressbarinner = C2D_Color32(100, 200, 240, 255);
 	theme.color.progressbarfill = C2D_Color32(20, 50, 75, 255);
+	theme.color.spritecharge    = C2D_Color32(255, 60, 60, 255);
 	theme.color.boardfillminr = 224;
 	theme.color.boardfillming = 224;
 	theme.color.boardfillminb = 224;
@@ -111,7 +112,7 @@ bool themes_settheme(const char* themename, bool included) {
 	
 	themes_setdefaultcolors();
 	theme.sprite_count = 0;
-	theme.fallingparticle = (C2D_Image){0};
+	theme.particlebitmap = (C2D_Image){0};
 	
 	foundcolor.background      = 0;
 	foundcolor.normaltext      = 0;
@@ -135,6 +136,7 @@ bool themes_settheme(const char* themename, bool included) {
 	foundcolor.boardfillmaxr = 0;
 	foundcolor.boardfillmaxg = 0;
 	foundcolor.boardfillmaxb = 0;
+	foundcolor.spritecharge  = 0;
 	sound_reset();
 
 	themefile = fopen(themefilename, "r");
@@ -273,6 +275,11 @@ bool themes_settheme(const char* themename, bool included) {
 				theme.color.progressbarfill=C2D_Color32(r,g,b,255);
 				foundcolor.progressbarfill++;
 			}
+			else if (!strcmp(optbuf,"spritecharge"))
+			{
+				theme.color.spritecharge=C2D_Color32(r,g,b,255);
+				foundcolor.spritecharge++;
+			}
 		}
 		else if (sscanf(linebuf,"%20s %255s",optbuf,valbuf)==2)
 		{
@@ -306,14 +313,14 @@ bool themes_settheme(const char* themename, bool included) {
 					return false;
 				}
 			}
-			else if (!strcmp(optbuf,"fallingparticle"))
+			else if (!strcmp(optbuf,"particlebitmap"))
 			{
 				if (includes) {
-					printf("Warning: fallingparticle is ignored in a file using an include directive\n");
+					printf("Warning: particlebitmap is ignored in a file using an include directive\n");
 					continue;
 				}
-				theme.fallingparticle = gfxmap_get_image(valbuf);
-				if (!theme.fallingparticle.tex) {
+				theme.particlebitmap = gfxmap_get_image(valbuf);
+				if (!theme.particlebitmap.tex) {
 					printf("Error while loading sprite: No image found: %s\n", valbuf);
 					fclose(themefile);
 					return false;
@@ -385,9 +392,11 @@ bool themes_settheme(const char* themename, bool included) {
 		{ printf("Warning: ProgressbarOutline not correctly defined in theme %s. Using default.\n",themename); }
 	if (foundcolor.progressbarinner == 0)
 		{ printf("Warning: ProgressbarInner not correctly defined in theme %s. Using default.\n",themename); }
+	if (foundcolor.spritecharge == 0)
+		{ printf("Warning: SpriteCharge not correctly defined in theme %s. Using default.\n",themename); }
 	
-	if (!theme.fallingparticle.tex) {
-		printf("Warning: FallingParticle not correctly defined in theme %s\n", themename);
+	if (!theme.particlebitmap.tex) {
+		printf("Warning: ParticleBitmap not correctly defined in theme %s\n", themename);
 	}
 	if (theme.color.boardfillmaxr<theme.color.boardfillminr)
 	{
