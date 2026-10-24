@@ -115,7 +115,9 @@ Line line_create(int linenum) {
 	l.dead=false;
 	l.speedslower=false;
 	l.stuckcount=0;
-	return(l);
+	l.shield_enabled = false;
+	l.shield_hit = false;
+	return l;
 }
 
 void line_start(Line * l, LineDir d, int x, int y, int end) {
@@ -123,6 +125,8 @@ void line_start(Line * l, LineDir d, int x, int y, int end) {
 	l->dir=d;
 	l->stuckcount=0;
 	l->end = end;
+	l->shield_enabled = false;
+	l->shield_hit = false;
 
 	switch (d)
 	{
@@ -159,7 +163,6 @@ int line_move(Line * l)
 	int finish=false;
 	char check1;
 	char check2;
-
 	grid_mark(l->mark.x,l->mark.y,l->mark.w,l->mark.h,l->id);
 	switch (l->dir)
 	{
@@ -219,20 +222,18 @@ int line_move(Line * l)
 				break;
 			}
 		}
-		else if (check1 == '*' || check2 == '*')
-		{ // hit a penguin. kills line.
-			l->dead=true;
-		}
-		else if (check1 == '1' || check2 == '1' || check1 == '2' || check2 == '2')
-		{
-			if (l->stuckcount>LINEMAXSTUCK)
-			{
+		else if ((check1 == '*' || check2 == '*')) { // hit a penguin. kills line.
+			if (l->shield_enabled) {
+				l->shield_hit = true;
+			} else {
+				l->dead = true;
+			}
+		} else if (check1 == '1' || check2 == '1' || check1 == '2' || check2 == '2') {
+			if (l->stuckcount > LINEMAXSTUCK) {
 				// FIX -- should play sound when this happens, to
 				// let users know that this isn't a mistake.
-				finish=true;
-			}
-			else
-			{
+				finish = true;
+			} else {
 				l->stuckcount++;
 				// FIX: kludge-o-rama!!
 				// this could work around the irritating thing where
@@ -240,9 +241,7 @@ int line_move(Line * l)
 				// is totally repairing the symptom, not the bug. *sigh*
 				//if (l->geom.w==1 || l->geom.h==1) finish=true;
 			}
-		}
-		else
-		{ // hit something else
+		} else { // hit something else
 			finish=true;
 		}
 	}
@@ -274,4 +273,12 @@ void line_kill(Line * l)
   			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,' ');
 	  	break;
 	}
+}
+
+bool line_shield_enabled(const Line *l) {
+	return l->shield_enabled;
+}
+
+void line_enable_shield(Line *l, bool v) {
+	l->shield_enabled = v;
 }

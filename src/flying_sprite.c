@@ -24,6 +24,7 @@
 #include <math.h>
 #include <stddef.h>
 #include "themes.h"
+#include "game.h"
 
 typedef enum {
 	SPRITE_NORMAL,
@@ -90,7 +91,7 @@ bool flying_sprite_celebrating(void) {
 void flying_sprite_update(void) {
 	// Update the sprite in update since with stereoscopic 3d,
 	// flying_sprite_draw() is called twice a frame
-	if (sprite.image_tick++ >= 20) { // 8 seems to be a correct value
+	if (sprite.image_tick++ >= 0.3f * FPS) { // 20 seems to be a correct value
 		sprite.image_tick = 0;
 		sprite.current_image = (sprite.current_image + 1) % theme.sprite_count;
 	}

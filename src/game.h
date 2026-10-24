@@ -28,6 +28,8 @@
 #include <citro2d.h>
 #include <stdbool.h>
 
+#define FPS 60 // C3D_FRAME_SYNCDRAW locks the main loop to the 3DS refresh rate
+
 #define MAXPENGUINS 100
 #define PENGUINSPEED 2
 #define SPRITE_SIZE 1.0f
@@ -72,6 +74,8 @@ typedef struct {
 	int lives;
 	int clear;
 	bool dead;
+	size_t energy;
+	size_t energybonus;
 } GameStats;
 
 bool game_init(void);

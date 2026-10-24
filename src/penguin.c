@@ -32,7 +32,7 @@
 #include "line.h"
 #include "level.h"
 
-#define CHARGE_TICKS    30
+#define CHARGE_TICKS_SECONDS    0.5f
 #define ANGLE_PHASES	3
 
 // Since the play field is not square anymore, checking only the block
@@ -103,8 +103,9 @@ void penguin_draw(Penguin* p)
 	C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, t, scale_x, SPRITE_SIZE);
 }
 
-PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* line2)
+PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* line2, bool freezed)
 {
+	if (freezed) return PENGUIN_HIT_NONE;
 	const Line *lines[] = { line1, line2 };
 	bool hitline1 = false;
 	bool hitline2 = false;
@@ -116,10 +117,11 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 	int movey = 0;
 	int attract_radius = (level - 1) * 10;
 	int speed_mod = 1;
+	bool shield_touched = false;
 
 	// Update the sprite in update since with stereoscopic 3d,
 	// flying_sprite_draw() is called twice a frame
-	if (p->image_tick++ >= 20) { // 20 seems to be a correct value
+	if (p->image_tick++ >= 0.3f * FPS) { // 20 seems to be a correct value
 		p->image_tick = 0;
 		p->current_image = (p->current_image + 1) % theme.sprite_count;
 	}
@@ -185,13 +187,25 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 	}
 	else if (grid_at(checkx,p->state.y)=='1' || grid_at(checkx,p->state.y+BLOCKHEIGHT-1)=='1')
 	{
-		hitline1=true;
-		p->state.x+=movex;
+		if (line1 && line_shield_enabled(line1)) {
+			shield_touched = true;
+			p->state.xdelta = -p->state.xdelta;
+			bounced_x = true;
+		} else {
+			hitline1 = true;
+			p->state.x += movex;
+		}
 	}
 	else if (grid_at(checkx,p->state.y)=='2' || grid_at(checkx,p->state.y+BLOCKHEIGHT-1)=='2')
 	{
-		hitline2=true;
-		p->state.x+=movex;
+		if (line2 && line_shield_enabled(line2)) {
+			shield_touched = true;
+			p->state.xdelta = -p->state.xdelta;
+			bounced_x = true;
+		} else {
+			hitline2 = true;
+			p->state.x += movex;
+		}
 	}
 	else
 	{
@@ -208,13 +222,25 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 	}
 	else if (grid_at(p->state.x,checky)=='1' || grid_at(p->state.x+BLOCKWIDTH-1,checky)=='1')
 	{
-		hitline1=true;
-		p->state.y+=movey;
+		if (line1 && line_shield_enabled(line1)) {
+			shield_touched = true;
+			p->state.ydelta = -p->state.ydelta;
+			bounced_y = true;
+		} else {
+			hitline1 = true;
+			p->state.y += movey;
+		}
 	}
 	else if (grid_at(p->state.x,checky)=='2' || grid_at(p->state.x+BLOCKWIDTH-1,checky)=='2')
 	{
-		hitline2=true;
-		p->state.y+=movey;
+		if (line2 && line_shield_enabled(line2)) {
+			shield_touched = true;
+			p->state.ydelta=-p->state.ydelta;
+			bounced_y = true;
+		} else {
+			hitline2 = true;
+			p->state.y += movey;
+		}
 	}
 	else
 	{
@@ -261,14 +287,14 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 					p->state.xdelta = -p->state.xdelta;
 				}
 				p->history_count = 0;
-				p->charge_tick = CHARGE_TICKS;
+				p->charge_tick = CHARGE_TICKS_SECONDS * FPS;
 			}
 			if (p->charge_tick == 0 && bounced_x && best_dy != attract_radius) {
 				if ((best_dy > 0 && p->state.ydelta < 0) || (best_dy < 0 && p->state.ydelta > 0)) {
 					p->state.ydelta = -p->state.ydelta;
 				}
 				p->history_count = 0;
-				p->charge_tick = CHARGE_TICKS;
+				p->charge_tick = CHARGE_TICKS_SECONDS * FPS;
 			}
 		}
 		bool trapped = false;
@@ -304,6 +330,7 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 			}
 		}
 	}
+	if (shield_touched) return PENGUIN_HIT_SHIELD;
 	if (hitline1 && hitline2) return PENGUIN_HIT_BOTH;
 	if (hitline1) return PENGUIN_HIT_LINE1;
 	if (hitline2) return PENGUIN_HIT_LINE2;

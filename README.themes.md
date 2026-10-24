@@ -43,16 +43,22 @@ like this:
   TextentryBox            0    0    0
   TextentryText         255  255  255
   CopyrightText         192  192  192
-  ProgressbarOutline  180 225 245
-  ProgressbarInner    20  50  75
-  ProgressbarFill     100  200  240
-  SpriteCharge        255  60   60
+  ProgressbarOutline    180  225  245
+  ProgressbarInner       20   50   75
+  ProgressbarFill       100  200  240
+  SpriteCharge          255   60   60
   SpriteBitmap          penguin
-  #ParticleBitmap      particle
+  #ParticleBitmap        particle
+  #ShieldBitmap          shield
+  EnergyBitmap          snowflake
   SoundOuch             ouch
   SoundCrash            crash
   SoundVictory          victory
   SoundDefeat           defeat
+  #SoundFreeze           freeze
+  #SoundSpeed            zap
+  #SoundShield           shield_enable
+  #SoundShieldOff        shield_disable
 ```
 The names should mostly be self-explanatory. If something is unclear, let me
 know, and I'll either change the name in a future version or write better
@@ -66,14 +72,15 @@ you can produce grey or monotone backgrounds instead of having every theme
 look like the mutant love child of Rainbow Brite and the Swamp Thing.
 
 The bitmap file should be a 24-bit .png format. Alpha is supported.
-The SpriteBitmap should be 14x14. If you want, you can make them as
-small as 12x12, but that's basically treated as the top-left of 14x14,
-and support for that may vanish in a future version.
-(If you want smaller, just mask out most of the image.)
+The SpriteBitmap, EnergyBitmap and ParticleBitmap should be 14x14.
+If you want, you can make them as small as 12x12, but that's basically
+treated as the top-left of 14x14, and support for that may vanish in a
+future version. (If you want smaller, just mask out most of the image.)
 You can repeat the SpriteBitmap directive up to 4 times, so the sprite
 image can switch to the new image 3 times per second, so the sprite looks
 animated.
-The ParticleBitmap must be tiny: from 5x5 to 9x9.
+ShieldBitmap is used in Modern mode as a full-screen indicator that the Shield
+powerup is enabled. The image should be 320x240 at most.
 BTW, do not give the .png extension in the ibt file.
 
 Don't underestimate how hard it is to make a sprite image look good at such

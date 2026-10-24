@@ -136,6 +136,7 @@ void game_start(void) {
 	level_close();
 	stats.score = 0;
 	stats.level = 1;
+	stats.energy = 1;
 	stats.dead = false;
 	level_init(&stats);
 	game_mode = GAME_LEVEL;
@@ -154,6 +155,8 @@ static void game_continue(void) {
 	intro_close();
 	level_close();
 	stats.level++;
+	stats.energy++;
+	stats.energy += stats.energybonus;
 	level_init(&stats);
 	game_mode = GAME_LEVEL;
 }
@@ -165,7 +168,7 @@ static void game_intermission_start(void) {
 
 bool game_update(u32 keys, touchPosition touch) {
 #ifdef DEBUG
-	if (keys & KEY_X) {
+	if (keys & (KEY_L | KEY_R)) {
 		return false;
 	}
 #endif

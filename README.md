@@ -44,13 +44,45 @@ score, high score, lives and how much ice has been cleared.
 ### Options
 - **Language** - change the current language.
 - **Difficulty** - Changing it ends the current game.
+- **Mode** - Game mode: Modern or Original. See below.
 - **Theme** - change the look of the game.
 - **Grid** - change the current board. It ends the current game. **Random**
   picks a new grid at the start of every level.
 - **Back** - to the main menu.
 
-Options and high scores are saved on the SD card, in `sdmc:/.icebreaker` and
-`sdmc:/.icebreaker.scores`.
+Options and high scores are saved on the SD card, in
+`sdmc:/icebreaker/icebreaker.cfg` and `sdmc:/icebreaker/icebreaker.scores`.
+Custom grids and themes go in the same `sdmc:/icebreaker/` folder.
+
+## Game mode
+
+The **Mode** option chooses between two ways to play. Changing it ends the
+current game.
+
+### Original
+
+The game as Matthew Miller designed it: penguins always bounce at 45 degrees,
+at a given speed, and there are no power-ups.
+
+### Modern
+
+Penguins get more aggressive, but you get power-ups to fight back.
+
+- **Penguins come at your lines.** When a penguin bounces near a line that is
+  being drawn, it turns towards it and charges.
+- **Penguins move at different angles.** Some go flatter or steeper than
+  the usual angle, so their paths are harder to predict.
+
+Your energy is shown on the top screen, under the lives. You start with one,
+and at the end of each level you get one more. You can also get more if you
+play smart.
+You can spend them to buy Power-ups.
+
+| Power-up | Energy | Input     | Effect                                      |
+|----------|--------|-----------|---------------------------------------------|
+| Freeze   | 1      | X or UP   | Penguins stop for 2 seconds                 |
+| Speed    | 1      | B or DOWN | Lines are drawn 3 times faster for 1 second |
+| Shield   | 2      | Y or LEFT | Penguins bounce off your lines instead of breaking them. The shield lasts until a penguin hits it |
 
 ## Installation
 

@@ -62,6 +62,8 @@ typedef struct {
 	C2D_Image spriteimage[MAX_SPRITES];
 	size_t sprite_count;
 	C2D_Image particlebitmap;
+	C2D_Image energybitmap;
+	C2D_Image shieldbitmap;
 } Theme;
 
 extern Theme theme;
