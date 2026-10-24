@@ -79,6 +79,7 @@ static float logo_scale;
 static float logo_parallax;
 static bool selected_modern_mode;
 static DialogConfirmType dialog_confirm_type;
+static size_t help_page;
 
 static MenuEntry main_menu[] = {
 	{"MENU_NEW_GAME", MENU_NEW_GAME},
@@ -315,9 +316,12 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		C2D_DrawRectSolid(52.0f, 42.0f, 0.31f, 296.0f, 151.0f, theme.color.background);
 		for(int i = 0; i < 13; i++) {
 			char helpkey[24];
-			snprintf(helpkey, 24, "MENU_HELP_DETAIL_%d", i + 1);
+			snprintf(helpkey, 24, "MENU_HELP_DETAIL_%d", 13 * help_page + i + 1);
 			text_put(60, 48 + 11 * i, 0.4f, 1, theme.color.normaltext, lang_get(helpkey));
 		}
+		char page_number[6];
+		snprintf(page_number, sizeof(page_number), "%d / 3", help_page + 1);
+		text_rput(340.0f, 48, 0.4f, 1, theme.color.normaltext, page_number);
 		break;
 	default:
 		break;
@@ -446,6 +450,7 @@ bool menu_update(bool pause, u32 keys) {
 				if (grid_maps_random(grid_maps_selected_name())) grid_maps_next();
 				break;
 			case MENU_HELP:
+				help_page = 0;
 				dialog_type = DIALOG_HELP;
 				break;
 			default:
@@ -507,6 +512,19 @@ bool menu_update(bool pause, u32 keys) {
 		}
 		break;
 	case DIALOG_HELP:
+		if (keys & KEY_LEFT) {
+			if (help_page == 0) {
+				help_page = 2;
+			} else {
+				help_page--;
+			}
+		}
+		if (keys & KEY_RIGHT) {
+			help_page++;
+			if (help_page == 3) {
+				help_page = 0;
+			}
+		}
 		if (keys & (KEY_A | KEY_B)) {
 			dialog_type = DIALOG_NORMAL;
 		}
