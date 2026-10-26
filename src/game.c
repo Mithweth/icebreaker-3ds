@@ -47,10 +47,10 @@ typedef enum {
 	GAME_EDITOR,
 	GAME_INTERMISSION,
 	GAME_OVER
-} GameMode;
+} GameStep;
 
-static GameMode game_mode;
-static GameMode previous_game_mode;
+static GameStep game_step;
+static GameStep previous_game_step;
 
 static bool pause;
 static GameStats stats;
@@ -83,7 +83,7 @@ static bool ensure_data_dir(void) {
 
 bool game_init(void) {
 	ensure_data_dir();
-	game_mode = GAME_INTRO;
+	game_step = GAME_INTRO;
 	sound_init();
 	if (!gfxmap_init()) {
 		return false;
@@ -102,13 +102,14 @@ bool game_init(void) {
 	menu_init();
 	hiscore_read();
 	snowflake_init();
+	hiscore_dialog_init();
 	pause = false;
 	return true;
 }
 
 void game_editor_start(void) {
-	previous_game_mode = game_mode;
-	game_mode = GAME_EDITOR;
+	previous_game_step = game_step;
+	game_step = GAME_EDITOR;
 	pause = false;
 	editor_init();
 }
@@ -119,10 +120,10 @@ void game_editor_stop(void) {
 	}
 	hiscore_read();
 	editor_close();
-	game_mode = previous_game_mode;
+	game_step = previous_game_step;
 	if (editor_current_grid_changed()) {
 		options_write();
-		if (game_mode == GAME_LEVEL || game_mode == GAME_INTERMISSION) {
+		if (game_step == GAME_LEVEL || game_step == GAME_INTERMISSION) {
 			game_start();
 			return;
 		}
@@ -139,13 +140,12 @@ void game_start(void) {
 	stats.energy = 1;
 	stats.dead = false;
 	level_init(&stats);
-	game_mode = GAME_LEVEL;
+	game_step = GAME_LEVEL;
 }
 
 static void game_over(void) {
-	if (!grid_maps_random(grid_maps_current_name()) && hiscore_check_high(grid_maps_current_name(), stats.score)) {
-		hiscore_dialog_init();
-		game_mode = GAME_HIGH_SCORE;
+	if (!grid_maps_random(grid_maps_current_name()) && hiscore_check_high(options_game_mode(), grid_maps_current_name(), stats.score)) {
+		game_step = GAME_HIGH_SCORE;
 	} else {
 		game_start();
 	}
@@ -158,12 +158,12 @@ static void game_continue(void) {
 	stats.energy++;
 	stats.energy += stats.energybonus;
 	level_init(&stats);
-	game_mode = GAME_LEVEL;
+	game_step = GAME_LEVEL;
 }
 
 static void game_intermission_start(void) {
 	intermission_init(&stats);
-	game_mode = GAME_INTERMISSION;
+	game_step = GAME_INTERMISSION;
 }
 
 bool game_update(u32 keys, touchPosition touch) {
@@ -172,7 +172,7 @@ bool game_update(u32 keys, touchPosition touch) {
 		return false;
 	}
 #endif
-	if ((keys & KEY_START) && game_mode != GAME_HIGH_SCORE && game_mode != GAME_EDITOR) {
+	if ((keys & KEY_START) && game_step != GAME_HIGH_SCORE && game_step != GAME_EDITOR) {
 		pause = !pause;
 		if (pause) {
 			menu_init();
@@ -181,7 +181,7 @@ bool game_update(u32 keys, touchPosition touch) {
 	if (menu_update(pause, keys)) {
 		return true;
 	}
-	switch(game_mode) {
+	switch(game_step) {
 	case GAME_INTRO:
 		if (!intro_update(keys)) {
 			game_start();
@@ -223,7 +223,7 @@ bool game_update(u32 keys, touchPosition touch) {
 void game_draw_bottom(C3D_RenderTarget *bottom) {
 	C2D_TargetClear(bottom, C2D_Color32(0, 0, 0, 255));
 	C2D_SceneBegin(bottom);
-	switch(game_mode) {
+	switch(game_step) {
 	case GAME_INTRO:
 		intro_draw();
 		break;

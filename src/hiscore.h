@@ -28,6 +28,7 @@
 
 #include <3ds.h>
 #include "game.h"
+#include "options.h"
 
 typedef struct {
 	char name[50];
@@ -35,9 +36,9 @@ typedef struct {
 } HighScore;
 
 void hiscore_read(void);
-bool hiscore_check_high(const char* grid, long thisgamescore);
-HighScore* hiscore_get(const char* grid, int id);
-void hiscore_add(const char *grid, const char* name, long score);
+bool hiscore_check_high(GameMode mode, const char* grid, long thisgamescore);
+HighScore* hiscore_get(GameMode mode, const char* grid, int id);
+void hiscore_add(GameMode mode, const char *grid, const char* name, long score);
 void hiscore_write(void);
 void hiscore_dialog_init(void);
 void hiscore_dialog_draw(void);
