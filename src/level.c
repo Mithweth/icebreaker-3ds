@@ -248,19 +248,23 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	int speed = (speed_tick > 0) ? 3 : 1;
 	for(int i = 0; i < speed; i++) {
 		if (line1.on) {
-			// kludgy crap to implement speed = 1 1/2
-			bool linedoneflag = line_move(&line1);
-			if (!linedoneflag && line1.speedslower) {
-				line1.speedslower = false;
-				linedoneflag = line_move(&line1);
-			} else {
-				line1.speedslower = true;
-			}
-			if (linedoneflag) {
-				flying_sprite_capture();
-				stats->clear = grid_countcleared();
-				stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
-				tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+			// a line hit by a penguin last frame must not move, or it
+			// could finish and fill its area before being killed
+			if (!line1.dead) {
+				// kludgy crap to implement speed = 1 1/2
+				bool linedoneflag = line_move(&line1);
+				if (!linedoneflag && line1.speedslower) {
+					line1.speedslower = false;
+					linedoneflag = line_move(&line1);
+				} else {
+					line1.speedslower = true;
+				}
+				if (linedoneflag) {
+					flying_sprite_capture();
+					stats->clear = grid_countcleared();
+					stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
+					tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+				}
 			}
 			if (line1.dead)  {
 				sound_play(SNDBREAK);
@@ -271,20 +275,22 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			}
 		}
 		if (line2.on) {
-			bool linedoneflag = line_move(&line2);
-			if (!linedoneflag && line2.speedslower) {
-				line2.speedslower = false;
-				linedoneflag = line_move(&line2);
-			} else {
-				line2.speedslower = true;
+			if (!line2.dead) {
+				bool linedoneflag = line_move(&line2);
+				if (!linedoneflag && line2.speedslower) {
+					line2.speedslower = false;
+					linedoneflag = line_move(&line2);
+				} else {
+					line2.speedslower = true;
+				}
+				if (linedoneflag) {
+					flying_sprite_capture();
+					stats->clear = grid_countcleared();
+					stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
+					tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+				}
 			}
-			if (linedoneflag) {
-				flying_sprite_capture();
-				stats->clear = grid_countcleared();
-				stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
-				tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
-			}
-			if (line2.dead) { 
+			if (line2.dead) {
 				sound_play(SNDBREAK);
 				flying_sprite_death();
 				line_kill(&line2);
