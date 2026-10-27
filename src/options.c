@@ -34,15 +34,7 @@
 
 static GameDifficultyType current_difficulty;
 static GameDifficultyType selected_difficulty;
-static bool modern_mode;
-
-bool options_modern_mode(void) {
-	return modern_mode;
-}
-
-void options_set_modern_mode(bool v) {
-	modern_mode = v;
-}
+static GameMode game_mode;
 
 void options_difficulty_next(void) {
     if (selected_difficulty == HARD) {
@@ -79,9 +71,41 @@ GameDifficultyType options_difficulty_current(void) {
     return current_difficulty;
 }
 
-
 GameDifficultyType options_difficulty_selected(void) {
     return selected_difficulty;
+}
+
+GameMode options_game_mode(void) {
+	return game_mode;
+}
+
+void options_set_game_mode(GameMode mode) {
+	game_mode = mode;
+}
+
+bool options_modern_mode(void) {
+	return game_mode == GAME_MODE_MODERN;
+}
+
+const char* options_game_mode_serialize(GameMode mode) {
+	switch(mode) {
+	case GAME_MODE_ORIGINAL:
+		return "original";
+	case GAME_MODE_MODERN:
+		return "modern";
+	default:
+		return "original";
+	}
+}
+
+GameMode options_game_mode_deserialize(const char *name) {
+	if (strcmp(name, "original") == 0) {
+		return GAME_MODE_ORIGINAL;
+	} else if (strcmp(name, "modern") == 0) {
+		return GAME_MODE_MODERN;
+	} else {
+		return GAME_MODE_COUNT;
+	}
 }
 
 const char* options_difficulty_serialize(GameDifficultyType t) {
@@ -156,8 +180,11 @@ bool options_read(void) {
 			}
 			else if (!strcmp(optbuf,"gamemode"))
 			{
-				options_set_modern_mode(strcmp(valbuf, "modern") == 0);
-				mode_found = true;
+				GameMode mode = options_game_mode_deserialize(valbuf);
+				if (mode != GAME_MODE_COUNT) {
+					mode_found = true;
+					game_mode = mode;
+				}
 			}
 		}
 	}
@@ -184,7 +211,7 @@ bool options_read(void) {
 	}
 	if (!mode_found) {
 		printf("Mode not found. Set to original\n");
-		options_set_modern_mode(false);
+		game_mode = GAME_MODE_ORIGINAL;
 	}
 	return true;
 }
@@ -235,12 +262,8 @@ bool options_write(void) {
 	fprintf(optionfile,"\n# Game mode. If unset, will fallback to the 'original' mode.\n");
 	fprintf(optionfile,"# Original mode is the exact same as Matthew Miller designed it.\n");
 	fprintf(optionfile,"# Modern mode is a new penguin behaviour and some power-ups to\n");
-	fprintf(optionfile,"# collect.\n");	
-	if (options_modern_mode()) {
-		fprintf(optionfile,"GameMode modern\n");
-	} else {
-		fprintf(optionfile,"GameMode original\n");
-	}
+	fprintf(optionfile,"# collect.\n");
+	fprintf(optionfile, "GameMode %s\n", options_game_mode_serialize(options_game_mode()));
 	fclose(optionfile);
 	
 	printf("options successfully written in %s\n", OPTIONFILE);

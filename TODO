@@ -1,3 +1,6 @@
+- Collision / fin de ligne : empêcher qu'une ligne soit validée alors qu'un pingouin vient de la détruire.
+- Modern / double collision : si un même pingouin touche line1 et line2 pendant la même frame, ne perdre qu'une vie.
+- Thèmes / Random : vérifier que le thème Classic fait bien partie du tirage aléatoire et qu'il a la même probabilité que les autres.
 - grid preview
 - music ?
 - custom theme resources from the SD card:

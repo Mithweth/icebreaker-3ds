@@ -77,7 +77,7 @@ static size_t selected;
 static bool options_selected;
 static float logo_scale;
 static float logo_parallax;
-static bool selected_modern_mode;
+static GameMode selected_game_mode;
 static DialogConfirmType dialog_confirm_type;
 static size_t help_page;
 
@@ -192,7 +192,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		text_put(30.0f + parallax, 184.0f, 0.1f, 2, theme.color.normaltext, tmptext);
 	}
 	if (!grid_maps_random(grid_maps_current_name())) {
-		snprintf(tmptext, 30,"%ld", hiscore_get(grid_maps_current_name(), 0)->score);
+		snprintf(tmptext, 30,"%ld", hiscore_get(options_game_mode(), grid_maps_current_name(), 0)->score);
 		text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	}
 	progress_bar_draw(stats->clear);
@@ -247,7 +247,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, difficulty);
 					break;
 				case MENU_MODE:
-					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, (selected_modern_mode) ? lang_get("MODE_MODERN") : lang_get("MODE_ORIGINAL"));
+					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, (selected_game_mode == GAME_MODE_MODERN) ? lang_get("MODE_MODERN") : lang_get("MODE_ORIGINAL"));
 					break;
 				case MENU_GRID:
 					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, grid_maps_selected_name());
@@ -301,7 +301,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		text_cput(200, 70, 0.4f, 3, theme.color.normaltext, grid_maps_selected_name());
 		for(int i = 0; i < HISCORENUM; i++) {
 			int y = 95 + 20 * i;
-			HighScore* user = hiscore_get(grid_maps_selected_name(), i);
+			HighScore* user = hiscore_get(options_game_mode(), grid_maps_selected_name(), i);
 			char nb[4];
 			snprintf(nb, 4, "%d.", i + 1);
 			char score[10];
@@ -361,7 +361,7 @@ bool menu_update(bool pause, u32 keys) {
 				grid_maps_prev();
 				break;
 			case MENU_MODE:
-				selected_modern_mode = !selected_modern_mode;
+				selected_game_mode = (selected_game_mode == GAME_MODE_ORIGINAL) ? GAME_MODE_MODERN : GAME_MODE_ORIGINAL;
 				break;
 			default:
 				break;
@@ -384,7 +384,7 @@ bool menu_update(bool pause, u32 keys) {
 				grid_maps_next();
 				break;
 			case MENU_MODE:
-				selected_modern_mode = !selected_modern_mode;
+				selected_game_mode = (selected_game_mode == GAME_MODE_ORIGINAL) ? GAME_MODE_MODERN : GAME_MODE_ORIGINAL;
 				break;
 			default:
 				break;
@@ -395,7 +395,7 @@ bool menu_update(bool pause, u32 keys) {
 			options_difficulty_selected_reset();
 			lang_selected_reset();
 			grid_maps_selected_reset();
-			selected_modern_mode = options_modern_mode();
+			selected_game_mode = options_game_mode();
 			selected = 0;
 			break;
 		}
@@ -417,7 +417,7 @@ bool menu_update(bool pause, u32 keys) {
 				}
 				break;
 			case MENU_MODE:
-				if (options_modern_mode() != selected_modern_mode) {
+				if (options_game_mode() != selected_game_mode) {
 					dialog_type = DIALOG_CONFIRM;
 					dialog_confirm_type = CONFIRM_MODE;
 					yes_selected = false;
@@ -435,7 +435,7 @@ bool menu_update(bool pause, u32 keys) {
 				options_difficulty_selected_reset();
 				lang_selected_reset();
 				grid_maps_selected_reset();
-				selected_modern_mode = options_modern_mode();
+				selected_game_mode = options_game_mode();
 				selected = 0;
 				break;
 			case MENU_GRID:
@@ -484,7 +484,7 @@ bool menu_update(bool pause, u32 keys) {
 					options_difficulty_apply();
 					break;
 				case CONFIRM_MODE:
-					options_set_modern_mode(selected_modern_mode);
+					options_set_game_mode(selected_game_mode);
 					break;
 				case CONFIRM_GRID:
 					grid_maps_apply(grid_maps_selected_name());
@@ -503,7 +503,7 @@ bool menu_update(bool pause, u32 keys) {
 					grid_maps_selected_reset();
 					break;
 				case CONFIRM_MODE:
-					selected_modern_mode = options_modern_mode();
+					selected_game_mode = options_game_mode();
 					break;
 				default:
 					break;
@@ -545,7 +545,7 @@ void menu_init(void) {
 	logo_scale = 6.0f;
 	logo_parallax = 0.0f;
 	options_selected = false;
-	selected_modern_mode = options_modern_mode();
+	selected_game_mode = options_game_mode();
 }
 
 void menu_close(void) {
