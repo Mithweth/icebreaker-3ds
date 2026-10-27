@@ -30,6 +30,8 @@
 #include "grid_maps.h"
 #include "game.h"
 
+#define RANDOM_HISTORY	3
+
 typedef enum {
 	GRID_BUILTIN,
 	GRID_CUSTOM,
@@ -45,6 +47,28 @@ static GridFile grids[MAX_GRIDS + 1];
 static size_t grid_count;
 static size_t current_grid;
 static size_t selected_grid;
+static size_t random_history[RANDOM_HISTORY];
+static size_t random_history_count;
+
+static bool grid_in_history(size_t grid_number) {
+	for (size_t i = 0; i < random_history_count; i++) {
+		if (random_history[i] == grid_number) return true;
+	}
+	return false;
+}
+
+static size_t random_pick(void) {
+	size_t chosen_grid = random() % (grid_count - 1);
+	while (random_history_count < grid_count - 1 && grid_in_history(chosen_grid)) {
+		chosen_grid = random() % (grid_count - 1);
+	}
+	if (random_history_count == RANDOM_HISTORY) {
+		for (size_t i = 1; i < random_history_count; i++) random_history[i - 1] = random_history[i];
+		random_history_count--;
+	}
+	random_history[random_history_count++] = chosen_grid;
+	return chosen_grid;
+}
 
 static int alphasortstringarray(const void *a, const void *b) {
 	const char* x = ((const GridFile *)a)->name;
@@ -140,7 +164,7 @@ bool grid_maps_apply(const char* gridname) {
 			return false;
 		}
 		random_mode = true;
-		grid_name = grid_maps_get_name(random() % (grid_count - 1));
+		grid_name = grid_maps_get_name(random_pick());
 	}
 	int potential_grid = grid_maps_get_index(grid_name);
 	if (potential_grid < 0) {
@@ -254,6 +278,7 @@ bool grid_maps_load(void) {
 	}
 	grid_count = 0;
 	current_grid = 0;
+	random_history_count = 0;
 
 	if (!grid_maps_load_from_directory(GRID_DIRECTORY, GRID_BUILTIN)) return false;
 	if (!grid_maps_load_from_directory(CUSTOM_GRID_DIRECTORY, GRID_CUSTOM)) {
