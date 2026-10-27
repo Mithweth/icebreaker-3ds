@@ -244,7 +244,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 
 	if (freeze_tick > 0) freeze_tick--;
 	if (speed_tick > 0) speed_tick--;
-
+	bool life_lost = false;
 	int speed = (speed_tick > 0) ? 3 : 1;
 	for(int i = 0; i < speed; i++) {
 		if (line1.on) {
@@ -267,11 +267,8 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 				}
 			}
 			if (line1.dead)  {
-				sound_play(SNDBREAK);
-				flying_sprite_death();
 				line_kill(&line1);
-				stats->lives--;
-				if (stats->lives < 0) stats->lives = 0;
+				life_lost = true;
 			}
 		}
 		if (line2.on) {
@@ -291,13 +288,16 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 				}
 			}
 			if (line2.dead) {
-				sound_play(SNDBREAK);
-				flying_sprite_death();
 				line_kill(&line2);
-				stats->lives--;
-				if (stats->lives < 0) stats->lives = 0;
+				life_lost = true;
 			}
 		}
+	}
+	if (life_lost) {
+		sound_play(SNDBREAK);
+		flying_sprite_death();
+		stats->lives--;
+		if (stats->lives < 0) stats->lives = 0;
 	}
 	if (line1.shield_hit || line2.shield_hit) shield_used = true;
 	for (int i = 0; i < penguincount; i++)
