@@ -34,7 +34,7 @@
 #include "sound.h"
 
 typedef struct {
-	char *filename;
+	char *path;
 	char *name;
 } ThemeFile;
 
@@ -45,7 +45,7 @@ static size_t current_theme;
 
 static int alphasortstringarray(const void *a, const void *b) {
 	int cmp = strcmp(((const ThemeFile *)a)->name, ((const ThemeFile *)b)->name);
-	return cmp ? cmp : strcmp(((const ThemeFile *)a)->filename, ((const ThemeFile *)b)->filename);   // "romfs:" < "sdmc:"
+	return cmp ? cmp : strcmp(((const ThemeFile *)a)->path, ((const ThemeFile *)b)->path);   // "romfs:" < "sdmc:"
 
 }
 
@@ -63,11 +63,11 @@ static void themes_setdefaultcolors(void)
 	theme.color.bonusscrolltext = C2D_Color32(192,  0, 64,255);
 	theme.color.textentrybox    = C2D_Color32(  0,  0,  0,255);
 	theme.color.textentrytext   = C2D_Color32(255,255,255,255);
-	theme.color.copyrighttext   = C2D_Color32(192,192,192,255);
 	theme.color.progressbaroutline = C2D_Color32(180, 225, 245, 255);
 	theme.color.progressbarinner = C2D_Color32(100, 200, 240, 255);
 	theme.color.progressbarfill = C2D_Color32(20, 50, 75, 255);
 	theme.color.spritecharge    = C2D_Color32(255, 60, 60, 255);
+	theme.color.shieldbackground = C2D_Color32(0, 0, 255, 64);
 	theme.color.boardfillminr = 224;
 	theme.color.boardfillming = 224;
 	theme.color.boardfillminb = 224;
@@ -85,6 +85,15 @@ bool themes_exists(const char* name) {
 	return false;
 }
 
+static bool themes_sound_load(Sound id, const char* name, bool custom) {
+	if (custom) {
+		if (sound_load(id, CUSTOM_SOUND_DIRECTORY, name)) {
+			return true;
+		}
+	}
+	return sound_load(id, SOUND_DIRECTORY, name);
+}
+
 bool themes_settheme(const char* themename, bool included) {
 	char themefilename[256];
 	int found = -1;
@@ -100,7 +109,7 @@ bool themes_settheme(const char* themename, bool included) {
 	}
 	current_theme = found;
 	bool includes = false;
-	snprintf(themefilename, sizeof(themefilename), "%s", themes[found].filename);
+	snprintf(themefilename, sizeof(themefilename), "%s/%s.ibt", themes[found].path, themes[found].name);
 
 	FILE* themefile;
 	char linebuf[300];
@@ -115,6 +124,7 @@ bool themes_settheme(const char* themename, bool included) {
 	theme.particlebitmap = (C2D_Image){0};
 	theme.energybitmap = (C2D_Image){0};
 	theme.shieldbitmap = (C2D_Image){0};
+	theme.gridbitmap = (C2D_Image){0};
 	
 	foundcolor.background      = 0;
 	foundcolor.normaltext      = 0;
@@ -128,7 +138,6 @@ bool themes_settheme(const char* themename, bool included) {
 	foundcolor.bonusscrolltext = 0;
 	foundcolor.textentrybox    = 0;
 	foundcolor.textentrytext   = 0;
-	foundcolor.copyrighttext   = 0;
 	foundcolor.progressbaroutline = 0;
 	foundcolor.progressbarinner = 0;
 	foundcolor.progressbarfill = 0;
@@ -139,6 +148,7 @@ bool themes_settheme(const char* themename, bool included) {
 	foundcolor.boardfillmaxg = 0;
 	foundcolor.boardfillmaxb = 0;
 	foundcolor.spritecharge  = 0;
+	foundcolor.shieldbackground  = 0;
 	sound_reset();
 
 	themefile = fopen(themefilename, "r");
@@ -148,6 +158,20 @@ bool themes_settheme(const char* themename, bool included) {
 		// value the right thing to do?
 		fprintf(stderr, "Warning: Can't open theme file %s. Using default look and sound.\n",themefilename);
 		return false;
+	}
+	bool custom_theme = strcmp(themes[found].path, THEME_DIRECTORY) != 0;
+	if (!included) {
+		bool custom_theme_loaded = false;
+		if (custom_theme) {
+			if (!gfxmap_custom_load(themename)) {
+				printf("Cannot load assets from %s\n", themename);
+			} else {
+				custom_theme_loaded = true;
+			}
+		}
+		if (!custom_theme_loaded) {
+			gfxmap_custom_close();
+		}
 	}
 	while(fgets(linebuf,300,themefile))
 	{
@@ -257,11 +281,6 @@ bool themes_settheme(const char* themename, bool included) {
 				theme.color.textentrytext=C2D_Color32(r,g,b,255);
 				foundcolor.textentrytext++;
 			}
-			else if (!strcmp(optbuf,"copyrighttext"))
-			{
-				theme.color.copyrighttext=C2D_Color32(r,g,b,255);
-				foundcolor.copyrighttext++;
-			}
 			else if (!strcmp(optbuf,"progressbaroutline"))
 			{
 				theme.color.progressbaroutline=C2D_Color32(r,g,b,255);
@@ -281,6 +300,11 @@ bool themes_settheme(const char* themename, bool included) {
 			{
 				theme.color.spritecharge=C2D_Color32(r,g,b,255);
 				foundcolor.spritecharge++;
+			}
+			else if (!strcmp(optbuf,"shieldbackground"))
+			{
+				theme.color.shieldbackground=C2D_Color32(r,g,b,64);
+				foundcolor.shieldbackground++;
 			}
 		}
 		else if (sscanf(linebuf,"%20s %255s",optbuf,valbuf)==2)
@@ -354,51 +378,64 @@ bool themes_settheme(const char* themename, bool included) {
 					return false;
 				}
 			}
+			else if (!strcmp(optbuf,"gridbitmap"))
+			{
+				if (includes) {
+					printf("Warning: gridbitmap is ignored in a file using an include directive\n");
+					continue;
+				}
+				theme.gridbitmap = gfxmap_get_image(valbuf);
+				if (!theme.gridbitmap.tex) {
+					printf("Error while loading sprite: No image found: %s\n", valbuf);
+					fclose(themefile);
+					return false;
+				}
+			}
 			else if (!strcmp(optbuf,"soundouch"))
 			{
-				if (!sound_load(SNDOUCH, valbuf)) {
+				if (!themes_sound_load(SNDOUCH, valbuf, custom_theme)) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
 			else if (!strcmp(optbuf,"soundcrash"))
 			{
-				if (!sound_load(SNDBREAK, valbuf)) {
+				if (!themes_sound_load(SNDBREAK, valbuf, custom_theme)) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
 			else if (!strcmp(optbuf,"soundvictory"))
 			{
-				if (!sound_load(SNDVICTORY, valbuf)) {
+				if (!themes_sound_load(SNDVICTORY, valbuf, custom_theme)) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
 			else if (!strcmp(optbuf,"sounddefeat"))
 			{
-				if (!sound_load(SNDDEFEAT, valbuf)) {
+				if (!themes_sound_load(SNDDEFEAT, valbuf, custom_theme)) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
 			else if (!strcmp(optbuf,"soundfreeze"))
 			{
-				if (!sound_load(SNDFREEZE, valbuf)) {
+				if (!themes_sound_load(SNDFREEZE, valbuf, custom_theme)) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
 			else if (!strcmp(optbuf,"soundspeed"))
 			{
-				if (!sound_load(SNDSPEED, valbuf)) {
+				if (!themes_sound_load(SNDSPEED, valbuf, custom_theme)) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
 			else if (!strcmp(optbuf,"soundshield"))
 			{
-				if (!sound_load(SNDSHIELD, valbuf)) {
+				if (!themes_sound_load(SNDSHIELD, valbuf, custom_theme)) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
 			else if (!strcmp(optbuf,"soundshieldoff"))
 			{
-				if (!sound_load(SNDSHIELDOFF, valbuf)) {
+				if (!themes_sound_load(SNDSHIELDOFF, valbuf, custom_theme)) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
@@ -446,14 +483,14 @@ bool themes_settheme(const char* themename, bool included) {
 		{ printf("Warning: TextentryBox not correctly defined in theme %s. Using default.\n",themename); }
 	if (foundcolor.textentrytext == 0)
 		{ printf("Warning: TextentryText not correctly defined in theme %s. Using default.\n",themename); }
-	if (foundcolor.copyrighttext == 0)
-		{ printf("Warning: CopyrightText not correctly defined in theme %s. Using default.\n",themename); }
 	if (foundcolor.progressbaroutline == 0)
 		{ printf("Warning: ProgressbarOutline not correctly defined in theme %s. Using default.\n",themename); }
 	if (foundcolor.progressbarinner == 0)
 		{ printf("Warning: ProgressbarInner not correctly defined in theme %s. Using default.\n",themename); }
 	if (foundcolor.spritecharge == 0)
 		{ printf("Warning: SpriteCharge not correctly defined in theme %s. Using default.\n",themename); }
+	if (foundcolor.shieldbackground == 0)
+		{ printf("Warning: ShieldBackground not correctly defined in theme %s. Using default.\n",themename); }
 	
 	if (!theme.particlebitmap.tex) {
 		printf("Warning: ParticleBitmap not correctly defined in theme %s\n", themename);
@@ -503,15 +540,15 @@ static bool themes_load_from_directory(const char *directory) {
 		memcpy(theme_name, entry->d_name, len - 4);
 		theme_name[len - 4] = '\0';
 
-		char *file_name = malloc(len + dirlen + 2);
-		if (!file_name) {
+		char *file_path = malloc(dirlen + 1);
+		if (!file_path) {
 			free(theme_name);
 			closedir(dir);
 			return false;
 		}
-		snprintf(file_name, len + dirlen + 2, "%s/%s", directory, entry->d_name);
+		snprintf(file_path, dirlen + 1, "%s", directory);
 		themes[theme_count].name = theme_name;
-		themes[theme_count++].filename = file_name;
+		themes[theme_count++].path = file_path;
 		printf("Found theme: %s\n", theme_name);
 	}
 
@@ -522,7 +559,7 @@ static bool themes_load_from_directory(const char *directory) {
 bool themes_load(void) {
 	for (size_t i = 0; i < theme_count; i++) {
 		free(themes[i].name);
-		free(themes[i].filename);
+		free(themes[i].path);
 	}
 	theme_count = 0;
 	current_theme = 0;

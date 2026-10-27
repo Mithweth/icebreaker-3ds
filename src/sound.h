@@ -36,7 +36,7 @@ typedef enum {
 	SNDCOUNT
 } Sound;
 
-bool sound_load(Sound id, const char *soundname);
+bool sound_load(Sound id, const char* directory, const char *soundname);
 bool sound_play(Sound id);
 void sound_init(void);
 void sound_reset(void);

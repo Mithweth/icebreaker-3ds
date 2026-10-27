@@ -1,0 +1,32 @@
+Background			24	36	53
+NormalText			241 230 206
+BoardFillMin		68	85 101
+BoardFillMax		132 149 162
+Gridline			48	65	78
+GridHighlight		255 237 195
+Line1				255 205	82
+Line2				238	98	86
+MenuHighlight		247 195	94
+GameoverText		255 105	95
+ScorescrollText		241 230 206
+BonusscrollText		148 224 176
+TextentryBox		247 195	94
+TextentryText		24	36	53
+ProgressbarOutline	220 172	91
+ProgressbarInner	24	36	53
+ProgressbarFill		247 195	94
+ShieldBackground	57	41	80
+SpriteCharge		255	68	54
+SpriteBitmap		heroic_sprite
+EnergyBitmap		heroic_energy
+ParticleBitmap		heroic_particle
+ShieldBitmap		heroic_shield
+GridBitmap			heroic_grid
+SoundOuch			heroic_hit
+SoundCrash			heroic_hit
+SoundVictory		heroic_victory
+SoundDefeat			heroic_defeat
+SoundFreeze			heroic_freeze
+SoundSpeed			heroic_speed
+SoundShield			heroic_shieldon
+SoundShieldOff		heroic_shieldoff

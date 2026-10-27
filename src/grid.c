@@ -127,6 +127,20 @@ void grid_generate_colors(void) {
 void grid_drawblocks(void) {
 	C2D_DrawRectSolid(0, 0, 0.0f, WIDTH, HEIGHT, theme.color.background);
 
+	if (theme.gridbitmap.tex) {
+		C2D_DrawImageAt(theme.gridbitmap, 0, 0, 0.05f, NULL, 1.0f, 1.0f);
+		for (int bx = 0; bx < COLS; bx++) {
+			for (int by = 0; by < ROWS; by++) {
+				int x = bx * BLOCKWIDTH;
+				int y = by * BLOCKHEIGHT;
+
+				if (grid_at(x,y) == '.' || grid_at(x,y) == '-' || grid_at(x,y) == '|') {
+					C2D_DrawRectSolid(x, y, 0.1f, BLOCKWIDTH, BLOCKHEIGHT, theme.color.background);		
+				}
+			}
+		}
+		return;
+	}
 	for (int bx = 0; bx < COLS; bx++) {
 		for (int by = 0; by < ROWS; by++) {
 			int x = bx * BLOCKWIDTH;
