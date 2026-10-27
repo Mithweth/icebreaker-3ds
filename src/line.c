@@ -29,9 +29,36 @@
 #include "grid.h"
 #include "themes.h"
 
+static bool position_free(int x, int y) {
+	return grid_at(x, y - 1) == ' ' || grid_at(x, y - 1) == '*';
+}
+
 void line_draw(const Line *l, u32 color) {
-    if (!l->on) return;
-    C2D_DrawRectSolid(l->geom.x, l->geom.y, 0.4f, l->geom.w, l->geom.h, color);
+	if (!l->on) return;
+	int y, x;
+	switch (l->dir) {
+	case UP:
+		y = l->geom.y;
+		while (position_free(l->geom.x, y - 1) && position_free(l->geom.x + BLOCKWIDTH - 1, y - 1) && (!l->end || y > l->end)) y--;
+		C2D_DrawRectSolid(l->geom.x, y, 0.35f, BLOCKWIDTH, l->geom.y - y, color & 0x90FFFFFF);
+		break;
+	case DOWN:
+		y = l->geom.y + l->geom.h;
+		while (position_free(l->geom.x, y) && position_free(l->geom.x + BLOCKWIDTH - 1, y) && (!l->end || y < l->end)) y++;
+		C2D_DrawRectSolid(l->geom.x, l->geom.y + l->geom.h, 0.35f, BLOCKWIDTH, y - (l->geom.y + l->geom.h), color & 0x90FFFFFF);
+		break;
+	case LEFT:
+		x = l->geom.x;
+		while (position_free(x - 1, l->geom.y) && position_free(x - 1, l->geom.y + BLOCKHEIGHT - 1) && (!l->end || x > l->end)) x--;
+		C2D_DrawRectSolid(x, l->geom.y, 0.35f, l->geom.x - x, BLOCKHEIGHT, color & 0x90FFFFFF);
+		break;
+	case RIGHT:
+		x = l->geom.x + l->geom.w;
+		while (position_free(x, l->geom.y) && position_free(x, l->geom.y + BLOCKHEIGHT - 1) && (!l->end || x < l->end)) x++;
+		C2D_DrawRectSolid(l->geom.x + l->geom.w, l->geom.y, 0.35f, x - (l->geom.x + l->geom.w), BLOCKHEIGHT, color & 0x90FFFFFF);
+		break;
+	}
+	C2D_DrawRectSolid(l->geom.x, l->geom.y, 0.4f, l->geom.w, l->geom.h, color);
 }
 
 static void line_finish(Line * l)
@@ -41,63 +68,57 @@ static void line_finish(Line * l)
 	int quick2=false;
 	
 	l->on=false;	
-	
-	//grid_printwhole();
-	
-	switch (l->dir)
-  	{
-  		case DOWN:
-  		// falls through.
-  		case UP:
-  			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'|');
-  			line_draw(l,theme.color.background);
-  				
-  			// scan along edges to quickly determine if this
-  			// is going to be complicated.
-  			quick1=true; quick2=true;
-  			for (i=l->geom.y+BLOCKHEIGHT/2;i<l->geom.y+l->geom.h;i++)
-  			{
-  				if (grid_at(l->geom.x-1,i) != ' ' && grid_at(l->geom.x-1,i) != '*') quick1=false;
-  				if (grid_at(l->geom.x+BLOCKWIDTH,i) != ' ' && grid_at(l->geom.x+BLOCKWIDTH,i) != '*') quick2=false;
-  			}
-  				
-  			//printf("Quick %d %d\n",quick1,quick2);
-  				
-  			grid_checkempty(l->geom.x-BLOCKWIDTH/2,l->geom.y+BLOCKHEIGHT/2);
-  			grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2/2,l->geom.y+BLOCKHEIGHT/2);
-  		
-  			if (!quick1)
-  				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
-  					grid_checkempty(l->geom.x-BLOCKWIDTH/2,i);
-  			if (!quick2)
-  				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
-  					grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2,i);
-  		break;
-  		case RIGHT:
-  		// falls through
-  		case LEFT:
-  			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'-');
-  			line_draw(l,theme.color.background);
-	
-  			// scan along edges to quickly determine if this
-  			// is going to be complicated.
-  			quick1=true; quick2=true;
-  			for (i=l->geom.x+BLOCKWIDTH/2;i<l->geom.x+l->geom.w;i++)
-  			{
-  				if (grid_at(i,l->geom.y-1) != ' ' && grid_at(i,l->geom.y-1) != '*') quick1=false;
-  				if (grid_at(i,l->geom.y+BLOCKHEIGHT) != ' ' && grid_at(i,l->geom.y+BLOCKHEIGHT) != '*') quick2=false;
-  			}
 
-	  		grid_checkempty(l->geom.x+BLOCKWIDTH/2,l->geom.y-BLOCKHEIGHT/2);
-	  		grid_checkempty(l->geom.x+BLOCKWIDTH/2,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
-	  			
-	  		if (!quick1)
-	  			for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
-		  			grid_checkempty(i,l->geom.y-BLOCKHEIGHT/2);
-	  			
-	  		if (!quick2)
-	  			for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
-		  			grid_checkempty(i,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
+	switch (l->dir)
+	{
+		case DOWN:
+		// falls through.
+		case UP:
+			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'|');
+			line_draw(l,theme.color.background);
+
+			// scan along edges to quickly determine if this
+			// is going to be complicated.
+			quick1=true; quick2=true;
+			for (i=l->geom.y+BLOCKHEIGHT/2;i<l->geom.y+l->geom.h;i++)
+			{
+				if (grid_at(l->geom.x-1,i) != ' ' && grid_at(l->geom.x-1,i) != '*') quick1=false;
+				if (grid_at(l->geom.x+BLOCKWIDTH,i) != ' ' && grid_at(l->geom.x+BLOCKWIDTH,i) != '*') quick2=false;
+			}
+			grid_checkempty(l->geom.x-BLOCKWIDTH/2,l->geom.y+BLOCKHEIGHT/2);
+			grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2/2,l->geom.y+BLOCKHEIGHT/2);
+
+			if (!quick1)
+				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
+					grid_checkempty(l->geom.x-BLOCKWIDTH/2,i);
+			if (!quick2)
+				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
+					grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2,i);
+		break;
+		case RIGHT:
+		// falls through
+		case LEFT:
+			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'-');
+			line_draw(l,theme.color.background);
+
+			// scan along edges to quickly determine if this
+			// is going to be complicated.
+			quick1=true; quick2=true;
+			for (i=l->geom.x+BLOCKWIDTH/2;i<l->geom.x+l->geom.w;i++)
+			{
+				if (grid_at(i,l->geom.y-1) != ' ' && grid_at(i,l->geom.y-1) != '*') quick1=false;
+				if (grid_at(i,l->geom.y+BLOCKHEIGHT) != ' ' && grid_at(i,l->geom.y+BLOCKHEIGHT) != '*') quick2=false;
+			}
+
+			grid_checkempty(l->geom.x+BLOCKWIDTH/2,l->geom.y-BLOCKHEIGHT/2);
+			grid_checkempty(l->geom.x+BLOCKWIDTH/2,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
+
+			if (!quick1)
+				for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
+					grid_checkempty(i,l->geom.y-BLOCKHEIGHT/2);
+			if (!quick2)
+				for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
+					grid_checkempty(i,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
 		break;
 	}
 }
@@ -261,17 +282,17 @@ void line_kill(Line * l)
 	l->dead=false;
 	
 	switch (l->dir)
-  	{
-  		case DOWN:
+	{
+		case DOWN:
 		// falls through.
-  		case UP:
-  			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,' ');
-  		break;
-  		case RIGHT:
-  		// falls through
-  		case LEFT:
-  			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,' ');
-	  	break;
+		case UP:
+			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,' ');
+		break;
+		case RIGHT:
+		// falls through
+		case LEFT:
+			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,' ');
+		break;
 	}
 }
 
