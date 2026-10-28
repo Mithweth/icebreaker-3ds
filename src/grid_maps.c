@@ -49,6 +49,7 @@ static size_t current_grid;
 static size_t selected_grid;
 static size_t random_history[RANDOM_HISTORY];
 static size_t random_history_count;
+static char tmpgrid[GRID_MAPS_COLS][GRID_MAPS_ROWS];
 
 static bool grid_in_history(size_t grid_number) {
 	for (size_t i = 0; i < random_history_count; i++) {
@@ -74,31 +75,6 @@ static int alphasortstringarray(const void *a, const void *b) {
 	const char* x = ((const GridFile *)a)->name;
 	const char* y = ((const GridFile *)b)->name;
 	return strcmp(x, y);
-}
-
-void grid_maps_next(void) {
-	if (grid_count == 0) {
-		return;
-	}
-	selected_grid++;
-	if (selected_grid == grid_count) {
-		selected_grid = 0;
-	}
-}
-
-void grid_maps_prev(void) {
-	if (grid_count == 0) {
-		return;
-	}
-	if (selected_grid == 0) {
-		selected_grid = grid_count - 1;
-	} else {
-		selected_grid--;
-	}
-}
-
-void grid_maps_selected_reset(void) {
-	selected_grid = current_grid;
 }
 
 const char* grid_maps_get_name(size_t id) {
@@ -154,6 +130,49 @@ bool grid_maps_custom(const char *name) {
 	return false;
 }
 
+char grid_maps_selected_at(int x, int y) {
+	return tmpgrid[x][y];
+}
+
+static bool load_grid(size_t grid_index) {
+	char line[GRID_MAPS_COLS + 3];
+	char gridfilename[256];
+	size_t current_row = 0;
+	snprintf(gridfilename, 256, "%s", grid_maps_get_filename(grid_index));
+	FILE* file = fopen(gridfilename, "r");
+	if (!file) {
+		printf("Error: Can't open grid file %s. Reverse to default\n", gridfilename);
+		return false;
+	}
+
+	while(current_row < GRID_MAPS_ROWS && fgets(line,sizeof(line),file)) {
+		if (line[0] == '\0') {
+			break;
+		}
+		size_t len = strcspn(line, "\r\n");
+		if (len != GRID_MAPS_COLS) {
+			printf("%s:%zu: invalid grid row length\n", gridfilename, current_row + 1);
+			fclose(file);
+			return false;
+		}
+		for (int i = 0; i < GRID_MAPS_COLS; i++) {
+			if (line[i] != '.' && line[i] != '#') {
+				printf("%s:%zu: only '.' and '#' are supported. Reverse to default\n", gridfilename, current_row + 1);
+				fclose(file);
+				return false;
+			}
+			tmpgrid[i][current_row] = line[i];
+		}
+		current_row++;
+	}
+	fclose(file);
+	if (current_row < GRID_MAPS_ROWS) {
+		printf("%s: the grid file is not complete. Reverse to default\n", gridfilename);
+		return false;
+	}
+	return true;
+}
+
 bool grid_maps_apply(const char* gridname) {
 	const char* grid_name = gridname;
 	bool random_mode = false;
@@ -173,48 +192,12 @@ bool grid_maps_apply(const char* gridname) {
 		return false;
 	}
 
-	char line[GRID_MAPS_COLS + 3];
-	char gridfilename[256];
-	char tmpgrid[GRID_MAPS_COLS][GRID_MAPS_ROWS];
-	size_t current_row = 0;
-	snprintf(gridfilename, 256, "%s", grid_maps_get_filename(potential_grid));
-	FILE* file = fopen(gridfilename, "r");
-	if (!file) {
-		printf("Error: Can't open grid file %s. Reverse to default\n", gridfilename);
-		grid_reset();
-		return false;
-	}
-
-	while(current_row < GRID_MAPS_ROWS && fgets(line,sizeof(line),file)) {
-		if (line[0] == '\0') {
-			break;
-		}
-		size_t len = strcspn(line, "\r\n");
-		if (len != GRID_MAPS_COLS) {
-			printf("%s:%zu: invalid grid row length\n", gridfilename, current_row + 1);
-			fclose(file);
-			grid_reset();
-			return false;
-		}
-		for (int i = 0; i < GRID_MAPS_COLS; i++) {
-			if (line[i] != '.' && line[i] != '#') {
-				printf("%s:%zu: only '.' and '#' are supported. Reverse to default\n", gridfilename, current_row + 1);
-				grid_reset();
-				fclose(file);
-				return false;
-			}
-			tmpgrid[i][current_row] = line[i];
-		}
-		current_row++;
-	}
-	fclose(file);
-	if (current_row < GRID_MAPS_ROWS) {
-		printf("%s: the grid file is not complete. Reverse to default\n", gridfilename);
+	if (!load_grid(potential_grid)) {
 		grid_reset();
 		return false;
 	}
 	if (!grid_expand(GRID_MAPS_COLS, GRID_MAPS_ROWS, tmpgrid)) {
-		printf("%s: No valid ground has been found in that grid. Reverse to default\n", gridfilename);
+		printf("%s: No valid ground has been found in that grid. Reverse to default\n", gridname);
 		grid_reset();
 		return false;
 	}
@@ -298,6 +281,40 @@ bool grid_maps_load(void) {
 	if (!grid_maps_set_current_name(current_name)) {
 		grid_maps_set_current_name("classic");
 	}
-	selected_grid = current_grid;
+	grid_maps_selected_reset();
 	return true;
+}
+
+void grid_maps_selected_reset(void) {
+	selected_grid = current_grid;
+	if (!grid_maps_random(grid_maps_selected_name())) {
+		load_grid(selected_grid);
+	}
+}
+
+void grid_maps_next(void) {
+	if (grid_count == 0) {
+		return;
+	}
+	selected_grid++;
+	if (selected_grid == grid_count) {
+		selected_grid = 0;
+	}
+	if (!grid_maps_random(grid_maps_selected_name())) {
+		load_grid(selected_grid);
+	}
+}
+
+void grid_maps_prev(void) {
+	if (grid_count == 0) {
+		return;
+	}
+	if (selected_grid == 0) {
+		selected_grid = grid_count - 1;
+	} else {
+		selected_grid--;
+	}
+	if (!grid_maps_random(grid_maps_selected_name())) {
+		load_grid(selected_grid);
+	}
 }

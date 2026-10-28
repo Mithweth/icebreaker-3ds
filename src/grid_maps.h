@@ -29,6 +29,7 @@ bool grid_maps_load(void);
 void grid_maps_next(void);
 void grid_maps_prev(void);
 void grid_maps_selected_reset(void);
+char grid_maps_selected_at(int x, int y);
 bool grid_maps_apply(const char* name);
 const char* grid_maps_selected_name(void);
 const char* grid_maps_current_name(void);

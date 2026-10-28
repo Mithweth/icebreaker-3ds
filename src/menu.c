@@ -38,6 +38,8 @@
 #include "flying_sprite.h"
 #include "snowflake.h"
 
+#define GRID_PREVIEW_MARGIN		20
+
 typedef enum {
 	CONFIRM_DIFFICULTY,
 	CONFIRM_GRID,
@@ -165,6 +167,25 @@ static void progress_bar_draw(int pct) {
 
 void menu_bottom_draw(bool pause) {
 	if (pause) {
+		const MenuEntry *choices = options_selected ? options_menu : main_menu;
+		if (choices[selected].choice == MENU_GRID && !grid_maps_random(grid_maps_selected_name())) {
+			C2D_DrawRectSolid(0, 0, 0.86f, WIDTH, HEIGHT, theme.color.background & 0x90FFFFFF);
+			int w = (WIDTH - GRID_PREVIEW_MARGIN * 2) / GRID_MAPS_COLS;
+			int h = (HEIGHT - GRID_PREVIEW_MARGIN * 2) / GRID_MAPS_ROWS;
+			int cell = (w < h) ? w : h;
+			int grid_w = cell * GRID_MAPS_COLS;
+			int grid_h = cell * GRID_MAPS_ROWS;
+			int x = (WIDTH  - grid_w) / 2;
+			int y = (HEIGHT - grid_h) / 2;
+			C2D_DrawRectSolid(x - 2, y - 2, 0.87f, grid_w + 4, grid_h + 4, theme.color.gridline);
+			C2D_DrawRectSolid(x, y, 0.88f, grid_w, grid_h, theme.color.background);
+			for(int j = 0; j < GRID_MAPS_ROWS; j++) {
+				for(int i = 0; i < GRID_MAPS_COLS; i++) {
+					if (grid_maps_selected_at(i, j) == '.') continue;
+					C2D_DrawRectSolid(x + i * cell, y + j * cell, 0.89f, cell - 1, cell - 1, theme.color.gridhighlight);
+				}
+			}
+		}
 		C2D_DrawRectSolid(0, 0, 0.9f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
 		text_put(100, 110, 1.0f, 4, theme.color.normaltext, lang_get("MENU_PAUSE"));
 	}
