@@ -1,13 +1,3 @@
 - grid preview
-- music ?
-- custom theme resources from the SD card:
-  - sounds: accept an absolute path in Sound* (raw PCM16 mono 22050 Hz)
-  - sprites: per-theme sprite sheet
-    - provide a script that turns a theme's PNGs into <theme>.t3x + <theme>.h (tex3ds)
-      - run it through the project Docker image, which already ships tex3ds
-    - both files sit next to <theme>.ibt
-    - if <theme>.t3x is missing, fall back to romfs:/bitmaps/gfx.t3x as today
-    - tex3ds names macros after the .t3s file (<theme>_<image>_idx, not gfx_<image>_idx):
-      the script or gfxmap must handle the prefix
-    - free the theme sheet when switching themes
-  - allow SpriteBitmap to replace inherited sprites after an Include
+- challenge mode
+- stats
