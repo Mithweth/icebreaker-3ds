@@ -33,12 +33,12 @@ typedef struct {
 static Sfx sounds[SNDCOUNT];
 static bool initialized;
 
-bool sound_load(Sound id, const char *soundname) {
+bool sound_load(Sound id, const char* directory, const char *soundname) {
     if (!initialized) {
     	return false;
     }
-    char filename[128];
-    snprintf(filename, sizeof(filename), "romfs:/sounds/%s.raw", soundname);
+    char filename[255];
+    snprintf(filename, sizeof(filename), "%s/%s.raw", directory, soundname);
     FILE *f = fopen(filename, "rb");
     if (!f) {
         printf("File not found: %s\n", filename);

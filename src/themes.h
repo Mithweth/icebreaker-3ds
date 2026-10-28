@@ -49,11 +49,11 @@ typedef struct
 	u32 bonusscrolltext;
 	u32 textentrybox;
 	u32 textentrytext;
-	u32 copyrighttext;
 	u32 progressbaroutline;
 	u32 progressbarinner;
 	u32 progressbarfill;
 	u32 spritecharge;
+	u32 shieldbackground;
 } ThemeColorsType;
 
 typedef struct {
@@ -64,6 +64,7 @@ typedef struct {
 	C2D_Image particlebitmap;
 	C2D_Image energybitmap;
 	C2D_Image shieldbitmap;
+	C2D_Image gridbitmap;
 } Theme;
 
 extern Theme theme;
