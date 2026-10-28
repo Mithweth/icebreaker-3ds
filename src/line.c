@@ -30,7 +30,7 @@
 #include "themes.h"
 
 static bool position_free(int x, int y) {
-	return grid_at(x, y - 1) == ' ' || grid_at(x, y - 1) == '*';
+	return grid_at(x, y) == ' ' || grid_at(x, y) == '*';
 }
 
 void line_draw(const Line *l, u32 color) {

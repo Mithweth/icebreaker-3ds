@@ -37,14 +37,16 @@ done
 
 if command -v docker &> /dev/null; then
 	DOCKER=docker
-elif command -v pacman &> /dev/null; then
-	DOCKER=pacman
+	USER_OPTS="-u $(id -u):$(id -g)"
+elif command -v podman &> /dev/null; then
+	DOCKER=podman
+	USER_OPTS="--userns=keep-id"
 else
-	echo "Neither docker nor pacman has been found. Exiting."
+	echo "Neither docker nor podman has been found. Exiting."
 	exit 1
 fi
 
-"$DOCKER" run --rm -u $(id -u):$(id -g) -v "$OUTPUT_DIR:/work" -w "/work" "$DOCKER_IMAGE" \
+"$DOCKER" run --rm -u $USER_OPTS -v "$OUTPUT_DIR:/work" -w "/work" "$DOCKER_IMAGE" \
 	tex3ds -i "$THEME_NAME.t3s" -H "$THEME_NAME.h" -o "$THEME_NAME.t3x"
 
 while read file; do
@@ -68,7 +70,7 @@ else
 			_input="$INPUT_DIR/$sound.mp3"
 		fi
 		ffmpeg -hide_banner -loglevel error -nostats -y -i "$_input" -ac 1 -ar 22050 \
-			-c:a pcm_s16le -f s16le -f s16le "$OUTPUT_DIR/$sound.raw"
+			-c:a pcm_s16le -f s16le "$OUTPUT_DIR/$sound.raw"
 	done
 fi
 
