@@ -152,6 +152,7 @@ void gfxmap_custom_close(void) {
 }
 
 bool gfxmap_custom_load(const char *prefix) {
+	gfxmap_custom_close();
 	if (!gfxmap_load_assets(&custom, CUSTOM_THEME_DIRECTORY, prefix)) {
 		printf("Cannot load assets\n");
 		gfxmap_free_sheet(&custom);

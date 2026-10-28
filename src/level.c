@@ -185,7 +185,7 @@ void level_draw(void) {
 			C2D_DrawRectSolid(0, 0, 0.45f, WIDTH, HEIGHT, C2D_Color32(255, 0, 0, 128 * speed_tick / max_speed_tick));		
 		}
 	} else if (shield_enabled) {
-		C2D_DrawRectSolid(0, 0, 0.45f, WIDTH, HEIGHT, C2D_Color32(0, 0, 255, 64));
+		C2D_DrawRectSolid(0, 0, 0.45f, WIDTH, HEIGHT, theme.color.shieldbackground);
 		C2D_ImageTint tint;
 		C2D_AlphaImageTint(&tint, 0.15f);
 		C2D_DrawImageAt(theme.shieldbitmap, 160.0f - theme.shieldbitmap.subtex->width / 2, 120.0f - theme.shieldbitmap.subtex->height / 2, 0.46f, &tint, 1.0f, 1.0f);

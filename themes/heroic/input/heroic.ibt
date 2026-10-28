@@ -2,7 +2,7 @@
 #
 # The theme name is the file name without its extension: "heroic".
 # Build it with:  themes/create_theme.sh themes/heroic/input/heroic.ibt themes/heroic/output
-# For Windows:  themes\create-theme.ps1 "themes\heroic\input\heroic.ibt" "themes\heroic\output"
+# For Windows:  themes\create_theme.ps1 "themes\heroic\input\heroic.ibt" "themes\heroic\output"
 # then copy everything from themes/heroic/output/ to sdmc:/icebreaker/ on the SD card:
 #   heroic.ibt   this file
 #   heroic.t3x   the images below, packed by tex3ds into one sheet
