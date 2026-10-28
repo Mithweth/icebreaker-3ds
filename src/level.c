@@ -38,7 +38,10 @@
 #include "sound.h"
 #include "flying_sprite.h"
 #include "penguin.h"
+#include "text.h"
+#include "lang.h"
 
+#define RANDOM_HISTORY 			3
 #define GESTURE_THRESHOLD 		12
 #define FREEZE_DURATION_SECONDS	2.0f
 #define SPEED_DURATION_SECONDS	1.0f
@@ -62,6 +65,41 @@ static size_t freeze_tick;
 static size_t speed_tick;
 static bool shield_enabled;
 static bool shield_used;
+static bool challenge_explained;
+static int clear_pct_required;
+
+typedef enum {
+	CHALLENGE_CONQUEROR,
+	CHALLENGE_LAST_CHANCE,
+	CHALLENGE_TIME_LIMIT,
+	CHALLENGE_NO_POWERUP,
+	CHALLENGE_SPEEDY_PENGUINS,
+	CHALLENGE_COUNT,
+} ChallengeMode;
+
+typedef struct {
+	const char* label;
+	ChallengeMode mode;
+} ChallengeEntry;
+
+static const char* challenge_names[] = {
+	"CHALLENGE_CONQUEROR",
+	"CHALLENGE_LAST_CHANCE",
+	"CHALLENGE_TIME_LIMIT",
+	"CHALLENGE_NO_POWERUP",
+	"CHALLENGE_SPEEDY_PENGUINS",
+};
+static size_t current_challenge;
+static size_t random_history_count;
+static size_t random_history[RANDOM_HISTORY];
+
+
+static bool challenge_in_history(size_t challenge) {
+	for (size_t i = 0; i < random_history_count; i++) {
+		if (random_history[i] == challenge) return true;
+	}
+	return false;
+}
 
 static void level_action_startclick(int mousex, int mousey, bool vertical)
 {
@@ -100,6 +138,19 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 	}
 }
 
+void level_challenge_pick(void) {
+	challenge_explained = false;
+	current_challenge = random() % CHALLENGE_COUNT;
+	while (random_history_count < CHALLENGE_COUNT && challenge_in_history(current_challenge)) {
+		current_challenge = random() % CHALLENGE_COUNT;
+	}
+	if (random_history_count == RANDOM_HISTORY) {
+		for (size_t i = 1; i < random_history_count; i++) random_history[i - 1] = random_history[i];
+		random_history_count--;
+	}
+	random_history[random_history_count++] = current_challenge;
+}
+
 void level_init(GameStats *stats) {
 	grid_generate_colors();
 	grid_maps_apply(grid_maps_current_name());
@@ -107,9 +158,11 @@ void level_init(GameStats *stats) {
 	scoremod = 1.0f;
 	bonusmod = 1.0f;
 	freeze_tick = 0;
+	stats->level_tick = -1;
 	speed_tick = 0;
 	shield_enabled = false;
 	shield_used = false;
+	clear_pct_required = PERCENTREQUIRED;
 	percentextrabonus = PERCENTEXTRABONUS - (stats->level - 1) / 5; // this needs to decrease, or else the bonus disintegrates as the space required to actually trap penguins increases
 	percentbonus = PERCENTBONUS; // right now, there's really no point in making this a variable but it doesn't hurt, and keeps things consistant
 	timepenalty = 0;
@@ -118,7 +171,30 @@ void level_init(GameStats *stats) {
 	if (penguincount > MAXPENGUINS) {
 		penguincount = MAXPENGUINS;
 	}
+	float speed_modifier = 1.0f;
 	stats->lives = stats->level + 1;
+	if (options_challenge_mode()) {
+		switch(current_challenge) {
+		case CHALLENGE_LAST_CHANCE:
+			stats->lives = 1;
+			break;
+		case CHALLENGE_SPEEDY_PENGUINS:
+			speed_modifier = 2.0f;
+			break;
+		case CHALLENGE_CONQUEROR:
+			clear_pct_required = PERCENTREQUIREDCHALLENGE;
+			break;
+		case CHALLENGE_NO_POWERUP:
+			stats->previous_energy = stats->energy;
+			stats->energy = 0;
+			break;
+		case CHALLENGE_TIME_LIMIT:
+			stats->level_tick = 60 * FPS;
+			break;
+		default:
+			break;
+		}
+	}
 	switch(options_difficulty_current())
 	{
 		case NORMAL:
@@ -152,6 +228,7 @@ void level_init(GameStats *stats) {
 	for (int i=0;i<penguincount;i++)
 	{
 		flock[i] = penguin_create();
+		penguin_speed(&flock[i], speed_modifier);
 		if (options_modern_mode()) {
 			flock[i].slow_axis = random() % SLOW_AXIS_COUNT;
 		}
@@ -169,6 +246,16 @@ void level_draw(void) {
 	}
 	for (int i=0;i<penguincount;i++) {
 		penguin_draw(&flock[i]);
+	}
+	if (!challenge_explained && options_challenge_mode()) {
+		C2D_DrawRectSolid(0, 0, 0.45f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
+		text_cput(160.0f, 80.0f, 0.46f, 3, theme.color.gameovertext, lang_get(challenge_names[current_challenge]));
+		char explain[255];
+		snprintf(explain, sizeof(explain), "%s_EXPLAIN_1", challenge_names[current_challenge]);
+		text_cput(160.0f, 120.0f, 0.46f, 3, theme.color.scorescrolltext, lang_get(explain));
+		snprintf(explain, sizeof(explain), "%s_EXPLAIN_2", challenge_names[current_challenge]);
+		text_cput(160.0f, 140.0f, 0.46f, 3, theme.color.scorescrolltext, lang_get(explain));
+		return;
 	}
 	if (freeze_tick > 0) {
 		size_t max_freeze_tick = (size_t)(FREEZE_DURATION_SECONDS * FPS);
@@ -195,6 +282,16 @@ void level_draw(void) {
 bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (done) {
 		return false;
+	}
+	if (!challenge_explained && options_challenge_mode()) {
+		if (keys) challenge_explained = true;
+		return true;
+	}
+	if (stats->level_tick > 0) {
+		stats->level_tick--;
+		if (stats->level_tick == 0) {
+			stats->lives = 0;
+		}
 	}
 	if (shield_used && !line1.on && !line2.on) {
 		shield_enabled = false;
@@ -318,13 +415,14 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		done = true;
 		return true;
 	}
-	if (!line1.on && !line2.on && stats->clear >= PERCENTREQUIRED) // success!
+	if (!line1.on && !line2.on && stats->clear >= clear_pct_required) // success!
 	{ 
 		flying_sprite_victory();
 		speed_tick = 0;
 		freeze_tick = 0;
 		shield_enabled = false;
 		done = true;
+		stats->level_tick = -1;
 		stats->basescore=(int)(stats->clear * scoremod) - timepenalty;
 
 		stats->clearbonus=0;
@@ -336,7 +434,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			stats->clearbonus += (int)((stats->clear - percentextrabonus) * (stats->clear - percentextrabonus) * bonusmod);
 			stats->energybonus += 1;
 		}
-		if (stats->lives == stats->level + 1) {
+		if ((options_challenge_mode() && current_challenge == CHALLENGE_LAST_CHANCE) || stats->lives == stats->level + 1) {
 			stats->energybonus += 1;
 		}
 			

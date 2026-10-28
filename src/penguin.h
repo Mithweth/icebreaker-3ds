@@ -63,6 +63,7 @@ typedef enum {
 	PENGUIN_HIT_BOTH 
 } PenguinHit;
 
+void penguin_speed(Penguin* p, float speed);
 Penguin penguin_create(void);
 Penguin penguin_createxy(int x, int y);
 void penguin_draw(Penguin* p);
