@@ -79,7 +79,6 @@ static size_t selected;
 static bool options_selected;
 static float logo_scale;
 static float logo_parallax;
-static GameMode selected_game_mode;
 static DialogConfirmType dialog_confirm_type;
 static size_t help_page;
 
@@ -207,13 +206,17 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	C2D_DrawImageAt(theme.spriteimage[0], 10.0f + parallax, 205.0f - theme.spriteimage[0].subtex->height / 2, 0.1f, NULL, 1.0f, 1.0f);
 	snprintf(tmptext,30,"%d",stats->lives);
 	text_put(30.0f + parallax, 200.0f, 0.1f, 2, theme.color.normaltext, tmptext);
+	if (stats->level_tick > 0) {
+		snprintf(tmptext, 30, "%s %d", lang_get("MENU_TIME"), stats->level_tick / FPS);
+		text_cput(200.0f, 200.0f, 0.1f, 2, theme.color.normaltext, tmptext);
+	}
 	if (options_modern_mode()) {
 		C2D_DrawImageAt(theme.energybitmap, 10.0f + parallax, 180.0f, 0.1f, NULL, 1.0f, 1.0f);
 		snprintf(tmptext, 30, "%zu", stats->energy);
 		text_put(30.0f + parallax, 184.0f, 0.1f, 2, theme.color.normaltext, tmptext);
 	}
-	if (!grid_maps_random(grid_maps_current_name())) {
-		snprintf(tmptext, 30,"%ld", hiscore_get(options_game_mode(), grid_maps_current_name(), 0)->score);
+	if (!grid_maps_random(grid_maps_current_name()) && !options_challenge_mode()) {
+		snprintf(tmptext, 30,"%ld", hiscore_get(options_game_mode_current(), grid_maps_current_name(), 0)->score);
 		text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	}
 	progress_bar_draw(stats->clear);
@@ -237,20 +240,25 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	case DIALOG_NORMAL:
 		const MenuEntry *choices = options_selected ? options_menu : main_menu;
 		size_t count = options_selected ? sizeof(options_menu) / sizeof(options_menu[0]) : sizeof(main_menu) / sizeof(main_menu[0]);
-		C2D_DrawRectSolid(50.0f, 50.0f, 0.3f, 300.0f, 25.0f * count + 5.0f, theme.color.menuhighlight);
-		C2D_DrawRectSolid(52.0f, 52.0f, 0.31f, 296.0f, 25.0f * count + 1.0f, theme.color.background);
-	
+		int elements = count;
+		if (!options_selected && options_challenge_mode()) {
+			elements--;
+		}
+		C2D_DrawRectSolid(50.0f, 50.0f, 0.3f, 300.0f, 25.0f * elements + 5.0f, theme.color.menuhighlight);
+		C2D_DrawRectSolid(52.0f, 52.0f, 0.31f, 296.0f, 25.0f * elements + 1.0f, theme.color.background);
+		size_t j = 0;
 		for(size_t i = 0; i < count; i++) {
+			if (options_challenge_mode() &&  choices[i].choice == MENU_HIGHSCORES) continue;
 			u32 option_color = theme.color.normaltext;
 			if (selected == i) {
-				C2D_DrawRectSolid(50.0f, 56 + 24 * i, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
+				C2D_DrawRectSolid(50.0f, 56 + 24 * j, 0.35f, 300.0f, 23.0f, theme.color.menuhighlight);
 				option_color = theme.color.background;
 			}
-			text_put(60, 61 + 24 * i, 0.4f, 3, option_color, lang_get(choices[i].label));
+			text_put(60, 61 + 24 * j, 0.4f, 3, option_color, lang_get(choices[i].label));
 			
 			switch(choices[i].choice) {
 				case MENU_LANGUAGE:
-					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, lang_selected_name());
+					text_rput(340, 61 + 24 * j, 0.4f, 3, option_color, lang_selected_name());
 					break;
 				case MENU_DIFFICULTY:
 					const char* difficulty;
@@ -265,20 +273,33 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 						difficulty = lang_get("DIFFICULTY_NORMAL");
 						break;
 					}
-					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, difficulty);
+					text_rput(340, 61 + 24 * j, 0.4f, 3, option_color, difficulty);
 					break;
 				case MENU_MODE:
-					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, (selected_game_mode == GAME_MODE_MODERN) ? lang_get("MODE_MODERN") : lang_get("MODE_ORIGINAL"));
+					const char* mode;
+					switch(options_game_mode_selected()) {
+					case GAME_MODE_CHALLENGE:
+						mode = lang_get("MODE_CHALLENGE");
+						break;
+					case GAME_MODE_MODERN:
+						mode = lang_get("MODE_MODERN");
+						break;
+					default:
+						mode = lang_get("MODE_ORIGINAL");
+						break;
+					}
+					text_rput(340, 61 + 24 * j, 0.4f, 3, option_color, mode);
 					break;
 				case MENU_GRID:
-					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, grid_maps_selected_name());
+					text_rput(340, 61 + 24 * j, 0.4f, 3, option_color, grid_maps_selected_name());
 					break;
 				case MENU_THEME:
-					text_rput(340, 61 + 24 * i, 0.4f, 3, option_color, themes_current_name());
+					text_rput(340, 61 + 24 * j, 0.4f, 3, option_color, themes_current_name());
 					break;
 				default:
 					break;
 			}
+			j++;
 		}
 		break;
 	case DIALOG_CONFIRM:
@@ -322,7 +343,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 		text_cput(200, 70, 0.4f, 3, theme.color.normaltext, grid_maps_selected_name());
 		for(int i = 0; i < HISCORENUM; i++) {
 			int y = 95 + 20 * i;
-			HighScore* user = hiscore_get(options_game_mode(), grid_maps_selected_name(), i);
+			HighScore* user = hiscore_get(options_game_mode_current(), grid_maps_selected_name(), i);
 			char nb[4];
 			snprintf(nb, 4, "%d.", i + 1);
 			char score[10];
@@ -359,11 +380,19 @@ bool menu_update(bool pause, u32 keys) {
 	case DIALOG_NORMAL:
 		const MenuEntry *choices = options_selected ? options_menu : main_menu;
 		size_t count = options_selected ? sizeof(options_menu) / sizeof(options_menu[0]) : sizeof(main_menu) / sizeof(main_menu[0]);
-		if ((keys & KEY_UP) && (selected > 0)) {
-			selected--;
+		if ((keys & KEY_UP) && selected > 0) {
+			if (options_challenge_mode() && choices[selected - 1].choice == MENU_HIGHSCORES && selected > 1) {
+				selected -= 2;
+			} else {
+				selected--;
+			}
 		}
-		if ((keys & KEY_DOWN) && (selected < count - 1)) {
-			selected++;
+		if ((keys & KEY_DOWN) && selected < count - 1) {
+			if (options_challenge_mode() && choices[selected + 1].choice == MENU_HIGHSCORES && selected < count - 2) {
+				selected += 2;
+			} else {
+				selected++;
+			}
 		}
 		if (keys & KEY_LEFT) {
 			switch(choices[selected].choice) {
@@ -382,7 +411,7 @@ bool menu_update(bool pause, u32 keys) {
 				grid_maps_prev();
 				break;
 			case MENU_MODE:
-				selected_game_mode = (selected_game_mode == GAME_MODE_ORIGINAL) ? GAME_MODE_MODERN : GAME_MODE_ORIGINAL;
+				options_game_mode_prev();
 				break;
 			default:
 				break;
@@ -405,7 +434,7 @@ bool menu_update(bool pause, u32 keys) {
 				grid_maps_next();
 				break;
 			case MENU_MODE:
-				selected_game_mode = (selected_game_mode == GAME_MODE_ORIGINAL) ? GAME_MODE_MODERN : GAME_MODE_ORIGINAL;
+				options_game_mode_next();
 				break;
 			default:
 				break;
@@ -416,7 +445,7 @@ bool menu_update(bool pause, u32 keys) {
 			options_difficulty_selected_reset();
 			lang_selected_reset();
 			grid_maps_selected_reset();
-			selected_game_mode = options_game_mode();
+			options_game_mode_selected_reset();
 			selected = 0;
 			break;
 		}
@@ -438,7 +467,7 @@ bool menu_update(bool pause, u32 keys) {
 				}
 				break;
 			case MENU_MODE:
-				if (options_game_mode() != selected_game_mode) {
+				if (options_game_mode_selected() != options_game_mode_current()) {
 					dialog_type = DIALOG_CONFIRM;
 					dialog_confirm_type = CONFIRM_MODE;
 					yes_selected = false;
@@ -456,7 +485,7 @@ bool menu_update(bool pause, u32 keys) {
 				options_difficulty_selected_reset();
 				lang_selected_reset();
 				grid_maps_selected_reset();
-				selected_game_mode = options_game_mode();
+				options_game_mode_selected_reset();
 				selected = 0;
 				break;
 			case MENU_GRID:
@@ -505,7 +534,7 @@ bool menu_update(bool pause, u32 keys) {
 					options_difficulty_apply();
 					break;
 				case CONFIRM_MODE:
-					options_set_game_mode(selected_game_mode);
+					options_game_mode_apply();
 					break;
 				case CONFIRM_GRID:
 					grid_maps_apply(grid_maps_selected_name());
@@ -524,7 +553,7 @@ bool menu_update(bool pause, u32 keys) {
 					grid_maps_selected_reset();
 					break;
 				case CONFIRM_MODE:
-					selected_game_mode = options_game_mode();
+					options_game_mode_selected_reset();
 					break;
 				default:
 					break;
@@ -560,13 +589,13 @@ void menu_init(void) {
 	selected = 0;
 	dialog_type = DIALOG_NORMAL;
 	options_difficulty_selected_reset();
+	options_game_mode_selected_reset();
 	lang_selected_reset();
 	grid_maps_selected_reset();
 	flying_sprite_init();
 	logo_scale = 6.0f;
 	logo_parallax = 0.0f;
 	options_selected = false;
-	selected_game_mode = options_game_mode();
 }
 
 void menu_close(void) {

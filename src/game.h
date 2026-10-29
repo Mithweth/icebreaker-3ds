@@ -49,6 +49,7 @@
 #define LINEMAXSTUCK 750
 
 #define PERCENTREQUIRED 80
+#define PERCENTREQUIREDCHALLENGE 90
 #define PERCENTBONUS 80
 #define PERCENTEXTRABONUS 85
 
@@ -76,7 +77,9 @@ typedef struct {
 	int lives;
 	int clear;
 	bool dead;
+	int level_tick;
 	size_t energy;
+	size_t previous_energy;
 	size_t energybonus;
 } GameStats;
 

@@ -55,6 +55,7 @@ void hiscore_read(void) {
 	long score;
 	// make sure all entries are zeroed out to start.
 	for (size_t m = 0; m < GAME_MODE_COUNT; m++) {
+		if (m == GAME_MODE_CHALLENGE) continue;
 		for (size_t g = 0; g < grid_maps_count(); g++) {
 			for (int i = 0; i < HISCORENUM; i++) {
 				snprintf(hiscore[m][g][i].name, sizeof(hiscore[m][g][i].name), "Nobody");
@@ -117,6 +118,7 @@ void hiscore_write(void) {
 		return;
 	}
 	for(size_t m = 0; m < GAME_MODE_COUNT; m++) {
+		if (m == GAME_MODE_CHALLENGE) continue;
 		for (size_t g = 0; g < grid_maps_count(); g++) {
 			if (grid_maps_random(grid_maps_get_name(g))) continue;
 			for (int i = 0; i < HISCORENUM; i++) {
@@ -189,7 +191,7 @@ void hiscore_dialog_draw(void) {
 
 bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats) {
 	if (keys & KEY_A) {
-		hiscore_add(options_game_mode(), grid_maps_current_name(), username, stats->score);
+		hiscore_add(options_game_mode_current(), grid_maps_current_name(), username, stats->score);
 		hiscore_write();
 		return true;
 	}
@@ -201,7 +203,7 @@ bool hiscore_dialog_update(u32 keys, touchPosition touch, const GameStats *stats
 		hiscore_prompt_name();
 	}
 	if (touch.px >= 210 && touch.px <= 260 && touch.py >= 160 && touch.py <= 178) {
-		hiscore_add(options_game_mode(), grid_maps_current_name(), username, stats->score);
+		hiscore_add(options_game_mode_current(), grid_maps_current_name(), username, stats->score);
 		hiscore_write();
 		return true;
 	}

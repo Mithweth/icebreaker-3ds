@@ -91,6 +91,11 @@ Penguin penguin_createxy(int x, int y)
 	return p;
 }
 
+void penguin_speed(Penguin* p, float speed) {
+	p->state.xdelta *= speed;
+	p->state.ydelta *= speed;
+}
+
 void penguin_draw(Penguin* p)
 {
 	C2D_ImageTint tint;

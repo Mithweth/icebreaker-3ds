@@ -32,12 +32,18 @@ typedef enum { EASY, NORMAL, HARD } GameDifficultyType;
 typedef enum {
 	GAME_MODE_ORIGINAL,
 	GAME_MODE_MODERN,
+	GAME_MODE_CHALLENGE,
 	GAME_MODE_COUNT,
 } GameMode;
 
+void options_game_mode_next(void);
+void options_game_mode_prev(void);
+void options_game_mode_selected_reset(void);
+void options_game_mode_apply(void);
+GameMode options_game_mode_current(void);
+GameMode options_game_mode_selected(void);
+bool options_challenge_mode(void);
 bool options_modern_mode(void);
-GameMode options_game_mode(void);
-void options_set_game_mode(GameMode mode);
 const char* options_game_mode_serialize(GameMode mode);
 GameMode options_game_mode_deserialize(const char *name);
 void options_difficulty_next(void);

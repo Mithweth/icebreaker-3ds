@@ -137,14 +137,16 @@ void game_start(void) {
 	level_close();
 	stats.score = 0;
 	stats.level = 1;
+	stats.previous_energy = 0;
 	stats.energy = 1;
 	stats.dead = false;
+	if (options_challenge_mode()) level_challenge_pick();
 	level_init(&stats);
 	game_step = GAME_LEVEL;
 }
 
 static void game_over(void) {
-	if (!grid_maps_random(grid_maps_current_name()) && hiscore_check_high(options_game_mode(), grid_maps_current_name(), stats.score)) {
+	if (!grid_maps_random(grid_maps_current_name()) && !options_challenge_mode() && hiscore_check_high(options_game_mode_current(), grid_maps_current_name(), stats.score)) {
 		game_step = GAME_HIGH_SCORE;
 	} else {
 		game_start();
@@ -155,8 +157,13 @@ static void game_continue(void) {
 	intro_close();
 	level_close();
 	stats.level++;
+	if (stats.previous_energy > 0) {
+		stats.energy = stats.previous_energy;
+		stats.previous_energy = 0;
+	}
 	stats.energy++;
 	stats.energy += stats.energybonus;
+	if (options_challenge_mode()) level_challenge_pick();
 	level_init(&stats);
 	game_step = GAME_LEVEL;
 }

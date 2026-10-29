@@ -34,7 +34,8 @@
 
 static GameDifficultyType current_difficulty;
 static GameDifficultyType selected_difficulty;
-static GameMode game_mode;
+static GameMode selected_game_mode;
+static GameMode current_game_mode;
 
 void options_difficulty_next(void) {
     if (selected_difficulty == HARD) {
@@ -75,16 +76,50 @@ GameDifficultyType options_difficulty_selected(void) {
     return selected_difficulty;
 }
 
-GameMode options_game_mode(void) {
-	return game_mode;
+void options_game_mode_next(void) {
+	selected_game_mode++;
+    if (selected_game_mode == GAME_MODE_COUNT) {
+        selected_game_mode = 0;
+    }
 }
 
-void options_set_game_mode(GameMode mode) {
-	game_mode = mode;
+void options_game_mode_prev(void) {
+    if (selected_game_mode == 0) {
+        selected_game_mode = GAME_MODE_COUNT - 1;
+    } else {
+        selected_game_mode--;
+    }
+}
+
+void options_game_mode_selected_reset(void) {
+	selected_game_mode = current_game_mode;
+}
+
+void options_game_mode_apply(void) {
+    current_game_mode = selected_game_mode;
+    printf("selected mode: %s\n", options_game_mode_serialize(current_game_mode));
+}
+
+static void options_game_mode_set(GameMode diff) {
+    selected_game_mode = diff;
+    current_game_mode = diff;
+    printf("selected mode: %s\n", options_game_mode_serialize(current_game_mode));
 }
 
 bool options_modern_mode(void) {
-	return game_mode == GAME_MODE_MODERN;
+	return current_game_mode == GAME_MODE_MODERN || current_game_mode == GAME_MODE_CHALLENGE;
+}
+
+bool options_challenge_mode(void) {
+	return current_game_mode == GAME_MODE_CHALLENGE;
+}
+
+GameMode options_game_mode_current(void) {
+    return current_game_mode;
+}
+
+GameMode options_game_mode_selected(void) {
+    return selected_game_mode;
 }
 
 const char* options_game_mode_serialize(GameMode mode) {
@@ -93,6 +128,8 @@ const char* options_game_mode_serialize(GameMode mode) {
 		return "original";
 	case GAME_MODE_MODERN:
 		return "modern";
+	case GAME_MODE_CHALLENGE:
+		return "challenge";
 	default:
 		return "original";
 	}
@@ -103,6 +140,8 @@ GameMode options_game_mode_deserialize(const char *name) {
 		return GAME_MODE_ORIGINAL;
 	} else if (strcmp(name, "modern") == 0) {
 		return GAME_MODE_MODERN;
+	} else if (strcmp(name, "challenge") == 0) {
+		return GAME_MODE_CHALLENGE;
 	} else {
 		return GAME_MODE_COUNT;
 	}
@@ -183,7 +222,7 @@ bool options_read(void) {
 				GameMode mode = options_game_mode_deserialize(valbuf);
 				if (mode != GAME_MODE_COUNT) {
 					mode_found = true;
-					game_mode = mode;
+					options_game_mode_set(mode);
 				}
 			}
 		}
@@ -211,7 +250,7 @@ bool options_read(void) {
 	}
 	if (!mode_found) {
 		printf("Mode not found. Set to original\n");
-		game_mode = GAME_MODE_ORIGINAL;
+		options_game_mode_set(GAME_MODE_ORIGINAL);
 	}
 	return true;
 }
@@ -231,13 +270,7 @@ bool options_write(void) {
 	fprintf(optionfile,"\n# Normal is the best way to play. Easy is okay to get started,\n");
 	fprintf(optionfile,"# but you won't get very high scores. Hard is for those who really\n");
 	fprintf(optionfile,"# want a challenge, but scores only slightly higher than normal.\n");
-
-	if (current_difficulty==NORMAL)
-		fprintf(optionfile,"Difficulty normal\n");
-	else if (current_difficulty==HARD)
-		fprintf(optionfile,"Difficulty hard\n");
-	else if (current_difficulty==EASY)
-		fprintf(optionfile,"Difficulty easy\n");
+	fprintf(optionfile,"Difficulty %s\n", options_difficulty_serialize(current_difficulty));
 
 	fprintf(optionfile,"\n# Themes provide an easy way to select (or tweak!) the appearance\n");
 	fprintf(optionfile,"# and sound of the game. Select from .ibt files in the game data\n");
@@ -261,9 +294,9 @@ bool options_write(void) {
 	}
 	fprintf(optionfile,"\n# Game mode. If unset, will fallback to the 'original' mode.\n");
 	fprintf(optionfile,"# Original mode is the exact same as Matthew Miller designed it.\n");
-	fprintf(optionfile,"# Modern mode is a new penguin behaviour and some power-ups to\n");
-	fprintf(optionfile,"# collect.\n");
-	fprintf(optionfile, "GameMode %s\n", options_game_mode_serialize(options_game_mode()));
+	fprintf(optionfile,"# Modern mode is a new penguin behaviour and some power-ups to collect.\n");
+	fprintf(optionfile,"# Challenge mode is Modern mode with some random mechanics\n");
+	fprintf(optionfile, "GameMode %s\n", options_game_mode_serialize(current_game_mode));
 	fclose(optionfile);
 	
 	printf("options successfully written in %s\n", OPTIONFILE);
