@@ -18,6 +18,8 @@ ProgressbarInner	0	0	48
 ProgressbarFill		34	80	172
 SpriteCharge		255	60	60
 SpriteBitmap		star
+TeleportBitmap		teleport1
+TeleportBitmap		teleport2
 ParticleBitmap		fallingstar
 EnergyBitmap		energy
 SoundOuch			nbwoanp

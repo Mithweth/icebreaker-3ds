@@ -33,7 +33,7 @@
 #include "level.h"
 
 #define CHARGE_TICKS_SECONDS    0.5f
-#define ANGLE_PHASES	3
+#define ANGLE_PHASES			3
 
 // Since the play field is not square anymore, checking only the block
 // first pixel is not enough. We need to ensure the penguin to hold
@@ -52,6 +52,26 @@ Penguin penguin_create(void) {
 		y = random() % (HEIGHT - BLOCKHEIGHT);
 	}
 	return penguin_createxy(x, y);
+}
+
+void penguin_teleport(Penguin* p) {
+	grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, ' ');
+	int x = random() % (WIDTH - BLOCKWIDTH);
+	int y = random() % (HEIGHT - BLOCKHEIGHT);
+	int tries = 0;
+	while(!penguin_occupy_block(x, y) && ++tries < 100) {
+		x = random() % (WIDTH - BLOCKWIDTH);
+		y = random() % (HEIGHT - BLOCKHEIGHT);
+	}
+	if (tries == 100) {	// nowhere to go: stay put
+		x = p->state.x;
+		y = p->state.y;
+	}
+	grid_mark(x, y, BLOCKWIDTH, BLOCKHEIGHT, '*');
+	grid_checkempty(p->state.x, p->state.y);
+	p->state.x = x;
+	p->state.y = y;
+	p->history_count = 0;
 }
 
 Penguin penguin_createxy(int x, int y)
@@ -88,6 +108,7 @@ Penguin penguin_createxy(int x, int y)
 	p.slow_axis = SLOW_NONE;
 	p.history_count = 0;
 	p.charge_tick = 0;
+	p.teleport_tick = 0;
 	return p;
 }
 
@@ -106,6 +127,10 @@ void penguin_draw(Penguin* p)
 	}
 	float scale_x = (p->state.xdelta < 0) ? -SPRITE_SIZE : SPRITE_SIZE;
 	C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, t, scale_x, SPRITE_SIZE);
+	if (p->teleport_tick > 0) {
+		size_t teleport_image_index = (p->teleport_tick / (FPS / 6)) % theme.teleport_sprite_count;
+		C2D_DrawImageAt(theme.teleportbitmap[teleport_image_index], p->state.x, p->state.y, 0.31f, t, scale_x, SPRITE_SIZE);
+	}
 }
 
 PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* line2, bool freezed)

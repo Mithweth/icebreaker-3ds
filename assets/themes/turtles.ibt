@@ -18,6 +18,8 @@ ProgressbarInner	0	92	48
 ProgressbarFill		182	204	134
 SpriteCharge		255	60	60
 SpriteBitmap		turtle
+TeleportBitmap		teleport1
+TeleportBitmap		teleport2
 EnergyBitmap		energy
 SoundOuch			ouch
 SoundCrash			splash

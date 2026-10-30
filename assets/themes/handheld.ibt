@@ -19,6 +19,8 @@ ProgressbarFill		64	214	165
 SpriteCharge		255	60	60
 SpriteBitmap		cartridge1
 SpriteBitmap		cartridge2
+TeleportBitmap		teleport1
+TeleportBitmap		teleport2
 ParticleBitmap		paddle
 EnergyBitmap		8bit_energy
 SoundOuch			8bit_touch

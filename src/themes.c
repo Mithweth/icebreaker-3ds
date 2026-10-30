@@ -121,6 +121,7 @@ bool themes_settheme(const char* themename, bool included) {
 	
 	themes_setdefaultcolors();
 	theme.sprite_count = 0;
+	theme.teleport_sprite_count = 0;
 	theme.particlebitmap = (C2D_Image){0};
 	theme.energybitmap = (C2D_Image){0};
 	theme.shieldbitmap = (C2D_Image){0};
@@ -322,7 +323,7 @@ bool themes_settheme(const char* themename, bool included) {
 				current_theme = i;
 			}			
 			else if (!strcmp(optbuf,"spritebitmap"))
-			{	
+			{
 				if (includes) {
 					printf("Warning: spritebitmap is ignored in a file using an include directive\n");
 					continue;
@@ -334,6 +335,24 @@ bool themes_settheme(const char* themename, bool included) {
 				}
 				theme.spriteimage[theme.sprite_count] = gfxmap_get_image(valbuf);
 				if (!theme.spriteimage[theme.sprite_count++].tex) {
+					printf("Error while loading sprite: No image found: %s\n", valbuf);
+					fclose(themefile);
+					return false;
+				}
+			}
+			else if (!strcmp(optbuf,"teleportbitmap"))
+			{	
+				if (includes) {
+					printf("Warning: teleportbitmap is ignored in a file using an include directive\n");
+					continue;
+				}
+				if (theme.teleport_sprite_count >= MAX_SPRITES) {
+					printf("Error while loading sprite: too many sprites: %s", valbuf);
+					fclose(themefile);
+					return false;					
+				}
+				theme.teleportbitmap[theme.teleport_sprite_count] = gfxmap_get_image(valbuf);
+				if (!theme.teleportbitmap[theme.teleport_sprite_count++].tex) {
 					printf("Error while loading sprite: No image found: %s\n", valbuf);
 					fclose(themefile);
 					return false;
@@ -446,6 +465,11 @@ bool themes_settheme(const char* themename, bool included) {
 	if (theme.sprite_count == 0) {
 		printf("Error: no spritebitmap found in theme %s. Using default.\n", themename);
 		return false;
+	}
+	if (theme.teleport_sprite_count == 0) {
+		printf("Warning: no teleportbitmap found in theme %s. Using default.\n", themename);
+		theme.teleportbitmap[theme.teleport_sprite_count++] = gfxmap_get_image("teleport1");
+		theme.teleportbitmap[theme.teleport_sprite_count++] = gfxmap_get_image("teleport2");
 	}
 	if (!theme.energybitmap.tex) {
 		printf("Warning: no energybitmap found in theme %s. Using default.\n", themename);

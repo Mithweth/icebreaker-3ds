@@ -18,6 +18,8 @@ ProgressbarInner	255	250	192
 ProgressbarFill		0	64	0
 SpriteCharge		255	60	60
 SpriteBitmap		cow
+TeleportBitmap		teleport1
+TeleportBitmap		teleport2
 EnergyBitmap		energy
 SoundOuch			moo
 SoundCrash			splat

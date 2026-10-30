@@ -2,7 +2,9 @@
 #pragma once
 
 #define heroic_heroic_sprite_idx 0
-#define heroic_heroic_energy_idx 1
-#define heroic_heroic_particle_idx 2
-#define heroic_heroic_shield_idx 3
-#define heroic_heroic_grid_idx 4
+#define heroic_heroic_teleport1_idx 1
+#define heroic_heroic_teleport2_idx 2
+#define heroic_heroic_energy_idx 3
+#define heroic_heroic_particle_idx 4
+#define heroic_heroic_shield_idx 5
+#define heroic_heroic_grid_idx 6

@@ -46,7 +46,7 @@ else
 	exit 1
 fi
 
-"$DOCKER" run --rm -u $USER_OPTS -v "$OUTPUT_DIR:/work" -w "/work" "$DOCKER_IMAGE" \
+"$DOCKER" run --rm $USER_OPTS -v "$OUTPUT_DIR:/work" -w "/work" "$DOCKER_IMAGE" \
 	tex3ds -i "$THEME_NAME.t3s" -H "$THEME_NAME.h" -o "$THEME_NAME.t3x"
 
 while read file; do

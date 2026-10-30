@@ -18,6 +18,8 @@ ProgressbarInner	255	255	255
 ProgressbarFill		255	159	205
 SpriteCharge		173	0	160
 SpriteBitmap		kitty
+TeleportBitmap		teleport1
+TeleportBitmap		teleport2
 ParticleBitmap		heart
 EnergyBitmap		heart
 SoundOuch			ewww
