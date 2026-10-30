@@ -29,3 +29,4 @@ SoundFreeze			freeze
 SoundSpeed			zap
 SoundShield			shield_enable
 SoundShieldOff		shield_disable
+SoundImpact			impact

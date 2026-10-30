@@ -51,7 +51,8 @@ typedef struct
 } Line;
 
 void line_reset(void);
-bool line_remove(void);
+bool line_remove_random(void);
+bool line_remove_touched(int x, int y, int size);
 void line_replay_history(void);
 void line_start(Line * l, LineDir d, int x, int y, int end);
 Line line_create(int linenum);

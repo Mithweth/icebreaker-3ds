@@ -57,11 +57,22 @@ static void line_remove_from_history(size_t index) {
 	line_history_count--;
 }
 
-bool line_remove(void) {
+bool line_remove_random(void) {
 	if (line_history_count < 2) return false;
 	size_t index = random() % (line_history_count - 1);
 	line_remove_from_history(index);
 	return true;
+}
+
+bool line_remove_touched(int x, int y, int size) {
+	for (size_t i = 0; i < line_history_count; i++) {
+		const Coordinate *c = &line_history[i];
+		if (x + BLOCKWIDTH * size + 4 > c->x && x - 4 < c->x + c->w && y + BLOCKHEIGHT * size + 4 > c->y && y - 4 < c->y + c->h) {
+			line_remove_from_history(i);
+			return true;
+		}
+	}
+	return false;
 }
 
 void line_replay_history(void) {
@@ -315,7 +326,6 @@ int line_move(Line * l)
 	
 	return 0;
 }
-
 
 void line_kill(Line * l)
 {

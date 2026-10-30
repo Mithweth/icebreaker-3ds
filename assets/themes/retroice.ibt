@@ -31,3 +31,4 @@ SoundFreeze			8bit_freeze
 SoundSpeed			8bit_zap
 SoundShield			8bit_enable
 SoundShieldOff		8bit_disable
+SoundImpact			impact

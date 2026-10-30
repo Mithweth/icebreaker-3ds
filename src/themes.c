@@ -458,6 +458,12 @@ bool themes_settheme(const char* themename, bool included) {
 					printf("Error while loading sound file: %s\n", valbuf);
 				}
 			}
+			else if (!strcmp(optbuf,"soundimpact"))
+			{
+				if (!themes_sound_load(SNDIMPACT, valbuf, custom_theme)) {
+					printf("Error while loading sound file: %s\n", valbuf);
+				}
+			}
 		}	
 	}	
 	fclose(themefile);

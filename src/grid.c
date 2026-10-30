@@ -130,18 +130,18 @@ void grid_generate_colors(void) {
 	}
 }
 
-void grid_drawblocks(void) {
+void grid_drawblocks(int wallx, int wally) {
 	C2D_DrawRectSolid(0, 0, 0.0f, WIDTH, HEIGHT, theme.color.background);
 
 	if (theme.gridbitmap.tex) {
-		C2D_DrawImageAt(theme.gridbitmap, 0, 0, 0.05f, NULL, 1.0f, 1.0f);
+		C2D_DrawImageAt(theme.gridbitmap, wallx, wally, 0.05f, NULL, 1.0f, 1.0f);
 		for (int bx = 0; bx < COLS; bx++) {
 			for (int by = 0; by < ROWS; by++) {
 				int x = bx * BLOCKWIDTH;
 				int y = by * BLOCKHEIGHT;
 
 				if (grid_at(x,y) == '.' || grid_at(x,y) == '-' || grid_at(x,y) == '|') {
-					C2D_DrawRectSolid(x, y, 0.1f, BLOCKWIDTH, BLOCKHEIGHT, theme.color.background);		
+					C2D_DrawRectSolid(x + wallx, y + wally, 0.1f, BLOCKWIDTH, BLOCKHEIGHT, theme.color.background);		
 				}
 			}
 		}
@@ -154,13 +154,13 @@ void grid_drawblocks(void) {
 
 			if (grid_at(x,y) == '.' || grid_at(x,y) == '-' || grid_at(x,y) == '|')
 				continue;
-			C2D_DrawRectSolid(x, y, 0.1f, BLOCKWIDTH, BLOCKHEIGHT, theme.color.gridline);
+			C2D_DrawRectSolid(x + wallx, y + wally, 0.1f, BLOCKWIDTH, BLOCKHEIGHT, theme.color.gridline);
 
 			if (theme.color.gridhighlight == theme.color.gridline) {
-				C2D_DrawRectSolid(x, y, 0.2f, BLOCKWIDTH - 1, BLOCKHEIGHT - 1, block_colors[bx][by]);
+				C2D_DrawRectSolid(x + wallx, y + wally, 0.2f, BLOCKWIDTH - 1, BLOCKHEIGHT - 1, block_colors[bx][by]);
 			} else {
-				C2D_DrawRectSolid(x, y, 0.2f, BLOCKWIDTH - 1, BLOCKHEIGHT - 1, theme.color.gridhighlight);
-				C2D_DrawRectSolid(x + 1, y + 1, 0.3f, BLOCKWIDTH - 2, BLOCKHEIGHT - 2, block_colors[bx][by]);
+				C2D_DrawRectSolid(x + wallx, y + wally, 0.2f, BLOCKWIDTH - 1, BLOCKHEIGHT - 1, theme.color.gridhighlight);
+				C2D_DrawRectSolid(x + 1 + wallx, y + 1 + wally, 0.3f, BLOCKWIDTH - 2, BLOCKHEIGHT - 2, block_colors[bx][by]);
 			}
 		}
 	}

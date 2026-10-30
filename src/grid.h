@@ -27,7 +27,7 @@
 #include <stdbool.h>
 
 void grid_mark(int x, int y, int w, int h, char fillchar);
-void grid_drawblocks(void);
+void grid_drawblocks(int wallx, int wally);
 void grid_generate_colors(void);
 void grid_checkempty(int x, int y);
 char grid_at(int x, int y);
