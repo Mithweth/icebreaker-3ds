@@ -1,31 +1,86 @@
+# Heroic - IceBreaker 3DS custom theme
+#
+# The theme name is the file name without its extension: "heroic".
+# Build it with:  themes/create_theme.sh themes/heroic/input/heroic.ibt themes/heroic/output
+# For Windows:  themes\create_theme.ps1 "themes\heroic\input\heroic.ibt" "themes\heroic\output"
+# then copy everything from themes/heroic/output/ to sdmc:/icebreaker/ on the SD card:
+#   heroic.ibt   this file
+#   heroic.t3x   the images below, packed by tex3ds into one sheet
+#   heroic.h     the index of that sheet (the .t3x and .h names must match the theme name)
+#   *.raw        the sounds below, converted to mono 16-bit PCM at 22050 Hz
+#
+# Images and Sounds are named without extension.
+#
+# Colours are red, green and blue values from 0 to 255.
+# Keywords are not case sensitive. Comment lines must start with "#" in the
+# first column.
+
+# Bottom screen background, also shown where the ice has been cleared
 Background			24	36	53
+# Menu, dialog and top screen text
 NormalText			241 230 206
+
+# Ice blocks: each block gets a random colour between Min and Max.
+# These four colours are not used when a picture of the ice is set (see the
+# GridBitmap directive below).
 BoardFillMin		68	85 101
 BoardFillMax		132 149 162
+# Outer edge of each ice block
 Gridline			48	65	78
+# Inner edge of each ice block (no inner edge if equal to Gridline)
 GridHighlight		255 237 195
+
+# Line drawn upwards or to the left
 Line1				255 205	82
+# Line drawn downwards or to the right
 Line2				238	98	86
+
+# Selected menu entry, dialog frames and buttons
 MenuHighlight		247 195	94
+# "Game over" text and error messages
 GameoverText		255 105	95
+# Score line at the end of a level
 ScorescrollText		241 230 206
+# Bonus and energy lines at the end of a level
 BonusscrollText		148 224 176
+# Name entry box of the high score and editor dialogs, and its text
 TextentryBox		247 195	94
 TextentryText		24	36	53
+
+# Top screen progress bar (cleared ice): border, background and filling
 ProgressbarOutline	220 172	91
 ProgressbarInner	24	36	53
 ProgressbarFill		247 195	94
+
+# Modern mode: tint over the whole screen while the Shield is up
 ShieldBackground	57	41	80
+# Modern mode: tint of the penguins charging at a line
 SpriteCharge		255	68	54
+
+# Penguin image, about 14x14. Repeat the line (up to 4 times) to animate it.
 SpriteBitmap		heroic_sprite
+# Teleport magic effect for Challenge mode. Repeat the line (up to 4 times) to animate it.
+TeleportBitmap		heroic_teleport1
+TeleportBitmap		heroic_teleport2
+# Modern mode: energy icon on the top screen, about 14x14
 EnergyBitmap		heroic_energy
+# Small image falling on the top screen, from 5x5 to 14x14
 ParticleBitmap		heroic_particle
+# Modern mode: picture shown faded in the middle of the screen while the
+# Shield is up, 320x240 at most
 ShieldBitmap		heroic_shield
+# Full 320x240 picture of the ice, drawn instead of the coloured blocks
 GridBitmap			heroic_grid
+
+# Swipe started on a penguin
 SoundOuch			heroic_hit
+# Line broken by a penguin
 SoundCrash			heroic_hit
+# Level cleared
 SoundVictory		heroic_victory
+# Game over
 SoundDefeat			heroic_defeat
+# Modern mode: Freeze, Speed and Shield used, and Shield gone
 SoundFreeze			heroic_freeze
 SoundSpeed			heroic_speed
 SoundShield			heroic_shieldon

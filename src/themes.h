@@ -60,7 +60,9 @@ typedef struct {
 	char name[64];
 	ThemeColorsType color;
 	C2D_Image spriteimage[MAX_SPRITES];
+	C2D_Image teleportbitmap[MAX_SPRITES];
 	size_t sprite_count;
+	size_t teleport_sprite_count;
 	C2D_Image particlebitmap;
 	C2D_Image energybitmap;
 	C2D_Image shieldbitmap;

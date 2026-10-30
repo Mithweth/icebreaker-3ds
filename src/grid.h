@@ -31,6 +31,7 @@ void grid_drawblocks(void);
 void grid_generate_colors(void);
 void grid_checkempty(int x, int y);
 char grid_at(int x, int y);
+bool grid_is_open(char c);
 void grid_reset(void);
 int grid_countcleared(void);
 bool grid_expand(int cols, int rows, const char tmpgrid[cols][rows]);

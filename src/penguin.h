@@ -53,6 +53,7 @@ typedef struct {
 	PenguinState history[MAX_STATE_HISTORY];
 	size_t history_count;
 	size_t charge_tick;
+	size_t teleport_tick;
 } Penguin;
 
 typedef enum {
@@ -64,6 +65,7 @@ typedef enum {
 } PenguinHit;
 
 void penguin_speed(Penguin* p, float speed);
+void penguin_teleport(Penguin* p);
 Penguin penguin_create(void);
 Penguin penguin_createxy(int x, int y);
 void penguin_draw(Penguin* p);

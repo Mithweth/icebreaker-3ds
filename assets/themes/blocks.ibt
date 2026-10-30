@@ -18,6 +18,8 @@ ProgressbarInner	80	0	90
 ProgressbarFill		156	41	175
 SpriteCharge		255	60	60
 SpriteBitmap		woodblock
+TeleportBitmap		teleport1
+TeleportBitmap		teleport2
 EnergyBitmap		energy
 SoundOuch			scrunch
 SoundCrash			tap

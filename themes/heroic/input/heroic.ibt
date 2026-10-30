@@ -59,6 +59,9 @@ SpriteCharge		255	68	54
 
 # Penguin image, about 14x14. Repeat the line (up to 4 times) to animate it.
 SpriteBitmap		heroic_sprite
+# Teleport magic effect for Challenge mode. Repeat the line (up to 4 times) to animate it.
+TeleportBitmap		heroic_teleport1
+TeleportBitmap		heroic_teleport2
 # Modern mode: energy icon on the top screen, about 14x14
 EnergyBitmap		heroic_energy
 # Small image falling on the top screen, from 5x5 to 14x14

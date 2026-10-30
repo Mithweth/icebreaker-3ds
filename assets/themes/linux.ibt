@@ -18,6 +18,8 @@ ProgressbarInner	20	50	75
 ProgressbarFill		100	200	240
 SpriteCharge		70	60	255
 SpriteBitmap		penguin
+TeleportBitmap		teleport1
+TeleportBitmap		teleport2
 EnergyBitmap		snowflake
 ShieldBitmap		shield
 SoundOuch			ouch

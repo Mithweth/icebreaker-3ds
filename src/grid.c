@@ -47,12 +47,16 @@ char grid_at(int x, int y) {
 	return grid[x][y];
 }
 
+bool grid_is_open(char c) {
+	return c == ' ' || c == '1' || c == '2';
+}
+
 static void grid_squarefill(int x, int y)
 {
 	// x and y must be the top left corner of a square, or else this
 	// will look silly. and there's no bounds checking!
 
-	if (grid_at(x,y)==' ' || grid_at(x,y)=='1' || grid_at(x,y)=='2')
+	if (grid_is_open(grid_at(x,y)))
 	{
 		grid_mark(x,y,BLOCKWIDTH,BLOCKHEIGHT,'.');
 		grid_squarefill(x+BLOCKWIDTH, y);
@@ -176,7 +180,7 @@ static int grid_penguinsearch(int i, int j)
 	}
 
 		  
-	if (maskgrid[i][j]==' ' || maskgrid[i][j]=='1' || maskgrid[i][j]=='2')  // Ah ha! The nefarious "instant melting ice" bug solved!  NOTE: if more lines are added to the game, add them here too!
+	if (grid_is_open(maskgrid[i][j]))  // Ah ha! The nefarious "instant melting ice" bug solved!
 	{
 		maskgrid[i][j]=',';
 		
@@ -247,7 +251,7 @@ void grid_restore_base(void) {
 static void grid_flood_keep(int x, int y) {
 	if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
 	char c = maskgrid[x][y];
-	if (c != ' ' && c != '*' && c != '1' && c != '2') return;
+	if (!grid_is_open(c) && c != '*') return;
 	maskgrid[x][y] = ',';
 	grid_flood_keep(x + BLOCKWIDTH, y);
 	grid_flood_keep(x - BLOCKWIDTH, y);

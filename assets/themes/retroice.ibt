@@ -19,6 +19,8 @@ ProgressbarFill		255	199	74
 SpriteCharge		255	60	60
 SpriteBitmap		ice_cube1
 SpriteBitmap		ice_cube2
+TeleportBitmap		teleport1
+TeleportBitmap		teleport2
 ParticleBitmap		snowflake
 EnergyBitmap		8bit_energy
 SoundOuch			8bit_touch
