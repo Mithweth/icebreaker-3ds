@@ -45,6 +45,8 @@
 #define GESTURE_THRESHOLD 		12
 #define FREEZE_DURATION_SECONDS	2.0f
 #define SPEED_DURATION_SECONDS	1.0f
+#define RESTORE_LINES_PCT		50
+#define RESTORE_LINES_DELAY		7  // seconds
 
 static Line line1;
 static Line line2;
@@ -74,6 +76,8 @@ typedef enum {
 	CHALLENGE_TIME_LIMIT,
 	CHALLENGE_NO_POWERUP,
 	CHALLENGE_SPEEDY_PENGUINS,
+	CHALLENGE_UNSTABLE_LINES,
+	CHALLENGE_SLOW_LINES,
 	CHALLENGE_COUNT,
 } ChallengeMode;
 
@@ -88,10 +92,15 @@ static const char* challenge_names[] = {
 	"CHALLENGE_TIME_LIMIT",
 	"CHALLENGE_NO_POWERUP",
 	"CHALLENGE_SPEEDY_PENGUINS",
+	"CHALLENGE_UNSTABLE_LINES",
+	"CHALLENGE_SLOW_LINES"
 };
 static size_t current_challenge;
 static size_t random_history_count;
 static size_t random_history[RANDOM_HISTORY];
+static bool unstable_lines;
+static bool slow_lines;
+static size_t unstable_lines_tick;
 
 
 static bool challenge_in_history(size_t challenge) {
@@ -138,6 +147,18 @@ static void level_action_startclick(int mousex, int mousey, bool vertical)
 	}
 }
 
+static void level_rebuild_grid(void) {
+	grid_restore_base();
+	line_replay_history();
+	if (line1.on) grid_mark(line1.geom.x, line1.geom.y, line1.geom.w, line1.geom.h, line1.id);
+	if (line2.on) grid_mark(line2.geom.x, line2.geom.y, line2.geom.w, line2.geom.h, line2.id);
+
+	for (int i = 0; i < penguincount; i++) {
+		grid_mark(flock[i].state.x, flock[i].state.y, BLOCKWIDTH, BLOCKHEIGHT, '*');
+	}
+	grid_fill_empty_areas();
+}
+
 void level_challenge_pick(void) {
 	challenge_explained = false;
 	current_challenge = random() % CHALLENGE_COUNT;
@@ -152,6 +173,7 @@ void level_challenge_pick(void) {
 }
 
 void level_init(GameStats *stats) {
+	line_reset();
 	grid_generate_colors();
 	grid_maps_apply(grid_maps_current_name());
 	flying_sprite_init();
@@ -173,6 +195,9 @@ void level_init(GameStats *stats) {
 	}
 	float speed_modifier = 1.0f;
 	stats->lives = stats->level + 1;
+	unstable_lines = false;
+	slow_lines = false;
+	unstable_lines_tick = 0;
 	if (options_challenge_mode()) {
 		switch(current_challenge) {
 		case CHALLENGE_LAST_CHANCE:
@@ -190,6 +215,12 @@ void level_init(GameStats *stats) {
 			break;
 		case CHALLENGE_TIME_LIMIT:
 			stats->level_tick = 60 * FPS;
+			break;
+		case CHALLENGE_UNSTABLE_LINES:
+			unstable_lines = true;
+			break;
+		case CHALLENGE_SLOW_LINES:
+			slow_lines = true;
 			break;
 		default:
 			break;
@@ -293,6 +324,25 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			stats->lives = 0;
 		}
 	}
+	if (unstable_lines) {
+		if (unstable_lines_tick++ > RESTORE_LINES_DELAY * FPS) {
+			if (random() % RESTORE_LINES_PCT == 0) {
+				unstable_lines_tick = 0;
+				long count_before = grid_countcleared();
+				long count_after = count_before;
+				while (count_after == count_before && line_remove()) {
+					level_rebuild_grid();
+					count_after = grid_countcleared();
+				}
+				stats->clear = count_after;
+				stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
+			}
+		}
+	}
+	int line_speed = 1;
+	if (slow_lines) {
+		line_speed = tick % 2;
+	}
 	if (shield_used && !line1.on && !line2.on) {
 		shield_enabled = false;
 		shield_used = false;
@@ -342,7 +392,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (freeze_tick > 0) freeze_tick--;
 	if (speed_tick > 0) speed_tick--;
 	bool life_lost = false;
-	int speed = (speed_tick > 0) ? 3 : 1;
+	int speed = (speed_tick > 0) ? 3 : line_speed;
 	for(int i = 0; i < speed; i++) {
 		if (line1.on) {
 			// a line hit by a penguin last frame must not move, or it
@@ -450,7 +500,6 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			stats->basescore=(int)(stats->clear*scoremod)-timepenalty;
 		}
 	}
-
 	return true;
 }
 

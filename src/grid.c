@@ -35,8 +35,9 @@ static long rcount;
 
 #define MAXRCOUNT 80000
 
-char grid[WIDTH][HEIGHT];
-char maskgrid[WIDTH][HEIGHT];
+static char grid[WIDTH][HEIGHT];
+static char maskgrid[WIDTH][HEIGHT];
+static char base_grid[WIDTH][HEIGHT];
 static u32 block_colors[COLS][ROWS];
 static long total_blocks;
 
@@ -80,6 +81,7 @@ void grid_reset(void) {
 		}
 	}
 	total_blocks = WIDTH * HEIGHT;
+	memcpy(base_grid, grid, sizeof(base_grid));
 }
 
 void grid_mark(int x, int y, int w, int h, char fillchar) {
@@ -207,7 +209,7 @@ void grid_checkempty(int x, int y)
 	{
 		// this makes sure x and y are the top left corners of blocks.
 		// since the area is empty of penguins, it should be completely
-		// safe to use this isntead of grid_floodfill here. really. :)
+		// safe to use this instead of grid_floodfill here. really. :)
 		grid_squarefill(x / BLOCKWIDTH * BLOCKWIDTH, y / BLOCKHEIGHT * BLOCKHEIGHT);
 	}
 }
@@ -233,6 +235,38 @@ bool grid_expand(int cols, int rows, const char tmpgrid[cols][rows]) {
 	if (total_blocks == 0) {
 		return false;
 	}
-	memcpy(maskgrid,grid,WIDTH*HEIGHT);
+	memcpy(maskgrid, grid, sizeof(base_grid));
+	memcpy(base_grid, grid, sizeof(base_grid));
 	return true;
+}
+
+void grid_restore_base(void) {
+	memcpy(grid, base_grid, sizeof(base_grid));
+}
+
+static void grid_flood_keep(int x, int y) {
+	if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
+	char c = maskgrid[x][y];
+	if (c != ' ' && c != '*' && c != '1' && c != '2') return;
+	maskgrid[x][y] = ',';
+	grid_flood_keep(x + BLOCKWIDTH, y);
+	grid_flood_keep(x - BLOCKWIDTH, y);
+	grid_flood_keep(x, y + BLOCKHEIGHT);
+	grid_flood_keep(x, y - BLOCKHEIGHT);
+}
+
+void grid_fill_empty_areas(void) {
+	memcpy(maskgrid, grid, sizeof(maskgrid));
+	for (int x = BLOCKWIDTH / 2; x < WIDTH; x += BLOCKWIDTH) {
+		for (int y = BLOCKHEIGHT / 2; y < HEIGHT; y += BLOCKHEIGHT) {
+			if (grid[x][y] == '*') grid_flood_keep(x, y);
+		}
+	}
+	for (int x = BLOCKWIDTH / 2; x < WIDTH; x += BLOCKWIDTH) {
+		for (int y = BLOCKHEIGHT / 2; y < HEIGHT; y += BLOCKHEIGHT) {
+			if (grid[x][y] == ' ' && maskgrid[x][y] != ',') {
+				grid_mark(x - BLOCKWIDTH / 2, y - BLOCKHEIGHT / 2, BLOCKWIDTH, BLOCKHEIGHT, '.');
+			}
+		}
+	}
 }
