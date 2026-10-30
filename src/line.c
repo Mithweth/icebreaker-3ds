@@ -24,13 +24,52 @@
 
 #include <citro2d.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "game.h"
 #include "line.h"
 #include "grid.h"
 #include "themes.h"
 
+#define MAX_LINES		100
+
+static Coordinate line_history[MAX_LINES];
+static size_t line_history_count;
+
 static bool position_free(int x, int y) {
 	return grid_at(x, y) == ' ' || grid_at(x, y) == '*';
+}
+
+void line_reset(void) {
+	line_history_count = 0;
+}
+
+static void line_add_in_history(const Line *l) {
+	if (line_history_count < MAX_LINES) {
+		line_history[line_history_count++] = l->geom;
+	}
+}
+
+static void line_remove_from_history(size_t index) {
+	if (line_history_count == 0) return;
+	for(size_t i = index + 1; i < line_history_count; i++) {
+		line_history[i - 1] = line_history[i];
+	}
+	line_history_count--;
+}
+
+bool line_remove(void) {
+	if (line_history_count < 2) return false;
+	size_t index = random() % (line_history_count - 1);
+	line_remove_from_history(index);
+	return true;
+}
+
+void line_replay_history(void) {
+	if (line_history_count == 0) return;
+	for(size_t i = 0; i < line_history_count; i++) {
+		Coordinate *c = &line_history[i];
+		grid_mark(c->x, c->y, c->w, c->h, '|');
+	}
 }
 
 void line_draw(const Line *l, u32 color) {
@@ -75,6 +114,7 @@ static void line_finish(Line * l)
 		// falls through.
 		case UP:
 			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'|');
+			line_add_in_history(l);
 			line_draw(l,theme.color.background);
 
 			// scan along edges to quickly determine if this
@@ -99,6 +139,7 @@ static void line_finish(Line * l)
 		// falls through
 		case LEFT:
 			grid_mark(l->geom.x,l->geom.y,l->geom.w,l->geom.h,'-');
+			line_add_in_history(l);
 			line_draw(l,theme.color.background);
 
 			// scan along edges to quickly determine if this

@@ -50,6 +50,9 @@ typedef struct
 	bool shield_hit;
 } Line;
 
+void line_reset(void);
+bool line_remove(void);
+void line_replay_history(void);
 void line_start(Line * l, LineDir d, int x, int y, int end);
 Line line_create(int linenum);
 int line_move(Line * l);
