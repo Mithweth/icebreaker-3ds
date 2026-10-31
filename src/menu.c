@@ -194,31 +194,37 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	C2D_DrawRectSolid(0, 0, 0.0f, 400.0f, 240.0f, theme.color.background);
 	char tmptext[30]; // should be plenty big.
 	text_put(175 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_SCORE"));
-	text_put(10 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LEVEL"));
-	text_rput(385 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_HIGH_SCORE"));
-	snprintf(tmptext,30,"%d %%",stats->clear);
-	text_rput(390 + parallax, 200, 0.3f, 2, theme.color.normaltext, tmptext);
-	snprintf(tmptext,30,"%ld",stats->score + stats->basescore);
+	snprintf(tmptext, 30, "%ld", stats->score + stats->basescore);
 	text_cput(200 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
-	snprintf(tmptext,30,"%d",stats->level);
+
+	text_put(10 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_LEVEL"));
+	snprintf(tmptext, 30, "%d", stats->level);
 	text_put(20 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 
-	C2D_DrawImageAt(theme.spriteimage[0], 10.0f + parallax, 205.0f - theme.spriteimage[0].subtex->height / 2, 0.1f, NULL, 1.0f, 1.0f);
-	snprintf(tmptext,30,"%d",stats->lives);
-	text_put(30.0f + parallax, 200.0f, 0.1f, 2, theme.color.normaltext, tmptext);
-	if (stats->level_tick > 0) {
-		snprintf(tmptext, 30, "%s %d", lang_get("MENU_TIME"), stats->level_tick / FPS);
-		text_cput(200.0f, 200.0f, 0.1f, 2, theme.color.normaltext, tmptext);
+	if (!grid_maps_random(grid_maps_current_name()) && !options_challenge_mode()) {
+		text_rput(385 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_HIGH_SCORE"));
+		snprintf(tmptext, 30, "%ld", hiscore_get(options_game_mode_current(), grid_maps_current_name(), 0)->score);
+		text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
 	}
+
 	if (options_modern_mode()) {
 		C2D_DrawImageAt(theme.energybitmap, 10.0f + parallax, 180.0f, 0.1f, NULL, 1.0f, 1.0f);
 		snprintf(tmptext, 30, "%zu", stats->energy);
 		text_put(30.0f + parallax, 184.0f, 0.1f, 2, theme.color.normaltext, tmptext);
 	}
-	if (!grid_maps_random(grid_maps_current_name()) && !options_challenge_mode()) {
-		snprintf(tmptext, 30,"%ld", hiscore_get(options_game_mode_current(), grid_maps_current_name(), 0)->score);
-		text_rput(385 + parallax, 25, 0.3f, 2, theme.color.normaltext, tmptext);
+
+	C2D_DrawImageAt(theme.spriteimage[0], 10.0f + parallax, 205.0f - theme.spriteimage[0].subtex->height / 2, 0.1f, NULL, 1.0f, 1.0f);
+	snprintf(tmptext, 30, "%d", stats->lives);
+	text_put(30.0f + parallax, 200.0f, 0.1f, 2, theme.color.normaltext, tmptext);
+
+	if (stats->level_tick > 0) {
+		snprintf(tmptext, 30, "%s %d", lang_get("MENU_TIME"), stats->level_tick / FPS);
+		text_cput(200.0f, 200.0f, 0.1f, 2, theme.color.normaltext, tmptext);
 	}
+
+	snprintf(tmptext, 30, "%d %%", stats->clear);
+	text_rput(390 + parallax, 200, 0.3f, 2, theme.color.normaltext, tmptext);
+
 	progress_bar_draw(stats->clear);
 	snowflake_draw(parallax);
 	if (!pause) {
