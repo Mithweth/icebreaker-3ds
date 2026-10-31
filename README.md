@@ -28,7 +28,7 @@ score, high score, lives and how much ice has been cleared.
 | Tap the touch screen   | Skip the intro, or continue after the end-of-level screen                |
 | START                  | Open / close the menu (pauses the game)                                  |
 | D-Pad up / down        | Move through the menu                                                    |
-| D-Pad left / right     | Change the difficulty, the board or the theme, and browse the highscores |
+| D-Pad left / right     | Change an option (language, difficulty, mode, theme, board) and browse the highscores |
 | A                      | Confirm                                                                  |
 
 ## Menu
@@ -37,14 +37,14 @@ score, high score, lives and how much ice has been cleared.
 
 - **New game** - start over from level 1.
 - **Options** - open the options menu.
-- **High scores** - the five best scores.
+- **High scores** - the five best scores (not available in Challenges mode).
 - **Editor** - the grid editor.
 - **Help** - a short summary of the rules.
 
 ### Options
 - **Language** - change the current language.
 - **Difficulty** - Changing it ends the current game.
-- **Mode** - Game mode: Modern or Original. See below.
+- **Mode** - Game mode: Original, Modern or Challenges. See below.
 - **Theme** - change the look of the game.
 - **Grid** - change the current board. It ends the current game. **Random**
   picks a new grid at the start of every level.
@@ -56,7 +56,7 @@ Custom grids and themes go in the same `sdmc:/icebreaker/` folder.
 
 ## Game mode
 
-The **Mode** option chooses between two ways to play. Changing it ends the
+The **Mode** option chooses between three ways to play. Changing it ends the
 current game.
 
 ### Original
@@ -83,6 +83,23 @@ You can spend them to buy Power-ups.
 | Freeze   | 1      | X or UP   | Penguins stop for 2 seconds                 |
 | Speed    | 1      | B or DOWN | Lines are drawn 3 times faster for 1 second |
 | Shield   | 2      | Y or LEFT | Penguins bounce off your lines instead of breaking them. The shield lasts until a penguin hits it |
+
+### Challenges
+
+Modern mode, with energy and power-ups, plus a twist: every level draws a
+random challenge. Explanation are shown on the bottom screen when the level starts;
+
+| Challenge      | Effect                                                                 |
+|----------------|------------------------------------------------------------------------|
+| Conqueror      | Clear 90% of the ice instead of 80%                                    |
+| Last chance    | Only one life for the level                                            |
+| Time attack    | One minute to clear the level                                          |
+| No energy      | Power-ups can't be used during the level                               |
+| Furious        | Penguins move twice as fast                                            |
+| Unstable lines | Every few seconds a finished line may vanish, and the ice it cut off comes back |
+| Slow lines     | Lines are drawn at half speed                                          |
+| Teleportation  | Penguins teleport at random                                            |
+| Boss           | A single giant penguin. When it hits a wall, it breaks the line it hit |
 
 ## Installation
 
