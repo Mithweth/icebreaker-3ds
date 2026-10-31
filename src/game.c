@@ -140,8 +140,10 @@ void game_start(void) {
 	stats.previous_energy = 0;
 	stats.energy = 1;
 	stats.dead = false;
-	if (options_challenge_mode()) level_challenge_pick();
-	level_init(&stats);
+	GameStats saved_stats = stats;
+	while (!level_init(&stats)) {
+		stats = saved_stats;
+	}
 	game_step = GAME_LEVEL;
 }
 
@@ -163,8 +165,10 @@ static void game_continue(void) {
 	}
 	stats.energy++;
 	stats.energy += stats.energybonus;
-	if (options_challenge_mode()) level_challenge_pick();
-	level_init(&stats);
+	GameStats saved_stats = stats;
+	while (!level_init(&stats)) {
+		stats = saved_stats;
+	}
 	game_step = GAME_LEVEL;
 }
 

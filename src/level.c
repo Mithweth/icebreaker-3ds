@@ -164,7 +164,7 @@ static void level_rebuild_grid(void) {
 	grid_fill_empty_areas();
 }
 
-void level_challenge_pick(void) {
+static void level_challenge_pick(void) {
 	challenge_explained = false;
 	current_challenge = random() % CHALLENGE_COUNT;
 	while (random_history_count < CHALLENGE_COUNT && challenge_in_history(current_challenge)) {
@@ -177,7 +177,8 @@ void level_challenge_pick(void) {
 	random_history[random_history_count++] = current_challenge;
 }
 
-void level_init(GameStats *stats) {
+bool level_init(GameStats *stats) {
+	if (options_challenge_mode()) level_challenge_pick();
 	line_reset();
 	grid_generate_colors();
 	grid_maps_apply(grid_maps_current_name());
@@ -249,7 +250,7 @@ void level_init(GameStats *stats) {
 		break;
 		default:
 			fprintf(stderr,"Unknown difficulty -- that can't happen!\n");
-			return;
+			return true;
 		break;
 	}
 	stats->basescore = 0;
@@ -263,12 +264,16 @@ void level_init(GameStats *stats) {
 	for (size_t i = 0; i < penguincount; i++) {
 		int size = (i < boss_count) ? 4 : 1;
 		flock[i] = penguin_create(size);
+		if (flock[i].size == 0) {
+			return false;
+		}
 		penguin_speed(&flock[i], speed_modifier);
 		if (options_modern_mode()) {
 			flock[i].slow_axis = random() % SLOW_AXIS_COUNT;
 		}
 	}
 	tick = 0;
+	return true;
 }
 
 void level_draw(void) {

@@ -27,8 +27,7 @@
 #include <3ds.h>
 #include "game.h"
 
-void level_challenge_pick(void);
-void level_init(GameStats *stats);
+bool level_init(GameStats *stats);
 void level_draw(void);
 bool level_update(u32 keys, touchPosition touch, GameStats *stats);
 void level_close(void);

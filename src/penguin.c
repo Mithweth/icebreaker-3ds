@@ -63,10 +63,12 @@ static bool penguin_occupy_block(int x, int y, int size) {
 Penguin penguin_create(int size) {
 	int x = random() % (WIDTH - BLOCKWIDTH * size);
 	int y = random() % (HEIGHT - BLOCKHEIGHT * size);
-	while(!penguin_occupy_block(x, y, size)) {
+	int tries = 0;
+	while(!penguin_occupy_block(x, y, size) && ++tries < 1000) {
 		x = random() % (WIDTH - BLOCKWIDTH * size);
 		y = random() % (HEIGHT - BLOCKHEIGHT * size);
 	}
+	if (!penguin_occupy_block(x, y, size)) return (Penguin){0};
 	return penguin_createxy(x, y, size);
 }
 
@@ -75,11 +77,11 @@ void penguin_teleport(Penguin* p) {
 	int x = random() % (WIDTH - BLOCKWIDTH*p->size);
 	int y = random() % (HEIGHT - BLOCKHEIGHT*p->size);
 	int tries = 0;
-	while(!penguin_occupy_block(x, y, p->size) && ++tries < 100) {
+	while(!penguin_occupy_block(x, y, p->size) && ++tries < 1000) {
 		x = random() % (WIDTH - BLOCKWIDTH*p->size);
 		y = random() % (HEIGHT - BLOCKHEIGHT*p->size);
 	}
-	if (tries == 100) {	// nowhere to go: stay put
+	if (!penguin_occupy_block(x, y, p->size)) {  // nowhere to go: stay put
 		x = p->state.x;
 		y = p->state.y;
 	}
