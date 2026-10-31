@@ -54,11 +54,14 @@ typedef struct {
 	size_t history_count;
 	size_t charge_tick;
 	size_t teleport_tick;
+	size_t wall_tick;
+	int size;
 } Penguin;
 
 typedef enum {
 	PENGUIN_HIT_NONE,
 	PENGUIN_HIT_SHIELD,
+	PENGUIN_HIT_WALL,
 	PENGUIN_HIT_LINE1,
 	PENGUIN_HIT_LINE2,
 	PENGUIN_HIT_BOTH 
@@ -66,7 +69,7 @@ typedef enum {
 
 void penguin_speed(Penguin* p, float speed);
 void penguin_teleport(Penguin* p);
-Penguin penguin_create(void);
-Penguin penguin_createxy(int x, int y);
+Penguin penguin_create(int size);
+Penguin penguin_createxy(int x, int y, int size);
 void penguin_draw(Penguin* p);
 PenguinHit penguin_move(Penguin* p, int level, const Line *line1, const Line *line2, bool freezed);

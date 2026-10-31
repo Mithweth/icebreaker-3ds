@@ -51,7 +51,7 @@
 
 static Line line1;
 static Line line2;
-static int penguincount;
+static size_t penguincount;
 static Penguin flock[MAXPENGUINS];
 static bool gesture_active = false;
 static touchPosition gesture_start;
@@ -80,6 +80,7 @@ typedef enum {
 	CHALLENGE_UNSTABLE_LINES,
 	CHALLENGE_SLOW_LINES,
 	CHALLENGE_TELEPORT,
+	CHALLENGE_BOSS,
 	CHALLENGE_COUNT,
 } ChallengeMode;
 
@@ -97,11 +98,15 @@ static const char* challenge_names[] = {
 	"CHALLENGE_UNSTABLE_LINES",
 	"CHALLENGE_SLOW_LINES",
 	"CHALLENGE_TELEPORT",
+	"CHALLENGE_BOSS",
 };
 static size_t current_challenge;
 static size_t random_history_count;
 static size_t random_history[RANDOM_HISTORY];
 static size_t unstable_lines_tick;
+static size_t boss_count;
+static int wall_x;
+static int wall_y;
 
 static bool challenge_in_history(size_t challenge) {
 	for (size_t i = 0; i < random_history_count; i++) {
@@ -153,8 +158,8 @@ static void level_rebuild_grid(void) {
 	if (line1.on) grid_mark(line1.geom.x, line1.geom.y, line1.geom.w, line1.geom.h, line1.id);
 	if (line2.on) grid_mark(line2.geom.x, line2.geom.y, line2.geom.w, line2.geom.h, line2.id);
 
-	for (int i = 0; i < penguincount; i++) {
-		grid_mark(flock[i].state.x, flock[i].state.y, BLOCKWIDTH, BLOCKHEIGHT, '*');
+	for (size_t i = 0; i < penguincount; i++) {
+		grid_mark(flock[i].state.x, flock[i].state.y, BLOCKWIDTH * flock[i].size, BLOCKHEIGHT * flock[i].size, '*');
 	}
 	grid_fill_empty_areas();
 }
@@ -180,6 +185,9 @@ void level_init(GameStats *stats) {
 	scoremod = 1.0f;
 	bonusmod = 1.0f;
 	freeze_tick = 0;
+	boss_count = 0;
+	wall_x = 0;
+	wall_y = 0;
 	stats->level_tick = -1;
 	speed_tick = 0;
 	shield_enabled = false;
@@ -214,6 +222,10 @@ void level_init(GameStats *stats) {
 		case CHALLENGE_TIME_LIMIT:
 			stats->level_tick = 60 * FPS;
 			break;
+		case CHALLENGE_BOSS:
+			penguincount = 1;
+			boss_count = 1;
+			break;
 		default:
 			break;
 		}
@@ -245,12 +257,12 @@ void level_init(GameStats *stats) {
 	stats->lifebonus = 0;
 	stats->energybonus = 0;
 	stats->clear = 0;
-	line1=line_create(1);
-	line2=line_create(2);
+	line1 = line_create(1);
+	line2 = line_create(2);
 
-	for (int i=0;i<penguincount;i++)
-	{
-		flock[i] = penguin_create();
+	for (size_t i = 0; i < penguincount; i++) {
+		int size = (i < boss_count) ? 4 : 1;
+		flock[i] = penguin_create(size);
 		penguin_speed(&flock[i], speed_modifier);
 		if (options_modern_mode()) {
 			flock[i].slow_axis = random() % SLOW_AXIS_COUNT;
@@ -260,14 +272,29 @@ void level_init(GameStats *stats) {
 }
 
 void level_draw(void) {
-	grid_drawblocks();
+	bool boss_bounced = false;
+	for (size_t i = 0; i < boss_count; i++) {
+		if (flock[i].wall_tick > 0) {
+			if (flock[i].wall_tick % 5 == 0) {
+				wall_x = (random() % 3 - 1) * 4;
+				wall_y = (random() % 3 - 1) * 4;
+			}
+			boss_bounced = true;
+			break;
+		}
+	}
+	if (!boss_bounced) {
+		wall_x = 0;
+		wall_y = 0;
+	}
+	grid_drawblocks(wall_x, wall_y);
 	if (line1.on) {
 		line_draw(&line1, theme.color.line1);
 	}
 	if (line2.on) {
 		line_draw(&line2, theme.color.line2);
 	}
-	for (int i=0;i<penguincount;i++) {
+	for (size_t i = 0; i < penguincount; i++) {
 		penguin_draw(&flock[i]);
 	}
 	if (!challenge_explained && options_challenge_mode()) {
@@ -327,7 +354,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 					unstable_lines_tick = 0;
 					long count_before = grid_countcleared();
 					long count_after = count_before;
-					while (count_after == count_before && line_remove()) {
+					while (count_after == count_before && line_remove_random()) {
 						level_rebuild_grid();
 						count_after = grid_countcleared();
 					}
@@ -349,6 +376,18 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			break;
 		default:
 			break;
+		}
+	}
+	for (size_t i = 0; i < boss_count; i++) {
+		if (flock[i].wall_tick > 0) {
+			flock[i].wall_tick--;
+			if (flock[i].wall_tick == 0) {
+				if (line_remove_touched(flock[i].state.x, flock[i].state.y, flock[i].size)) {
+					level_rebuild_grid();
+					stats->clear = grid_countcleared();
+					stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
+				}
+			}
 		}
 	}
 	if (shield_used && !line1.on && !line2.on) {
@@ -455,8 +494,8 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if (stats->lives < 0) stats->lives = 0;
 	}
 	if (line1.shield_hit || line2.shield_hit) shield_used = true;
-	for (int i = 0; i < penguincount; i++)
-	{
+	for (size_t i = 0; i < penguincount; i++) {
+		if (i < boss_count && flock[i].wall_tick > 0) continue;
 		if (flock[i].teleport_tick > 0 && freeze_tick == 0) {
 			if (--flock[i].teleport_tick == 30) {
 				penguin_teleport(&flock[i]);
@@ -469,6 +508,10 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if (hit == PENGUIN_HIT_LINE1 || hit == PENGUIN_HIT_BOTH) line1.dead = true;
 		if (hit == PENGUIN_HIT_LINE2 || hit == PENGUIN_HIT_BOTH) line2.dead = true;
 		if (hit == PENGUIN_HIT_SHIELD) shield_used = true;
+		if (hit == PENGUIN_HIT_WALL && i < boss_count) {
+			flock[i].wall_tick = 60;
+			sound_play(SNDIMPACT);
+		}
 	}
 
 	if (stats->lives <= 0) // game over

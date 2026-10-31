@@ -33,6 +33,7 @@ typedef enum {
 	SNDSPEED,
 	SNDSHIELD,
 	SNDSHIELDOFF,
+	SNDIMPACT,
 	SNDCOUNT
 } Sound;
 

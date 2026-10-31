@@ -85,3 +85,5 @@ SoundFreeze			heroic_freeze
 SoundSpeed			heroic_speed
 SoundShield			heroic_shieldon
 SoundShieldOff		heroic_shieldoff
+# Challenge mode: when the Boss crashes the walls
+SoundImpact			heroic_impact

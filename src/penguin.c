@@ -35,46 +35,62 @@
 #define CHARGE_TICKS_SECONDS    0.5f
 #define ANGLE_PHASES			3
 
+static char penguin_edge(int x0, int y0, int x1, int y1) {
+	char found = ' ';
+	int steps = ((x1 - x0) + (y1 - y0)) / BLOCKWIDTH + 1;
+	for (int s = 0; s <= steps; s++) {
+		int x = x0 + (x1 - x0) * s / steps;
+		int y = y0 + (y1 - y0) * s / steps;
+		char c = grid_at(x, y);
+		if (c == '1' || c == '2') return c;  // a line in progress wins
+		if (c != ' ') found = c;
+	}
+	return found;
+}
+
 // Since the play field is not square anymore, checking only the block
 // first pixel is not enough. We need to ensure the penguin to hold
 // fully on the block.
-static bool penguin_occupy_block(int x, int y) {
-	const int r = x + BLOCKWIDTH - 1;
-	const int b = y + BLOCKHEIGHT - 1;
-	return (grid_at(x, y) == ' ' && grid_at(r, y) == ' ' && grid_at(x, b) == ' ' && grid_at(r, b) == ' ');
+static bool penguin_occupy_block(int x, int y, int size) {
+	const int w = BLOCKWIDTH * size;
+	const int h = BLOCKHEIGHT * size;
+	for (int dy = 0; dy < h; dy += BLOCKHEIGHT) {
+		if (penguin_edge(x, y + dy, x + w - 1, y + dy) != ' ') return false;
+	}
+	return penguin_edge(x, y + h - 1, x + w - 1, y + h - 1) == ' ';
 }
 
-Penguin penguin_create(void) {
-	int x = random() % (WIDTH - BLOCKWIDTH);
-	int y = random() % (HEIGHT - BLOCKHEIGHT);
-	while(!penguin_occupy_block(x, y)) {
-		x = random() % (WIDTH - BLOCKWIDTH);
-		y = random() % (HEIGHT - BLOCKHEIGHT);
+Penguin penguin_create(int size) {
+	int x = random() % (WIDTH - BLOCKWIDTH * size);
+	int y = random() % (HEIGHT - BLOCKHEIGHT * size);
+	while(!penguin_occupy_block(x, y, size)) {
+		x = random() % (WIDTH - BLOCKWIDTH * size);
+		y = random() % (HEIGHT - BLOCKHEIGHT * size);
 	}
-	return penguin_createxy(x, y);
+	return penguin_createxy(x, y, size);
 }
 
 void penguin_teleport(Penguin* p) {
-	grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, ' ');
-	int x = random() % (WIDTH - BLOCKWIDTH);
-	int y = random() % (HEIGHT - BLOCKHEIGHT);
+	grid_mark(p->state.x, p->state.y, BLOCKWIDTH*p->size, BLOCKHEIGHT*p->size, ' ');
+	int x = random() % (WIDTH - BLOCKWIDTH*p->size);
+	int y = random() % (HEIGHT - BLOCKHEIGHT*p->size);
 	int tries = 0;
-	while(!penguin_occupy_block(x, y) && ++tries < 100) {
-		x = random() % (WIDTH - BLOCKWIDTH);
-		y = random() % (HEIGHT - BLOCKHEIGHT);
+	while(!penguin_occupy_block(x, y, p->size) && ++tries < 100) {
+		x = random() % (WIDTH - BLOCKWIDTH*p->size);
+		y = random() % (HEIGHT - BLOCKHEIGHT*p->size);
 	}
 	if (tries == 100) {	// nowhere to go: stay put
 		x = p->state.x;
 		y = p->state.y;
 	}
-	grid_mark(x, y, BLOCKWIDTH, BLOCKHEIGHT, '*');
+	grid_mark(x, y, BLOCKWIDTH*p->size, BLOCKHEIGHT*p->size, '*');
 	grid_checkempty(p->state.x, p->state.y);
 	p->state.x = x;
 	p->state.y = y;
 	p->history_count = 0;
 }
 
-Penguin penguin_createxy(int x, int y)
+Penguin penguin_createxy(int x, int y, int size)
 {
 	Penguin p;
 	p.current_image = 0;
@@ -102,13 +118,15 @@ Penguin penguin_createxy(int x, int y)
 	//p.state.xdelta=0; p.state.ydelta=0;
 	
 	p.state.speedslower=0;
-	p.state.x=x;
-	p.state.y=y;
+	p.state.x = x;
+	p.state.y = y;
 	p.state.phase = 0;
 	p.slow_axis = SLOW_NONE;
 	p.history_count = 0;
 	p.charge_tick = 0;
 	p.teleport_tick = 0;
+	p.wall_tick = 0;
+	p.size = size;
 	return p;
 }
 
@@ -126,10 +144,10 @@ void penguin_draw(Penguin* p)
 		t = &tint;
 	}
 	float scale_x = (p->state.xdelta < 0) ? -SPRITE_SIZE : SPRITE_SIZE;
-	C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, t, scale_x, SPRITE_SIZE);
+	C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, t, scale_x * p->size, SPRITE_SIZE * p->size);
 	if (p->teleport_tick > 0) {
 		size_t teleport_image_index = (p->teleport_tick / (FPS / 6)) % theme.teleport_sprite_count;
-		C2D_DrawImageAt(theme.teleportbitmap[teleport_image_index], p->state.x, p->state.y, 0.31f, t, scale_x, SPRITE_SIZE);
+		C2D_DrawImageAt(theme.teleportbitmap[teleport_image_index], p->state.x, p->state.y, 0.31f, t, scale_x * p->size, SPRITE_SIZE * p->size);
 	}
 }
 
@@ -206,17 +224,17 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 	newx=p->state.x+movex;
 	newy=p->state.y+movey;
 
-	grid_mark(p->state.x,p->state.y,BLOCKWIDTH,BLOCKHEIGHT,' ');
+	grid_mark(p->state.x, p->state.y, BLOCKWIDTH * p->size, BLOCKHEIGHT * p->size, ' ');
 
-	if (movex>0) checkx = newx+BLOCKWIDTH;
-	else checkx = newx;
-
-	if (grid_at(checkx,p->state.y)==' ' && grid_at(checkx,p->state.y+BLOCKHEIGHT-1)==' ')
-	{
-		p->state.x+=movex;
+	if (movex > 0) {
+		checkx = newx + BLOCKWIDTH * p->size;
+	} else {
+		checkx = newx;
 	}
-	else if (grid_at(checkx,p->state.y)=='1' || grid_at(checkx,p->state.y+BLOCKHEIGHT-1)=='1')
-	{
+	char edge = penguin_edge(checkx, p->state.y, checkx, p->state.y + BLOCKHEIGHT * p->size - 1);
+	if (edge == ' ') {
+		p->state.x += movex;
+	} else if (edge == '1') {
 		if (line1 && line_shield_enabled(line1)) {
 			shield_touched = true;
 			p->state.xdelta = -p->state.xdelta;
@@ -225,9 +243,7 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 			hitline1 = true;
 			p->state.x += movex;
 		}
-	}
-	else if (grid_at(checkx,p->state.y)=='2' || grid_at(checkx,p->state.y+BLOCKHEIGHT-1)=='2')
-	{
+	} else if (edge == '2') {
 		if (line2 && line_shield_enabled(line2)) {
 			shield_touched = true;
 			p->state.xdelta = -p->state.xdelta;
@@ -236,22 +252,20 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 			hitline2 = true;
 			p->state.x += movex;
 		}
-	}
-	else
-	{
-		p->state.xdelta=-p->state.xdelta;
+	} else {
+		p->state.xdelta = -p->state.xdelta;
 		bounced_x = true;
 	}
 
-	if (movey>0) checky = newy+BLOCKHEIGHT;
-	else checky = newy;
-	
-	if (grid_at(p->state.x,checky)==' ' && grid_at(p->state.x+BLOCKWIDTH-1,checky)==' ')
-	{
-		p->state.y+=movey;
+	if (movey > 0) {
+		checky = newy + BLOCKHEIGHT * p->size;
+	} else {
+		checky = newy;
 	}
-	else if (grid_at(p->state.x,checky)=='1' || grid_at(p->state.x+BLOCKWIDTH-1,checky)=='1')
-	{
+	edge = penguin_edge(p->state.x, checky, p->state.x + BLOCKWIDTH * p->size-1, checky);
+	if (edge == ' ') {
+		p->state.y += movey;
+	} else if (edge == '1') {
 		if (line1 && line_shield_enabled(line1)) {
 			shield_touched = true;
 			p->state.ydelta = -p->state.ydelta;
@@ -260,32 +274,28 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 			hitline1 = true;
 			p->state.y += movey;
 		}
-	}
-	else if (grid_at(p->state.x,checky)=='2' || grid_at(p->state.x+BLOCKWIDTH-1,checky)=='2')
-	{
+	} else if (edge == '2') {
 		if (line2 && line_shield_enabled(line2)) {
 			shield_touched = true;
-			p->state.ydelta=-p->state.ydelta;
+			p->state.ydelta = -p->state.ydelta;
 			bounced_y = true;
 		} else {
 			hitline2 = true;
 			p->state.y += movey;
 		}
-	}
-	else
-	{
-		p->state.ydelta=-p->state.ydelta;
+	} else {
+		p->state.ydelta = -p->state.ydelta;
 		bounced_y = true;
 	}
 
-	grid_mark(p->state.x,p->state.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
+	grid_mark(p->state.x,p->state.y,BLOCKWIDTH*p->size,BLOCKHEIGHT*p->size,'*');
 
 	if (bounced_x || bounced_y) {
 		if (options_modern_mode() && ((line1 && line1->on) || (line2 && line2->on))) {
 			int best_dx = attract_radius;
 			int best_dy = attract_radius;
-			int px = p->state.x + BLOCKWIDTH / 2;
-			int py = p->state.y + BLOCKHEIGHT / 2;
+			int px = p->state.x + BLOCKWIDTH * p->size / 2;
+			int py = p->state.y + BLOCKHEIGHT * p->size / 2;
 			for (int i = 0; i < 2; i++) {
 				const Line *l = lines[i];
 				if (!l || !l->on || l->dead) continue;
@@ -343,13 +353,13 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 			}
 			if (trapped) {
 				int nudge = (random() % 2) ? 1 : -1;
-				grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, ' ');
-				if (penguin_occupy_block(p->state.x, p->state.y + nudge)) {
+				grid_mark(p->state.x, p->state.y, BLOCKWIDTH * p->size, BLOCKHEIGHT * p->size, ' ');
+				if (penguin_occupy_block(p->state.x, p->state.y + nudge, p->size)) {
 					p->state.y += nudge;
-				} else if (penguin_occupy_block(p->state.x + nudge, p->state.y)) {
+				} else if (penguin_occupy_block(p->state.x + nudge, p->state.y, p->size)) {
 					p->state.x += nudge;
 				}
-				grid_mark(p->state.x, p->state.y, BLOCKWIDTH, BLOCKHEIGHT, '*');
+				grid_mark(p->state.x, p->state.y, BLOCKWIDTH * p->size, BLOCKHEIGHT * p->size, '*');
 				p->history_count = 0;
 			} else {
 				if (p->history_count == MAX_STATE_HISTORY) {
@@ -364,5 +374,6 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 	if (hitline1 && hitline2) return PENGUIN_HIT_BOTH;
 	if (hitline1) return PENGUIN_HIT_LINE1;
 	if (hitline2) return PENGUIN_HIT_LINE2;
+	if (bounced_x || bounced_y) return PENGUIN_HIT_WALL;
 	return PENGUIN_HIT_NONE;
 }

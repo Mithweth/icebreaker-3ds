@@ -51,147 +51,147 @@ void intro_init(void) {
 	letterstep = 0;
 	line1=line_create(1);
 	line2=line_create(2);
-	tux = penguin_create();
+	tux = penguin_create(1);
 	grid_mark(tux.state.x,tux.state.y,BLOCKWIDTH,BLOCKHEIGHT,'*');
 	penguincount = 0;
 	frozen = true;
 	/// Here's the fun part where we set up the letters.
 	//B
-	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(12)); penguincount++; 
-	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(12),1); penguincount++; 
+	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(0),LYPOS(16),1); penguincount++;
 
-	flock[penguincount]=penguin_createxy(LXPOS(1),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(2),LYPOS(11)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(1),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(2),LYPOS(11),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(1),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(2),LYPOS(13)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(1),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(2),LYPOS(13),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(1),LYPOS(16)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(2),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(1),LYPOS(16),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(2),LYPOS(16),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(3),LYPOS(12)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(3),LYPOS(12),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(3),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(3),LYPOS(15)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(3),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(3),LYPOS(15),1); penguincount++;
 	
 	//R
-	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(12)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(12),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(5),LYPOS(16),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(6),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(7),LYPOS(11)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(6),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(7),LYPOS(11),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(6),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(7),LYPOS(13)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(6),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(7),LYPOS(13),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(12)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(12),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(8),LYPOS(16),1); penguincount++;
 	
 	//E
-	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(12)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(12),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(10),LYPOS(16),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(11),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(12),LYPOS(11)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(11),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(12),LYPOS(11),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(11),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(12),LYPOS(13)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(11),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(12),LYPOS(13),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(11),LYPOS(16)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(12),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(11),LYPOS(16),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(12),LYPOS(16),1); penguincount++;
 	
 	//A
-	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(12)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(12),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(14),LYPOS(16),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(12)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(12),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(17),LYPOS(16),1); penguincount++;
 
-	flock[penguincount]=penguin_createxy(LXPOS(15),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(16),LYPOS(11)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(15),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(16),LYPOS(11),1); penguincount++;
 
-	flock[penguincount]=penguin_createxy(LXPOS(15),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(16),LYPOS(13)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(15),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(16),LYPOS(13),1); penguincount++;
 
 	//K
-	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(12)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(12),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(19),LYPOS(16),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(20),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(21),LYPOS(12)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(22),LYPOS(11)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(20),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(21),LYPOS(12),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(22),LYPOS(11),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(21),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(22),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(22),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(21),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(22),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(22),LYPOS(16),1); penguincount++;
 
 	//E
-	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(12)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(12),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(24),LYPOS(16),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(25),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(26),LYPOS(11)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(25),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(26),LYPOS(11),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(25),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(26),LYPOS(13)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(25),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(26),LYPOS(13),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(25),LYPOS(16)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(26),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(25),LYPOS(16),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(26),LYPOS(16),1); penguincount++;
 
 	//R
-	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(12)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(14)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(12),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(28),LYPOS(16),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(29),LYPOS(11)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(30),LYPOS(11)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(29),LYPOS(11),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(30),LYPOS(11),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(29),LYPOS(13)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(30),LYPOS(13)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(29),LYPOS(13),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(30),LYPOS(13),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(31),LYPOS(12)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(31),LYPOS(12),1); penguincount++;
 	
-	flock[penguincount]=penguin_createxy(LXPOS(31),LYPOS(14)); penguincount++;
-		flock[penguincount]=penguin_createxy(LXPOS(31),LYPOS(15)); penguincount++;
-	flock[penguincount]=penguin_createxy(LXPOS(31),LYPOS(16)); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(31),LYPOS(14),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(31),LYPOS(15),1); penguincount++;
+	flock[penguincount]=penguin_createxy(LXPOS(31),LYPOS(16),1); penguincount++;
 
 	if (penguincount>=MAXPENGUINS) { fprintf(stderr,"Too many penguins!\n"); }
 }
 
 void intro_draw(void) {
-	grid_drawblocks();
+	grid_drawblocks(0, 0);
 	if (letterstep>11 || !frozen) {
 		for (int i=0;i<penguincount;i++) {
 			penguin_draw(&flock[i]);
