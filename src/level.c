@@ -400,7 +400,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		shield_used = false;
 		sound_play(SNDSHIELDOFF);
 	}
-	if (options_modern_mode() && stats->energy > 0  && speed_tick + freeze_tick == 0) {
+	if (options_modern_mode() && stats->energy > 0 && speed_tick + freeze_tick == 0) {
 		if ((keys & (KEY_DLEFT | KEY_Y)) && stats->energy > 1 && !shield_enabled) { // Shield
 			stats->energy -= 2;
 			shield_enabled = true;
@@ -551,7 +551,8 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if ((options_challenge_mode() && current_challenge == CHALLENGE_LAST_CHANCE) || stats->lives == stats->level + 1) {
 			stats->energybonus += 1;
 		}
-			
+		stats->energybonus += grid_find_zones_lt(10);
+		stats->clearbonus += grid_find_zones_lt(13);
 		// bonuses for leftover stats->lives
 		stats->lifebonus = (int)((stats->lives - 1) * 3 * bonusmod);
 	}
