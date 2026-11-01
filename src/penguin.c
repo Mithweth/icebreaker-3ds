@@ -146,10 +146,10 @@ void penguin_draw(Penguin* p)
 		t = &tint;
 	}
 	float scale_x = (p->state.xdelta < 0) ? -SPRITE_SIZE : SPRITE_SIZE;
-	C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.3f, t, scale_x * p->size, SPRITE_SIZE * p->size);
+	C2D_DrawImageAt(theme.spriteimage[p->current_image], p->state.x, p->state.y, 0.32f, t, scale_x * p->size, SPRITE_SIZE * p->size);
 	if (p->teleport_tick > 0) {
 		size_t teleport_image_index = (p->teleport_tick / (FPS / 6)) % theme.teleport_sprite_count;
-		C2D_DrawImageAt(theme.teleportbitmap[teleport_image_index], p->state.x, p->state.y, 0.31f, t, scale_x * p->size, SPRITE_SIZE * p->size);
+		C2D_DrawImageAt(theme.teleportbitmap[teleport_image_index], p->state.x, p->state.y, 0.33f, t, scale_x * p->size, SPRITE_SIZE * p->size);
 	}
 }
 

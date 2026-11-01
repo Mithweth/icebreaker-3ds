@@ -66,6 +66,7 @@ static int percentbonus;
 static int tick;
 static size_t freeze_tick;
 static size_t speed_tick;
+static size_t invincible_tick;
 static bool shield_enabled;
 static bool shield_used;
 static bool challenge_explained;
@@ -191,6 +192,7 @@ bool level_init(GameStats *stats) {
 	wall_y = 0;
 	stats->level_tick = -1;
 	speed_tick = 0;
+	invincible_tick = 0;
 	shield_enabled = false;
 	shield_used = false;
 	clear_pct_required = PERCENTREQUIRED;
@@ -293,6 +295,10 @@ void level_draw(void) {
 		wall_y = 0;
 	}
 	grid_drawblocks(wall_x, wall_y);
+	if (invincible_tick > 0) {
+		int alpha = 8 + 60 * (1.0f + sinf(invincible_tick * 0.3f)) / 2.0f;
+		C2D_DrawRectSolid(0, 0, 0.31f, WIDTH, HEIGHT, (theme.color.background & 0x00FFFFFF) | (alpha << 24));
+	}
 	if (line1.on) {
 		line_draw(&line1, theme.color.line1);
 	}
@@ -339,6 +345,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (done) {
 		return false;
 	}
+	if (invincible_tick > 0) invincible_tick--;
 	if (options_challenge_mode()) {
 		if (!challenge_explained) {
 			if (keys) challenge_explained = true;
@@ -494,9 +501,14 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	}
 	if (life_lost) {
 		sound_play(SNDBREAK);
-		flying_sprite_death();
-		stats->lives--;
-		if (stats->lives < 0) stats->lives = 0;
+		if (!options_modern_mode() || invincible_tick == 0) {
+			flying_sprite_death();
+			stats->lives--;
+			if (stats->lives < 0) stats->lives = 0;
+		}
+		if (options_modern_mode() && invincible_tick == 0) {
+			invincible_tick = (size_t)(1.5f * FPS);
+		}
 	}
 	if (line1.shield_hit || line2.shield_hit) shield_used = true;
 	for (size_t i = 0; i < penguincount; i++) {
