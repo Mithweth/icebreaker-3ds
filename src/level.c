@@ -28,6 +28,7 @@
 #include <3ds.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "game.h"
 #include "line.h"
 #include "grid.h"
@@ -48,6 +49,8 @@
 #define RESTORE_LINES_PCT		50
 #define RESTORE_LINES_DELAY		7  // seconds
 #define TELEPORT_PENGUIN_PCT	200
+#define ENERGY_BONUS_MIN_SIZE	10
+#define BONUS_MIN_SIZE			13
 
 static Line line1;
 static Line line2;
@@ -66,6 +69,7 @@ static int percentbonus;
 static int tick;
 static size_t freeze_tick;
 static size_t speed_tick;
+static size_t invincible_tick;
 static bool shield_enabled;
 static bool shield_used;
 static bool challenge_explained;
@@ -191,6 +195,7 @@ bool level_init(GameStats *stats) {
 	wall_y = 0;
 	stats->level_tick = -1;
 	speed_tick = 0;
+	invincible_tick = 0;
 	shield_enabled = false;
 	shield_used = false;
 	clear_pct_required = PERCENTREQUIRED;
@@ -267,10 +272,16 @@ bool level_init(GameStats *stats) {
 		if (flock[i].size == 0) {
 			return false;
 		}
+		grid_mark(flock[i].state.x, flock[i].state.y, BLOCKWIDTH * size, BLOCKHEIGHT * size, '*');
 		penguin_speed(&flock[i], speed_modifier);
 		if (options_modern_mode()) {
 			flock[i].slow_axis = random() % SLOW_AXIS_COUNT;
 		}
+	}
+	grid_fill_empty_areas();  // areas of the map that got no penguin fall into the sea
+	stats->clear = grid_countcleared();
+	if (stats->clear >= clear_pct_required) {
+		return false;  // penguins all spawned in a small area: try again
 	}
 	tick = 0;
 	return true;
@@ -293,6 +304,10 @@ void level_draw(void) {
 		wall_y = 0;
 	}
 	grid_drawblocks(wall_x, wall_y);
+	if (invincible_tick > 0) {
+		int alpha = 8 + 60 * (1.0f + sinf(invincible_tick * 0.3f)) / 2.0f;
+		C2D_DrawRectSolid(0, 0, 0.31f, WIDTH, HEIGHT, (theme.color.background & 0x00FFFFFF) | (alpha << 24));
+	}
 	if (line1.on) {
 		line_draw(&line1, theme.color.line1);
 	}
@@ -339,6 +354,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (done) {
 		return false;
 	}
+	if (invincible_tick > 0) invincible_tick--;
 	if (options_challenge_mode()) {
 		if (!challenge_explained) {
 			if (keys) challenge_explained = true;
@@ -400,7 +416,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		shield_used = false;
 		sound_play(SNDSHIELDOFF);
 	}
-	if (options_modern_mode() && stats->energy > 0  && speed_tick + freeze_tick == 0) {
+	if (options_modern_mode() && stats->energy > 0 && speed_tick + freeze_tick == 0) {
 		if ((keys & (KEY_DLEFT | KEY_Y)) && stats->energy > 1 && !shield_enabled) { // Shield
 			stats->energy -= 2;
 			shield_enabled = true;
@@ -494,9 +510,14 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	}
 	if (life_lost) {
 		sound_play(SNDBREAK);
-		flying_sprite_death();
-		stats->lives--;
-		if (stats->lives < 0) stats->lives = 0;
+		if (!options_modern_mode() || invincible_tick == 0) {
+			flying_sprite_death();
+			stats->lives--;
+			if (stats->lives < 0) stats->lives = 0;
+		}
+		if (options_modern_mode() && invincible_tick == 0) {
+			invincible_tick = (size_t)(1.5f * FPS);
+		}
 	}
 	if (line1.shield_hit || line2.shield_hit) shield_used = true;
 	for (size_t i = 0; i < penguincount; i++) {
@@ -551,7 +572,8 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if ((options_challenge_mode() && current_challenge == CHALLENGE_LAST_CHANCE) || stats->lives == stats->level + 1) {
 			stats->energybonus += 1;
 		}
-			
+		stats->energybonus += grid_find_zones_lt(ENERGY_BONUS_MIN_SIZE);
+		stats->clearbonus += grid_find_zones_lt(BONUS_MIN_SIZE) * bonusmod;
 		// bonuses for leftover stats->lives
 		stats->lifebonus = (int)((stats->lives - 1) * 3 * bonusmod);
 	}

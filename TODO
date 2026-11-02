@@ -1,5 +1,6 @@
 # TODO
 - stats
+- combo
 
 # bugs
 - penguin_edge(): when a penguin edge touches both a line in progress and a wall, the line is hit but the penguin still moves forward. Existed for normal penguins in the original game

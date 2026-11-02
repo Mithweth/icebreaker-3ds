@@ -37,6 +37,8 @@
 #define BLOCK_SIZE		(CELL_SIZE - GRID_SPACING)
 #define GRID_WIDTH		(2 * GRID_MARGIN + GRID_MAPS_COLS * CELL_SIZE - GRID_SPACING)
 #define GRID_HEIGHT		(2 * GRID_MARGIN + GRID_MAPS_ROWS * CELL_SIZE - GRID_SPACING)
+#define ZONE_MIN		12
+#define ZONE_MIN_SIZE	4
 
 typedef enum {
 	EDITOR_CLEAR,
@@ -66,6 +68,7 @@ typedef enum {
 typedef enum {
 	ERROR_MESSAGE,
 	ERROR_MESSAGE_SAVE,
+	ERROR_MESSAGE_VALIDATION,
 	ERROR_MESSAGE_MAX_GRIDS,
 } EditorErrorMessage;
 
@@ -75,6 +78,7 @@ typedef struct {
 } EditorEntry;
 
 static char grid[GRID_MAPS_COLS][GRID_MAPS_ROWS];
+static char maskgrid[GRID_MAPS_COLS][GRID_MAPS_ROWS];
 static u32 color_grid[GRID_MAPS_COLS][GRID_MAPS_ROWS];
 static bool swipe_active;
 static char current_char;
@@ -106,6 +110,27 @@ static int block_count(void) {
 
 bool editor_current_grid_changed(void) {
 	return current_grid_changed;
+}
+
+static int consecutive_block_size(int x, int y) {
+	if (x < 0 || x >= GRID_MAPS_COLS || y < 0 || y >= GRID_MAPS_ROWS) return 0;
+	if (grid[x][y] == '.' || maskgrid[x][y] == ',') return 0;
+	maskgrid[x][y] = ',';
+	return 1 + consecutive_block_size(x + 1, y) + consecutive_block_size(x - 1, y) + consecutive_block_size(x, y + 1) + consecutive_block_size(x, y - 1);
+}
+
+static int smallest_zone_size(void) {
+	int n = GRID_MAPS_COLS * GRID_MAPS_ROWS;
+	memcpy(maskgrid, grid, sizeof(grid));
+	for (int y = 0; y < GRID_MAPS_ROWS; y++) {
+		for (int x = 0; x < GRID_MAPS_COLS; x++) {
+			if (grid[x][y] == '#' && maskgrid[x][y] != ',') {
+				int size = consecutive_block_size(x, y);
+				if (size < n) n = size;
+			}
+		}
+	}
+	return n;
 }
 
 static size_t saved_grid_count(void) {
@@ -410,6 +435,12 @@ static void dialog_error_draw(void) {
 	case ERROR_MESSAGE:
 		text_put(60.0f, 100.0f, 0.43f, 2, theme.color.normaltext, lang_get("ERROR_MESSAGE"));
 		break;
+	case ERROR_MESSAGE_VALIDATION:
+		text_put(60.0f, 100.0f, 0.43f, 2, theme.color.normaltext, lang_get("ERROR_MESSAGE_VALIDATION_1"));
+		text_put(60.0f, 122.0f, 0.43f, 2, theme.color.normaltext, lang_get("ERROR_MESSAGE_VALIDATION_2"));
+		text_put(60.0f, 144.0f, 0.43f, 2, theme.color.normaltext, lang_get("ERROR_MESSAGE_VALIDATION_3"));
+		text_put(60.0f, 166.0f, 0.43f, 2, theme.color.normaltext, lang_get("ERROR_MESSAGE_VALIDATION_4"));
+		break;
 	case ERROR_MESSAGE_SAVE:
 		text_put(60.0f, 100.0f, 0.43f, 2, theme.color.normaltext, lang_get("ERROR_MESSAGE_SAVE_1"));
 		text_put(60.0f, 122.0f, 0.43f, 2, theme.color.normaltext, lang_get("ERROR_MESSAGE_SAVE_2"));
@@ -537,7 +568,10 @@ bool editor_update(u32 keys, touchPosition touch) {
 					}
 					break;
 				case EDITOR_SAVE:
-					if (block_count() != 0) {
+					if (block_count() < ZONE_MIN || smallest_zone_size() < ZONE_MIN_SIZE) {
+						dialog_type = DIALOG_ERROR;
+						error_message = ERROR_MESSAGE_VALIDATION;
+					} else {
 						dialog_type = DIALOG_SAVE;
 						yes_selected = false;
 					}
@@ -601,7 +635,7 @@ void editor_draw(void) {
 	text_put(10.0f, GRID_HEIGHT + GRID_SPACING + 5.0f, 0.02f, 2, theme.color.textentrybox, grid_name);
 	char blocks[8];
 	snprintf(blocks, sizeof(blocks), "%zu/%d", block_count(), GRID_MAPS_COLS * GRID_MAPS_ROWS);
-	text_rput(310.0f, GRID_HEIGHT + GRID_SPACING + 5.0f, 0.02f, 3, theme.color.textentrybox, blocks);
+	text_rput(310.0f, GRID_HEIGHT + GRID_SPACING + 5.0f, 0.02f, 3, (block_count() < ZONE_MIN) ? theme.color.gameovertext : theme.color.textentrybox, blocks);
 	char comment[100];
 	switch(comment_type) {
 	case COMMENT_PLAIN:

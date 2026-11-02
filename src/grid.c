@@ -51,6 +51,29 @@ bool grid_is_open(char c) {
 	return c == ' ' || c == '1' || c == '2';
 }
 
+static int grid_zone_size(int x, int y) {
+	if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return 0;
+	char c = grid_at(x, y);
+	if ((c != ' ' && c != '*') || maskgrid[x][y] == ',') return 0;
+	maskgrid[x][y] = ',';
+	return 1 + grid_zone_size(x + BLOCKWIDTH, y) + grid_zone_size(x - BLOCKWIDTH, y) + grid_zone_size(x, y + BLOCKHEIGHT) + grid_zone_size(x, y - BLOCKHEIGHT);
+}
+
+int grid_find_zones_lt(int max_size) {
+	int n = 0;
+	memcpy(maskgrid, grid, sizeof(grid));
+	for (int y = 0; y < HEIGHT; y += BLOCKHEIGHT) {
+		for (int x = 0; x < WIDTH; x += BLOCKWIDTH) {
+			char c = grid_at(x, y);
+			if ((c == ' ' || c == '*') && maskgrid[x][y] != ',') {
+				int size = grid_zone_size(x, y);
+				if (size < max_size) n++;
+			}
+		}
+	}
+	return n;
+}
+
 static void grid_squarefill(int x, int y)
 {
 	// x and y must be the top left corner of a square, or else this
