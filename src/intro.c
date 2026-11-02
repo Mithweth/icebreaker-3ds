@@ -324,8 +324,7 @@ bool intro_update(u32 keys) {
 		}
 
 	if (line1.on) {
-		if (line_move(&line1))
-		{
+		if (line_move(&line1) >= 0) {
 			linedone1=true;
 		}
 		if (line1.dead) // need a second check because line_move could change this
@@ -338,7 +337,7 @@ bool intro_update(u32 keys) {
 	}
 	if (line2.on) {
 	
-		if (line_move(&line2))
+		if (line_move(&line2) >= 0)
 		{
 			linedone2=true;
 		}

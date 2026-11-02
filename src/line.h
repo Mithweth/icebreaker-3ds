@@ -56,7 +56,7 @@ bool line_remove_touched(int x, int y, int size);
 void line_replay_history(void);
 void line_start(Line * l, LineDir d, int x, int y, int end);
 Line line_create(int linenum);
-int line_move(Line * l);
+long line_move(Line * l);
 void line_draw(const Line *l, u32 color);
 void line_kill(Line * l);
 bool line_shield_enabled(const Line *l);

@@ -77,10 +77,19 @@ typedef struct {
 	int lives;
 	int clear;
 	bool dead;
-	int level_tick;
+	int timeup_tick;
+	size_t total_time_tick;
+	size_t powerup_used;
 	size_t energy;
 	size_t previous_energy;
 	size_t energybonus;
+	size_t drawn_lines;
+	long max_captured_zone;
+	size_t total_energy;
+	long captured_blocks;
+	size_t safe_line_count;
+	size_t max_safe_line_count;
+	size_t no_lost_life_level;
 } GameStats;
 
 bool game_init(void);

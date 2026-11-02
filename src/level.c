@@ -193,7 +193,7 @@ bool level_init(GameStats *stats) {
 	boss_count = 0;
 	wall_x = 0;
 	wall_y = 0;
-	stats->level_tick = -1;
+	stats->timeup_tick = -1;
 	speed_tick = 0;
 	invincible_tick = 0;
 	shield_enabled = false;
@@ -226,7 +226,7 @@ bool level_init(GameStats *stats) {
 			stats->energy = 0;
 			break;
 		case CHALLENGE_TIME_LIMIT:
-			stats->level_tick = 60 * FPS;
+			stats->timeup_tick = 60 * FPS;
 			break;
 		case CHALLENGE_BOSS:
 			penguincount = 1;
@@ -388,9 +388,9 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			line_speed = tick % 2;
 			break;
 		case CHALLENGE_TIME_LIMIT:
-			if (stats->level_tick > 0) {
-				stats->level_tick--;
-				if (stats->level_tick == 0) {
+			if (stats->timeup_tick > 0) {
+				stats->timeup_tick--;
+				if (stats->timeup_tick == 0) {
 					stats->lives = 0;
 				}
 			}
@@ -399,6 +399,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			break;
 		}
 	}
+	stats->total_time_tick++;
 	for (size_t i = 0; i < boss_count; i++) {
 		if (flock[i].wall_tick > 0) {
 			flock[i].wall_tick--;
@@ -419,16 +420,19 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (options_modern_mode() && stats->energy > 0 && speed_tick + freeze_tick == 0) {
 		if ((keys & (KEY_DLEFT | KEY_Y)) && stats->energy > 1 && !shield_enabled) { // Shield
 			stats->energy -= 2;
+			stats->powerup_used++;
 			shield_enabled = true;
 			if (line1.on) line_enable_shield(&line1, true);
 			if (line2.on) line_enable_shield(&line2, true);
 			sound_play(SNDSHIELD);
 		} else if (keys & (KEY_DUP | KEY_X)) { // Freeze
 			stats->energy--;
+			stats->powerup_used++;
 			freeze_tick = (size_t)(FREEZE_DURATION_SECONDS * FPS);
 			sound_play(SNDFREEZE);
 		} else if (keys & (KEY_DDOWN | KEY_B)) { // Speed
 			stats->energy--;
+			stats->powerup_used++;
 			speed_tick = (size_t)(SPEED_DURATION_SECONDS * FPS);
 			sound_play(SNDSPEED);
 		}
@@ -467,16 +471,25 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 			// could finish and fill its area before being killed
 			if (!line1.dead) {
 				// kludgy crap to implement speed = 1 1/2
-				bool linedoneflag = line_move(&line1);
-				if (!linedoneflag && line1.speedslower) {
+				long captured_blocks = line_move(&line1);
+				if (captured_blocks < 0 && line1.speedslower) {
 					line1.speedslower = false;
-					linedoneflag = line_move(&line1);
+					captured_blocks = line_move(&line1);
 				} else {
 					line1.speedslower = true;
 				}
-				if (linedoneflag) {
+				if (captured_blocks >= 0) {
 					flying_sprite_capture();
+					stats->safe_line_count++;
+					if (stats->max_safe_line_count < stats->safe_line_count) {
+						stats->max_safe_line_count = stats->safe_line_count;
+					}
 					stats->clear = grid_countcleared();
+					stats->captured_blocks += captured_blocks;
+					if (stats->max_captured_zone < captured_blocks) {
+						stats->max_captured_zone = captured_blocks;
+					}
+					stats->drawn_lines++;
 					stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
 					tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 				}
@@ -488,16 +501,25 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		}
 		if (line2.on) {
 			if (!line2.dead) {
-				bool linedoneflag = line_move(&line2);
-				if (!linedoneflag && line2.speedslower) {
+				long captured_blocks = line_move(&line2);
+				if (captured_blocks < 0 && line2.speedslower) {
 					line2.speedslower = false;
-					linedoneflag = line_move(&line2);
+					captured_blocks = line_move(&line2);
 				} else {
 					line2.speedslower = true;
 				}
-				if (linedoneflag) {
+				if (captured_blocks >= 0) {
 					flying_sprite_capture();
+					stats->safe_line_count++;
+					if (stats->max_safe_line_count < stats->safe_line_count) {
+						stats->max_safe_line_count = stats->safe_line_count;
+					}
 					stats->clear = grid_countcleared();
+					stats->captured_blocks += captured_blocks;
+					if (stats->max_captured_zone < captured_blocks) {
+						stats->max_captured_zone = captured_blocks;
+					}
+					stats->drawn_lines++;
 					stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
 					tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
 				}
@@ -510,6 +532,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	}
 	if (life_lost) {
 		sound_play(SNDBREAK);
+		stats->safe_line_count = 0;
 		if (!options_modern_mode() || invincible_tick == 0) {
 			flying_sprite_death();
 			stats->lives--;
@@ -557,7 +580,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		freeze_tick = 0;
 		shield_enabled = false;
 		done = true;
-		stats->level_tick = -1;
+		stats->timeup_tick = -1;
 		stats->basescore=(int)(stats->clear * scoremod) - timepenalty;
 
 		stats->clearbonus=0;
@@ -571,6 +594,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		}
 		if ((options_challenge_mode() && current_challenge == CHALLENGE_LAST_CHANCE) || stats->lives == stats->level + 1) {
 			stats->energybonus += 1;
+			stats->no_lost_life_level++;
 		}
 		stats->energybonus += grid_find_zones_lt(ENERGY_BONUS_MIN_SIZE);
 		stats->clearbonus += grid_find_zones_lt(BONUS_MIN_SIZE) * bonusmod;

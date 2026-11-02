@@ -90,21 +90,27 @@ static void grid_squarefill(int x, int y)
 }
 
 int grid_countcleared(void) {
-	long c;
-	c = 0;
-	for (int i=0;i<WIDTH;i++)
-		for (int j=0;j<HEIGHT;j++)
-			if (grid_at(i,j) == ' ' || grid_at(i,j) == '*')
-				c++;
+	return 100 - (100 * grid_block_count() / total_blocks);
+}
 
-	return 100 - (100 * c / total_blocks);
+long grid_block_count(void) {
+	long c = 0;
+	for (int i = 0; i < WIDTH; i++) {
+		for (int j = 0; j < HEIGHT; j++) {
+			if (grid_at(i,j) == ' ' || grid_at(i,j) == '*') c++;
+		}
+	}
+	return c;
+}
+
+long grid_total_block_count(void) {
+	return total_blocks;
 }
 
 void grid_reset(void) {
-	for (int x=0;x<WIDTH;x++) {
-		for (int y=0;y<HEIGHT;y++)
-		{
-			grid[x][y]= ' ';
+	for (int x=0; x < WIDTH; x++) {
+		for (int y=0; y < HEIGHT; y++) {
+			grid[x][y] = ' ';
 		}
 	}
 	total_blocks = WIDTH * HEIGHT;

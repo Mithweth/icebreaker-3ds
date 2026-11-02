@@ -46,16 +46,15 @@ static float third_line_x;
 static float third_line_y;
 static size_t third_line_size;
 static bool done;
-static size_t energybonus;
-static bool dead;
+static bool show_stats;
+static const GameStats *current_stats;
 
 void intermission_init(const GameStats *stats) {
-	energybonus = stats->energybonus;
-	dead = stats->dead;
-	if (!dead) {
+	current_stats = stats;
+	if (!stats->dead) {
 		snprintf(first_line_text,30,"%s: %ld", lang_get("INTERMISSION_SCORE"), stats->basescore);
 		snprintf(second_line_text,30, "%s: %d", lang_get("INTERMISSION_BONUS"), stats->clearbonus + stats->lifebonus);
-		snprintf(third_line_text,30, "%s: %zu", lang_get("INTERMISSION_ENERGY"), energybonus);
+		snprintf(third_line_text,30, "%s: %zu", lang_get("INTERMISSION_ENERGY"), stats->energybonus);
 		second_line_color = theme.color.bonusscrolltext;
 		sound_play(SNDVICTORY);
 	} else {
@@ -97,21 +96,58 @@ void intermission_init(const GameStats *stats) {
 
 	third_line_x = (WIDTH - third_line_w) / 2;
 	third_line_y = HEIGHT;
+	show_stats = false;
 	done = false;
 }
 
 void intermission_draw(void) {
 	C2D_DrawRectSolid(0, 0, 0.5f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
-	text_put(first_line_x, first_line_y, 0.51f, first_line_size, theme.color.scorescrolltext, first_line_text);
-	text_put(second_line_x, second_line_y, 0.51f, second_line_size, second_line_color, second_line_text);
-	if (options_modern_mode() && energybonus > 0 && !dead) {
-		text_put(third_line_x, third_line_y, 0.51f, third_line_size, theme.color.bonusscrolltext, third_line_text);
+	if (!show_stats) {
+		text_put(first_line_x, first_line_y, 0.51f, first_line_size, theme.color.scorescrolltext, first_line_text);
+		text_put(second_line_x, second_line_y, 0.51f, second_line_size, second_line_color, second_line_text);
+		if (options_modern_mode() && current_stats->energybonus > 0 && !current_stats->dead) {
+			text_put(third_line_x, third_line_y, 0.51f, third_line_size, theme.color.bonusscrolltext, third_line_text);
+		}
+		return;
+	}
+	char tmptext[128];
+	text_cput(160, 20, 0.51f, 3, theme.color.bonusscrolltext, lang_get("STATS_TITLE"));
+	snprintf(tmptext, sizeof(tmptext), "%zu", current_stats->drawn_lines);
+	text_put(10, 70, 0.51f, 2, theme.color.normaltext, lang_get("STATS_LINES_DRAWN"));
+	text_rput(310, 70, 0.51f, 2, theme.color.normaltext, tmptext);
+	snprintf(tmptext, sizeof(tmptext), "%ld", current_stats->max_captured_zone);
+	text_put(10, 90, 0.51f, 2, theme.color.normaltext, lang_get("STATS_MAX_CAPTURED_ZONE"));
+	text_rput(310, 90, 0.51f, 2, theme.color.normaltext, tmptext);
+	snprintf(tmptext, sizeof(tmptext), "%zu", current_stats->total_time_tick / FPS / current_stats->level);
+	text_put(10, 110, 0.51f, 2, theme.color.normaltext, lang_get("STATS_AVERAGE_LEVEL_TIME"));
+	text_rput(310, 110, 0.51f, 2, theme.color.normaltext, tmptext);
+	snprintf(tmptext, sizeof(tmptext), "%zu", current_stats->max_safe_line_count);
+	text_put(10, 130, 0.51f, 2, theme.color.normaltext, lang_get("STATS_MAX_CONSECUTIVE_LINES"));
+	text_rput(310, 130, 0.51f, 2, theme.color.normaltext, tmptext);
+	long average = (current_stats->drawn_lines > 0) ? current_stats->captured_blocks / current_stats->drawn_lines : 0;
+	snprintf(tmptext, sizeof(tmptext), "%ld", average);
+	text_put(10, 150, 0.51f, 2, theme.color.normaltext, lang_get("STATS_AVERAGE_BLOCKS_PER_LINE"));
+	text_rput(310, 150, 0.51f, 2, theme.color.normaltext, tmptext);
+	snprintf(tmptext, sizeof(tmptext), "%zu", current_stats->no_lost_life_level);
+	text_put(10, 170, 0.51f, 2, theme.color.normaltext, lang_get("STATS_LEVELS_WITHOUT_LIFE_LOSS"));
+	text_rput(310, 170, 0.51f, 2, theme.color.normaltext, tmptext);
+	if (options_modern_mode()) {
+		snprintf(tmptext, sizeof(tmptext), "%zu", current_stats->powerup_used);
+		text_put(10, 190, 0.51f, 2, theme.color.normaltext, lang_get("STATS_POWERUPS_USED"));
+		text_rput(310, 190, 0.51f, 2, theme.color.normaltext, tmptext);
+		snprintf(tmptext, sizeof(tmptext), "%zu", current_stats->total_energy);
+		text_put(10, 210, 0.51f, 2, theme.color.normaltext, lang_get("STATS_ENERGY_GAINED"));
+		text_rput(310, 210, 0.51f, 2, theme.color.normaltext, tmptext);
 	}
 }
 
 bool intermission_update(u32 keys) {
 	if (keys & KEY_TOUCH) {
-		done = true;
+		if (current_stats->dead && !show_stats) {
+			show_stats = true;
+		} else {
+			done = true;
+		}
 	}
 	if (done) return false;
 	if (first_line_y > 100) {
