@@ -49,6 +49,8 @@
 #define RESTORE_LINES_PCT		50
 #define RESTORE_LINES_DELAY		7  // seconds
 #define TELEPORT_PENGUIN_PCT	200
+#define ENERGY_BONUS_MIN_SIZE	10
+#define BONUS_MIN_SIZE			13
 
 static Line line1;
 static Line line2;
@@ -270,10 +272,16 @@ bool level_init(GameStats *stats) {
 		if (flock[i].size == 0) {
 			return false;
 		}
+		grid_mark(flock[i].state.x, flock[i].state.y, BLOCKWIDTH * size, BLOCKHEIGHT * size, '*');
 		penguin_speed(&flock[i], speed_modifier);
 		if (options_modern_mode()) {
 			flock[i].slow_axis = random() % SLOW_AXIS_COUNT;
 		}
+	}
+	grid_fill_empty_areas();  // areas of the map that got no penguin fall into the sea
+	stats->clear = grid_countcleared();
+	if (stats->clear >= clear_pct_required) {
+		return false;  // penguins all spawned in a small area: try again
 	}
 	tick = 0;
 	return true;
@@ -564,8 +572,8 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		if ((options_challenge_mode() && current_challenge == CHALLENGE_LAST_CHANCE) || stats->lives == stats->level + 1) {
 			stats->energybonus += 1;
 		}
-		stats->energybonus += grid_find_zones_lt(10);
-		stats->clearbonus += grid_find_zones_lt(13);
+		stats->energybonus += grid_find_zones_lt(ENERGY_BONUS_MIN_SIZE);
+		stats->clearbonus += grid_find_zones_lt(BONUS_MIN_SIZE) * bonusmod;
 		// bonuses for leftover stats->lives
 		stats->lifebonus = (int)((stats->lives - 1) * 3 * bonusmod);
 	}
