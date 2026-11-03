@@ -217,8 +217,8 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	snprintf(tmptext, 30, "%d", stats->lives);
 	text_put(30.0f + parallax, 200.0f, 0.1f, 2, theme.color.normaltext, tmptext);
 
-	if (stats->level_tick > 0) {
-		snprintf(tmptext, 30, "%s %d", lang_get("MENU_TIME"), stats->level_tick / FPS);
+	if (stats->timeup_tick > 0) {
+		snprintf(tmptext, 30, "%s %d", lang_get("MENU_TIME"), stats->timeup_tick / FPS);
 		text_cput(200.0f, 200.0f, 0.1f, 2, theme.color.normaltext, tmptext);
 	}
 

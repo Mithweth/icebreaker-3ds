@@ -140,6 +140,15 @@ void game_start(void) {
 	stats.previous_energy = 0;
 	stats.energy = 1;
 	stats.dead = false;
+	stats.drawn_lines = 0;
+	stats.max_captured_zone = 0;
+	stats.total_time_tick = 0;
+	stats.powerup_used = 0;
+	stats.total_energy = 1;
+	stats.captured_blocks = 0;
+	stats.max_safe_line_count = 0;
+	stats.safe_line_count = 0;
+	stats.no_lost_life_level = 0;
 	GameStats saved_stats = stats;
 	while (!level_init(&stats)) {
 		stats = saved_stats;
@@ -165,6 +174,7 @@ static void game_continue(void) {
 	}
 	stats.energy++;
 	stats.energy += stats.energybonus;
+	stats.total_energy += stats.energybonus + 1;
 	GameStats saved_stats = stats;
 	while (!level_init(&stats)) {
 		stats = saved_stats;

@@ -111,16 +111,13 @@ void line_draw(const Line *l, u32 color) {
 	C2D_DrawRectSolid(l->geom.x, l->geom.y, 0.4f, l->geom.w, l->geom.h, color);
 }
 
-static void line_finish(Line * l)
-{
-	int i;
-	int quick1=false;
-	int quick2=false;
+static void line_finish(Line * l) {
+	int quick1 = false;
+	int quick2 = false;
 	
-	l->on=false;	
+	l->on = false;
 
-	switch (l->dir)
-	{
+	switch (l->dir) {
 		case DOWN:
 		// falls through.
 		case UP:
@@ -130,9 +127,9 @@ static void line_finish(Line * l)
 
 			// scan along edges to quickly determine if this
 			// is going to be complicated.
-			quick1=true; quick2=true;
-			for (i=l->geom.y+BLOCKHEIGHT/2;i<l->geom.y+l->geom.h;i++)
-			{
+			quick1 = true;
+			quick2 = true;
+			for (int i = l->geom.y + BLOCKHEIGHT / 2; i < l->geom.y + l->geom.h; i++) {
 				if (grid_at(l->geom.x-1,i) != ' ' && grid_at(l->geom.x-1,i) != '*') quick1=false;
 				if (grid_at(l->geom.x+BLOCKWIDTH,i) != ' ' && grid_at(l->geom.x+BLOCKWIDTH,i) != '*') quick2=false;
 			}
@@ -140,10 +137,10 @@ static void line_finish(Line * l)
 			grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2/2,l->geom.y+BLOCKHEIGHT/2);
 
 			if (!quick1)
-				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
+				for (int i = l->geom.y + BLOCKHEIGHT / 2 + BLOCKHEIGHT; i < l->geom.y + l->geom.h; i += BLOCKHEIGHT)
 					grid_checkempty(l->geom.x-BLOCKWIDTH/2,i);
 			if (!quick2)
-				for (i=l->geom.y+BLOCKHEIGHT/2+BLOCKHEIGHT;i<l->geom.y+l->geom.h;i+=BLOCKHEIGHT)
+				for (int i = l->geom.y + BLOCKHEIGHT / 2 + BLOCKHEIGHT; i < l->geom.y + l->geom.h; i += BLOCKHEIGHT)
 					grid_checkempty(l->geom.x+BLOCKWIDTH+BLOCKWIDTH/2,i);
 		break;
 		case RIGHT:
@@ -155,9 +152,9 @@ static void line_finish(Line * l)
 
 			// scan along edges to quickly determine if this
 			// is going to be complicated.
-			quick1=true; quick2=true;
-			for (i=l->geom.x+BLOCKWIDTH/2;i<l->geom.x+l->geom.w;i++)
-			{
+			quick1 = true;
+			quick2 = true;
+			for (int i = l->geom.x + BLOCKWIDTH / 2; i < l->geom.x + l->geom.w; i++) {
 				if (grid_at(i,l->geom.y-1) != ' ' && grid_at(i,l->geom.y-1) != '*') quick1=false;
 				if (grid_at(i,l->geom.y+BLOCKHEIGHT) != ' ' && grid_at(i,l->geom.y+BLOCKHEIGHT) != '*') quick2=false;
 			}
@@ -166,10 +163,10 @@ static void line_finish(Line * l)
 			grid_checkempty(l->geom.x+BLOCKWIDTH/2,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
 
 			if (!quick1)
-				for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
+				for (int i = l->geom.x + BLOCKWIDTH / 2 + BLOCKWIDTH; i < l->geom.x + l->geom.w; i += BLOCKWIDTH)
 					grid_checkempty(i,l->geom.y-BLOCKHEIGHT/2);
 			if (!quick2)
-				for (i=l->geom.x+BLOCKWIDTH/2+BLOCKWIDTH;i<l->geom.x+l->geom.w;i+=BLOCKWIDTH)
+				for (int i = l->geom.x + BLOCKWIDTH / 2 + BLOCKWIDTH; i < l->geom.x + l->geom.w; i += BLOCKWIDTH)
 					grid_checkempty(i,l->geom.y+BLOCKHEIGHT+BLOCKHEIGHT/2);
 		break;
 	}
@@ -231,9 +228,10 @@ void line_start(Line * l, LineDir d, int x, int y, int end) {
 	l->mark = l->geom;
 }
 
-int line_move(Line * l)
-{
-	int finish=false;
+// Move the line one step. Returns -1 while the line is still being drawn,
+// or the number of blocks it captured (0 or more) once it is finished.
+long line_move(Line * l) {
+	int finish = false;
 	char check1;
 	char check2;
 	grid_mark(l->mark.x,l->mark.y,l->mark.w,l->mark.h,l->id);
@@ -315,16 +313,17 @@ int line_move(Line * l)
 				//if (l->geom.w==1 || l->geom.h==1) finish=true;
 			}
 		} else { // hit something else
-			finish=true;
+			finish = true;
 		}
 	}
 	if (finish) {
+		long previous = grid_block_count();
 		grid_mark(l->mark.x,l->mark.y,l->mark.w,l->mark.h,l->id);
 		line_finish(l);
-		return 1;
+		return (previous - grid_block_count()) / (BLOCKWIDTH * BLOCKHEIGHT);
 	}
 	
-	return 0;
+	return -1;
 }
 
 void line_kill(Line * l)

@@ -35,6 +35,8 @@ char grid_at(int x, int y);
 bool grid_is_open(char c);
 void grid_reset(void);
 int grid_countcleared(void);
+long grid_block_count(void);
+long grid_total_block_count(void);
 bool grid_expand(int cols, int rows, const char tmpgrid[cols][rows]);
 void grid_restore_base(void);
 void grid_fill_empty_areas(void);
