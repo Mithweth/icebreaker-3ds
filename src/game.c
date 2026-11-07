@@ -39,6 +39,7 @@
 #include "options.h"
 #include "snowflake.h"
 #include "editor.h"
+#include "logo.h"
 
 typedef enum {
 	GAME_INTRO,
@@ -99,6 +100,7 @@ bool game_init(void) {
 	}
 	options_read();
 	intro_init();
+	logo_init();
 	menu_init();
 	hiscore_read();
 	snowflake_init();
@@ -269,15 +271,14 @@ void game_draw_bottom(C3D_RenderTarget *bottom) {
 	return;
 }
 
-void game_draw_top(C3D_RenderTarget *top, float parallax) {
-	C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
-	C2D_SceneBegin(top);
-	menu_draw(pause, &stats, parallax);
+void game_draw_top(C3D_RenderTarget *target, float parallax) {
+	menu_draw(pause, &stats, target, parallax);
 	return;
 }
 
 void game_close(void) {
 	gfxmap_close();
+	logo_close();
 	menu_close();
 	sound_close();
 }

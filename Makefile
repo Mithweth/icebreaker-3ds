@@ -90,12 +90,13 @@ export DEPSDIR			:= $(TOPDIR)/$(BUILD)
 
 CFILES					:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES				:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+PICAFILES				:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.v.pica)))
 SFILES					:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 
 export VPATH			:= $(foreach dir,$(SOURCES),$(TOPDIR)/$(dir))
-export OFILES			:= $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES			:= $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o) $(PICAFILES:.v.pica=.shbin.o)
 export OFILES_SOURCES	:= $(OFILES)
-export HFILES			:= $(TOPDIR)/$(GFX_H)
+export HFILES			:= $(TOPDIR)/$(GFX_H) $(PICAFILES:.v.pica=_shbin.h)
 export LIBPATHS			:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 export LD				:= $(CC)
 
@@ -191,9 +192,13 @@ else
 all: $(OUTPUT).3dsx
 
 # These files already exist: the outer make generated/copied them first.
-$(OFILES_SOURCES): $(HFILES)
+$(filter-out %.shbin.o,$(OFILES_SOURCES)): $(HFILES)
 $(OUTPUT).elf: $(OFILES)
 $(OUTPUT).3dsx: $(OUTPUT).elf $(_3DSXDEPS) $(ROMFS_DEPS)
+
+%.shbin.o %_shbin.h : %.shbin
+	$(SILENTMSG) $(notdir $<)
+	$(bin2o)
 
 -include $(DEPSDIR)/*.d
 

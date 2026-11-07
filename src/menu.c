@@ -23,6 +23,7 @@
 #include "menu.h"
 
 #include <3ds.h>
+#include <citro3d.h>
 #include <citro2d.h>
 #include <stdio.h>
 #include <string.h>
@@ -37,6 +38,7 @@
 #include "lang.h"
 #include "flying_sprite.h"
 #include "snowflake.h"
+#include "logo.h"
 
 #define GRID_PREVIEW_MARGIN		20
 
@@ -74,10 +76,10 @@ typedef struct {
 
 static DialogType dialog_type;
 static bool yes_selected;
-static const char *logo_chars = "ICEBRAK";
 static size_t selected;
 static bool options_selected;
 static float logo_scale;
+static float logo_rotate_y;
 static float logo_parallax;
 static DialogConfirmType dialog_confirm_type;
 static size_t help_page;
@@ -97,55 +99,6 @@ static MenuEntry options_menu[] = {
 	{"MENU_THEME", MENU_THEME},
 	{"MENU_BACK", MENU_BACK},
 };
-static const u8 logo_glyphs[][7] = {
-	{31,  4,  4,  4,  4,  4, 31}, // I
-	{15, 16, 16, 16, 16, 16, 15}, // C
-	{31, 16, 16, 30, 16, 16, 31}, // E
-	{30, 17, 17, 30, 17, 17, 30}, // B
-	{30, 17, 17, 30, 20, 18, 17}, // R
-	{14, 17, 17, 31, 17, 17, 17}, // A
-	{17, 18, 20, 24, 20, 18, 17}  // K
-};
-
-static void logo_drawtext(const char *text, float y, float parallax, float scale) {
-	const u32 gradient[8] = {
-		C2D_Color32(245, 253, 255, 255),
-		C2D_Color32(218, 245, 255, 255),
-		C2D_Color32(179, 228, 250, 255),
-		C2D_Color32(135, 207, 240, 255),
-		C2D_Color32(100, 179, 223, 255),
-		C2D_Color32(70, 150, 208, 255),
-		C2D_Color32(48, 117, 183, 255),
-		C2D_Color32(25, 75, 145, 255)
-	};
-
-	float logo_width = (strlen(text) * 6 - 1) * scale;
-	float x = (400.0f - logo_width) / 2.0f + parallax / 2;
-	y -= 7.0f * (scale - 1.0f) / 2.0f;
-	for (int i = 0; text[i]; i++) {
-		const char *p = strchr(logo_chars, text[i]);
-		if (!p) continue;
-
-		int glyph = p - logo_chars;
-		for (int row = 0; row < 7; row++) {
-			for (int col = 0; col < 5;) {
-				if (!(logo_glyphs[glyph][row] & (1 << (4 - col)))) {
-					col++;
-					continue;
-				}
-
-				int start = col;
-				while (col < 5 && (logo_glyphs[glyph][row] & (1 << (4 - col)))) col++;
-				C2D_DrawRectangle(x + (i * 6 + start) * scale, y + row * scale, 0.3f, (col - start) * scale, scale, gradient[row], gradient[row], gradient[row + 1], gradient[row + 1]);
-				for (int c = start; c < col; c++) {
-					if (row == 0 || !(logo_glyphs[glyph][row - 1] & (1 << (4 - c)))) {
-						C2D_DrawRectSolid(x + (i * 6 + c) * scale, y + row * scale, 0.3f, scale, 1.5f, C2D_Color32(245, 252, 255, 230));
-					}
-				}
-			}
-		}
-	}
-}
 
 static void menu_draw_rounded_rect(float x, float y, float w, float h, u32 color) {
 	if (w <= 0 || h <= 0) return;
@@ -162,7 +115,6 @@ static void progress_bar_draw(int pct) {
 	menu_draw_rounded_rect(12.0f, 222.0f, 376.0f, 10.0f, theme.color.progressbarinner);
 	menu_draw_rounded_rect(12.0f, 222.0f, (376.0f) * pct / 100.0f, 10.0f, theme.color.progressbarfill);
 }
-
 
 void menu_bottom_draw(bool pause) {
 	if (pause) {
@@ -190,7 +142,10 @@ void menu_bottom_draw(bool pause) {
 	}
 }
 
-void menu_draw(bool pause, const GameStats *stats, float parallax) {
+void menu_draw(bool pause, const GameStats *stats, C3D_RenderTarget *target, float parallax) {
+	C2D_Prepare();
+	C2D_TargetClear(target, C2D_Color32(0, 0, 0, 255));
+	C2D_SceneBegin(target);
 	C2D_DrawRectSolid(0, 0, 0.0f, 400.0f, 240.0f, theme.color.background);
 	char tmptext[30]; // should be plenty big.
 	text_put(175 + parallax, 10, 0.3f, 2, theme.color.normaltext, lang_get("MENU_SCORE"));
@@ -228,17 +183,7 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	progress_bar_draw(stats->clear);
 	snowflake_draw(parallax);
 	if (!pause) {
-		if (flying_sprite_celebrating()) {
-			logo_scale += 0.04f;
-			logo_parallax += (parallax > 0.0f) ? 0.01f : -0.01f;
-		} else {
-			if (logo_scale > 6.0f) {
-				logo_scale -= 0.04f;
-				logo_parallax -= (parallax > 0.0f) ? 0.01f : -0.01f;
-			}
-		}
-		logo_drawtext("ICE", 75, logo_parallax + parallax, logo_scale);
-		logo_drawtext("BREAKER", 130, logo_parallax + parallax, logo_scale);
+		logo_draw(target);
 		flying_sprite_draw(parallax);
 		return;
 	}
@@ -374,10 +319,12 @@ void menu_draw(bool pause, const GameStats *stats, float parallax) {
 	default:
 		break;
 	}
+	C2D_Flush();
 }
 
 bool menu_update(bool pause, u32 keys) {
 	flying_sprite_update();
+	logo_update();
 	snowflake_update();
 	if (!pause) {
 		return false;
@@ -593,15 +540,16 @@ bool menu_update(bool pause, u32 keys) {
 
 void menu_init(void) {
 	selected = 0;
+	logo_scale = 1.0f;
 	dialog_type = DIALOG_NORMAL;
 	options_difficulty_selected_reset();
 	options_game_mode_selected_reset();
 	lang_selected_reset();
 	grid_maps_selected_reset();
 	flying_sprite_init();
-	logo_scale = 6.0f;
 	logo_parallax = 0.0f;
 	options_selected = false;
+	logo_rotate_y = 0.0f;
 }
 
 void menu_close(void) {

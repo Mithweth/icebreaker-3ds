@@ -41,6 +41,7 @@
 #include "penguin.h"
 #include "text.h"
 #include "lang.h"
+#include "logo.h"
 
 #define RANDOM_HISTORY 			3
 #define GESTURE_THRESHOLD 		12
@@ -543,6 +544,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		}
 	}
 	if (line1.shield_hit || line2.shield_hit) shield_used = true;
+
 	for (size_t i = 0; i < penguincount; i++) {
 		if (i < boss_count && flock[i].wall_tick > 0) continue;
 		if (flock[i].teleport_tick > 0 && freeze_tick == 0) {
@@ -565,6 +567,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 
 	if (stats->lives <= 0) // game over
 	{
+		logo_explode(5, 5);
 		stats->dead = true;
 		speed_tick = 0;
 		freeze_tick = 0;
@@ -576,6 +579,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (!line1.on && !line2.on && stats->clear >= clear_pct_required) // success!
 	{ 
 		flying_sprite_victory();
+		logo_rotate(0.0f, 0.2f);
 		speed_tick = 0;
 		freeze_tick = 0;
 		shield_enabled = false;

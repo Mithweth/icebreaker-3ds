@@ -70,6 +70,7 @@ int main(void) {
 	int ret = 0;
 	gfxInitDefault();
 	gfxSet3D(true);
+	HIDUSER_EnableAccelerometer();
 	romfsInit();
 	debug_init();
 	srand(time(NULL));

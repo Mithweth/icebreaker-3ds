@@ -153,8 +153,7 @@ void penguin_draw(Penguin* p)
 	}
 }
 
-PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* line2, bool freezed)
-{
+PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* line2, bool freezed) {
 	if (freezed) return PENGUIN_HIT_NONE;
 	const Line *lines[] = { line1, line2 };
 	bool hitline1 = false;
@@ -188,8 +187,8 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 				movey = p->state.ydelta / 2;
 				if (p->charge_tick > 0) speed_mod = 2;
 			} else {
-				movex=p->state.xdelta;
-				movey=p->state.ydelta;
+				movex = p->state.xdelta;
+				movey = p->state.ydelta;
 			}
 			p->state.speedslower = !p->state.speedslower;
 			attract_radius += 90;
@@ -223,8 +222,8 @@ PenguinHit penguin_move(Penguin* p, int level, const Line* line1, const Line* li
 		}
 	}
 
-	newx=p->state.x+movex;
-	newy=p->state.y+movey;
+	newx = p->state.x + movex;
+	newy = p->state.y + movey;
 
 	grid_mark(p->state.x, p->state.y, BLOCKWIDTH * p->size, BLOCKHEIGHT * p->size, ' ');
 

@@ -26,7 +26,7 @@
 #include "game.h"
 
 void menu_init(void);
-void menu_draw(bool pause, const GameStats *stats, float parallax);
+void menu_draw(bool pause, const GameStats *stats, C3D_RenderTarget *target, float parallax);
 bool menu_update(bool pause, u32 keys);
 void menu_close(void);
 void menu_bottom_draw(bool pause);
