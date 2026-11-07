@@ -98,5 +98,5 @@ void game_editor_stop(void);
 void game_start(void);
 bool game_update(u32 keys, touchPosition touch);
 void game_draw_bottom(C3D_RenderTarget *bottom);
-void game_draw_top(C3D_RenderTarget *top, float parallax);
+void game_draw_top(C3D_RenderTarget *target, float parallax);
 void game_close(void);

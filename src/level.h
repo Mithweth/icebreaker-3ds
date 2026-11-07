@@ -28,6 +28,6 @@
 #include "game.h"
 
 bool level_init(GameStats *stats);
-void level_draw(void);
+void level_draw(C3D_RenderTarget *target);
 bool level_update(u32 keys, touchPosition touch, GameStats *stats);
 void level_close(void);

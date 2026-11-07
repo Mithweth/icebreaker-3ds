@@ -25,6 +25,7 @@
 #pragma once
 
 #include <3ds.h>
+#include <stdbool.h>
 
 void intro_init(void);
 void intro_draw(void);

@@ -198,8 +198,8 @@ void intro_draw(void) {
 		}
 	}
 	penguin_draw(&tux);
-    line_draw(&line1, theme.color.line1);
-    line_draw(&line2, theme.color.line2);
+	line_draw(&line1, theme.color.line1);
+	line_draw(&line2, theme.color.line2);
 }
 
 bool intro_update(u32 keys) {
