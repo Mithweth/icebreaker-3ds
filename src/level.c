@@ -41,6 +41,8 @@
 #include "penguin.h"
 #include "text.h"
 #include "lang.h"
+#include "logo.h"
+#include "mesh.h"
 
 #define RANDOM_HISTORY 			3
 #define GESTURE_THRESHOLD 		12
@@ -74,6 +76,8 @@ static bool shield_enabled;
 static bool shield_used;
 static bool challenge_explained;
 static int clear_pct_required;
+static Mesh *level_mesh;
+static char previous_grid[ROWS][COLS];
 
 typedef enum {
 	CHALLENGE_CONQUEROR,
@@ -181,11 +185,17 @@ static void level_challenge_pick(void) {
 	random_history[random_history_count++] = current_challenge;
 }
 
+
 bool level_init(GameStats *stats) {
 	if (options_challenge_mode()) level_challenge_pick();
 	line_reset();
 	grid_generate_colors();
 	grid_maps_apply(grid_maps_current_name());
+	for (int by = 0; by < ROWS; by++) {
+		for (int bx = 0; bx < COLS; bx++) {
+			previous_grid[by][bx] = grid_at(bx * BLOCKWIDTH, by * BLOCKHEIGHT);
+		}
+	}
 	flying_sprite_init();
 	scoremod = 1.0f;
 	bonusmod = 1.0f;
@@ -284,10 +294,16 @@ bool level_init(GameStats *stats) {
 		return false;  // penguins all spawned in a small area: try again
 	}
 	tick = 0;
+	level_mesh = mesh_generate_grid(COLS, ROWS, -160.0f, 160.0f, 120.0f, -120.0f, 0.0f, 1.0f, 320.0f / 512.0f, 1.0f - 240.0f / 256.0f, 0.0f, C3D_AspectRatioBot);
+	if (level_mesh) {
+		mesh_capture_begin(level_mesh);
+		grid_drawblocks(0, 0);
+		mesh_capture_end();
+	}
 	return true;
 }
 
-void level_draw(void) {
+void level_draw(C3D_RenderTarget *target) {
 	bool boss_bounced = false;
 	for (size_t i = 0; i < boss_count; i++) {
 		if (flock[i].wall_tick > 0) {
@@ -347,12 +363,62 @@ void level_draw(void) {
 		C2D_AlphaImageTint(&tint, 0.15f);
 		C2D_DrawImageAt(theme.shieldbitmap, 160.0f - theme.shieldbitmap.subtex->width / 2, 120.0f - theme.shieldbitmap.subtex->height / 2, 0.46f, &tint, 1.0f, 1.0f);
 	}
+	if (!level_mesh) return;
+	for (int i = 0; i < mesh_vertex_count(level_mesh) / 3; i++) {
+		mesh_move_triangle(level_mesh, (1.0f - mesh_shard_alpha(level_mesh, i)) * 12.0f, i);
+	}
+	mesh_draw(level_mesh, target);
+}
+
+static void level_line_finished(GameStats *stats, long blocks) {
+	if (blocks >= 0) {
+		flying_sprite_capture();
+		stats->safe_line_count++;
+		if (stats->max_safe_line_count < stats->safe_line_count) {
+			stats->max_safe_line_count = stats->safe_line_count;
+		}
+		stats->clear = grid_countcleared();
+		stats->captured_blocks += blocks;
+		if (stats->max_captured_zone < blocks) {
+			stats->max_captured_zone = blocks;
+		}
+		stats->drawn_lines++;
+		stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
+		tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
+		if (!level_mesh) return;
+		for (int by = 0; by < ROWS; by++) {
+			for (int bx = 0; bx < COLS; bx++) {
+				char old = previous_grid[by][bx];
+				char now = grid_at(bx * BLOCKWIDTH, by * BLOCKHEIGHT);
+
+				bool was_ice = old != '.' && old != '-' && old != '|';
+				bool is_water = now == '.';
+
+				if (was_ice && is_water) {
+					int i = (by * COLS + bx) * 2;
+					float xdelta = rand() % 4 - 2;
+					float ydelta = rand() % 4 - 2;
+					mesh_shard(level_mesh, i, xdelta, ydelta, 1.0f);
+					mesh_shard(level_mesh, i + 1, xdelta, ydelta, 1.0f);
+				}
+
+				previous_grid[by][bx] = now;
+			}
+		}
+	}
 }
 
 bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	int line_speed = 1;
 	if (done) {
 		return false;
+	}
+	if (level_mesh) {
+		for (int i = 0; i < mesh_vertex_count(level_mesh) / 3; i++) {
+			float alpha = mesh_shard_alpha(level_mesh, i);
+			if (alpha <= 0.0f) continue;
+			mesh_shard_set_alpha(level_mesh, i, alpha - 0.1f);
+		}
 	}
 	if (invincible_tick > 0) invincible_tick--;
 	if (options_challenge_mode()) {
@@ -478,21 +544,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 				} else {
 					line1.speedslower = true;
 				}
-				if (captured_blocks >= 0) {
-					flying_sprite_capture();
-					stats->safe_line_count++;
-					if (stats->max_safe_line_count < stats->safe_line_count) {
-						stats->max_safe_line_count = stats->safe_line_count;
-					}
-					stats->clear = grid_countcleared();
-					stats->captured_blocks += captured_blocks;
-					if (stats->max_captured_zone < captured_blocks) {
-						stats->max_captured_zone = captured_blocks;
-					}
-					stats->drawn_lines++;
-					stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
-					tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
-				}
+				level_line_finished(stats, captured_blocks);
 			}
 			if (line1.dead)  {
 				line_kill(&line1);
@@ -508,21 +560,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 				} else {
 					line2.speedslower = true;
 				}
-				if (captured_blocks >= 0) {
-					flying_sprite_capture();
-					stats->safe_line_count++;
-					if (stats->max_safe_line_count < stats->safe_line_count) {
-						stats->max_safe_line_count = stats->safe_line_count;
-					}
-					stats->clear = grid_countcleared();
-					stats->captured_blocks += captured_blocks;
-					if (stats->max_captured_zone < captured_blocks) {
-						stats->max_captured_zone = captured_blocks;
-					}
-					stats->drawn_lines++;
-					stats->basescore = (int)(stats->clear * scoremod) - timepenalty;
-					tick = 0; // reset this to keep score from seeming to flicker around a lot. and to be nice. :)
-				}
+				level_line_finished(stats, captured_blocks);
 			}
 			if (line2.dead) {
 				line_kill(&line2);
@@ -543,6 +581,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 		}
 	}
 	if (line1.shield_hit || line2.shield_hit) shield_used = true;
+
 	for (size_t i = 0; i < penguincount; i++) {
 		if (i < boss_count && flock[i].wall_tick > 0) continue;
 		if (flock[i].teleport_tick > 0 && freeze_tick == 0) {
@@ -565,9 +604,11 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 
 	if (stats->lives <= 0) // game over
 	{
+		logo_explode(5, 5);
 		stats->dead = true;
 		speed_tick = 0;
 		freeze_tick = 0;
+		invincible_tick = 0;
 		shield_enabled = false;
 		flying_sprite_gameover();
 		done = true;
@@ -576,6 +617,7 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 	if (!line1.on && !line2.on && stats->clear >= clear_pct_required) // success!
 	{ 
 		flying_sprite_victory();
+		logo_rotate(0.0f, 0.2f);
 		speed_tick = 0;
 		freeze_tick = 0;
 		shield_enabled = false;
@@ -614,5 +656,6 @@ bool level_update(u32 keys, touchPosition touch, GameStats *stats) {
 }
 
 void level_close(void) {
-	return;
+	mesh_destroy(level_mesh);
+	level_mesh = NULL;
 }

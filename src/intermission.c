@@ -34,16 +34,13 @@
 
 static char first_line_text[30];
 static float first_line_x;
-static float first_line_y;
 static size_t first_line_size;
 static char second_line_text[30];
 static float second_line_x;
-static float second_line_y;
 static size_t second_line_size;
 static u32 second_line_color;
 static char third_line_text[30];
 static float third_line_x;
-static float third_line_y;
 static size_t third_line_size;
 static bool done;
 static bool show_stats;
@@ -89,24 +86,18 @@ void intermission_init(const GameStats *stats) {
 	}
 
 	first_line_x = (WIDTH - first_line_w) / 2;
-	first_line_y = HEIGHT;
-
 	second_line_x = (WIDTH - second_line_w) / 2;
-	second_line_y = HEIGHT;
-
 	third_line_x = (WIDTH - third_line_w) / 2;
-	third_line_y = HEIGHT;
 	show_stats = false;
 	done = false;
 }
 
 void intermission_draw(void) {
-	C2D_DrawRectSolid(0, 0, 0.5f, WIDTH, HEIGHT, C2D_Color32(0, 0, 0, 192));
 	if (!show_stats) {
-		text_put(first_line_x, first_line_y, 0.51f, first_line_size, theme.color.scorescrolltext, first_line_text);
-		text_put(second_line_x, second_line_y, 0.51f, second_line_size, second_line_color, second_line_text);
+		text_put(first_line_x, 100, 0.51f, first_line_size, theme.color.scorescrolltext, first_line_text);
+		text_put(second_line_x, 130, 0.51f, second_line_size, second_line_color, second_line_text);
 		if (options_modern_mode() && current_stats->energybonus > 0 && !current_stats->dead) {
-			text_put(third_line_x, third_line_y, 0.51f, third_line_size, theme.color.bonusscrolltext, third_line_text);
+			text_put(third_line_x, 160, 0.51f, third_line_size, theme.color.bonusscrolltext, third_line_text);
 		}
 		return;
 	}
@@ -150,12 +141,5 @@ bool intermission_update(u32 keys) {
 		}
 	}
 	if (done) return false;
-	if (first_line_y > 100) {
-		first_line_y -= 2;
-	} else if (second_line_y > 130) {
-		second_line_y -= 2;
-	} else if (third_line_y > 160) {
-		third_line_y -= 2;
-	}
 	return true;
 }

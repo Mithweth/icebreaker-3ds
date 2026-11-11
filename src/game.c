@@ -39,6 +39,9 @@
 #include "options.h"
 #include "snowflake.h"
 #include "editor.h"
+#include "logo.h"
+#include "mesh.h"
+#include "transition.h"
 
 typedef enum {
 	GAME_INTRO,
@@ -85,6 +88,7 @@ bool game_init(void) {
 	ensure_data_dir();
 	game_step = GAME_INTRO;
 	sound_init();
+	mesh_init();
 	if (!gfxmap_init()) {
 		return false;
 	}
@@ -99,6 +103,7 @@ bool game_init(void) {
 	}
 	options_read();
 	intro_init();
+	logo_init();
 	menu_init();
 	hiscore_read();
 	snowflake_init();
@@ -132,7 +137,9 @@ void game_editor_stop(void) {
 }
 
 void game_start(void) {
+	transition_close();
 	pause = false;
+	transition_init((game_step == GAME_INTRO) ? TRANSITION_FLIP : TRANSITION_SPLIT);
 	intro_close();
 	level_close();
 	stats.score = 0;
@@ -165,7 +172,6 @@ static void game_over(void) {
 }
 
 static void game_continue(void) {
-	intro_close();
 	level_close();
 	stats.level++;
 	if (stats.previous_energy > 0) {
@@ -180,9 +186,12 @@ static void game_continue(void) {
 		stats = saved_stats;
 	}
 	game_step = GAME_LEVEL;
+
+	transition_init(TRANSITION_EXPLODE_IN);
 }
 
 static void game_intermission_start(void) {
+	transition_init(TRANSITION_EXPLODE_OUT);
 	intermission_init(&stats);
 	game_step = GAME_INTERMISSION;
 }
@@ -202,6 +211,11 @@ bool game_update(u32 keys, touchPosition touch) {
 	if (menu_update(pause, keys)) {
 		return true;
 	}
+
+	if (transition_active()) {
+		if (transition_update()) return true;
+		transition_close();
+	}
 	switch(game_step) {
 	case GAME_INTRO:
 		if (!intro_update(keys)) {
@@ -220,7 +234,6 @@ bool game_update(u32 keys, touchPosition touch) {
 		break;
 	case GAME_INTERMISSION:
 		if (!intermission_update(keys)) {
-			printf("GAME OVER: score=%ld base=%ld clearbonus=%d lifebonus=%d dead=%d\n", stats.score, stats.basescore, stats.clearbonus, stats.lifebonus, stats.dead);
 			stats.score += stats.basescore + stats.clearbonus + stats.lifebonus;
 			stats.basescore = 0;
 			if (stats.dead) {
@@ -252,32 +265,32 @@ void game_draw_bottom(C3D_RenderTarget *bottom) {
 		editor_draw();
 		return;
 	case GAME_LEVEL:
-		level_draw();
+		if (!transition_hides_screen()) level_draw(bottom);
 		break;
 	case GAME_INTERMISSION:
-		level_draw();
 		intermission_draw();
 		break;
 	case GAME_HIGH_SCORE:
-		level_draw();
+		level_draw(bottom);
 		hiscore_dialog_draw();
 		break;
 	default:
 		break;
 	}
+	transition_draw(bottom);
 	menu_bottom_draw(pause);
 	return;
 }
 
-void game_draw_top(C3D_RenderTarget *top, float parallax) {
-	C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
-	C2D_SceneBegin(top);
-	menu_draw(pause, &stats, parallax);
-	return;
+void game_draw_top(C3D_RenderTarget *target, float parallax) {
+	menu_draw(pause, &stats, target, parallax);
 }
 
 void game_close(void) {
 	gfxmap_close();
+	level_close();
+	logo_close();
 	menu_close();
+	mesh_close();
 	sound_close();
 }

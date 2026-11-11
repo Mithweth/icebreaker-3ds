@@ -30,7 +30,7 @@ install() {
 
   echo "* Install 3ds-dev tools"
 
-  dkp-pacman -S --noconfirm -q libctru citro2d 3ds-examples 3dslink tex3ds 3ds-libvorbisidec 3dstools
+  dkp-pacman -S --noconfirm -q libctru citro2d 3ds-examples 3dslink tex3ds 3ds-libvorbisidec 3dstools picasso
 
   echo "* Create profile script"
 
@@ -78,7 +78,7 @@ uninstall() {
   fi
   echo "* Uninstall 3ds-dev tools"
   if command -v dkp-pacman &>/dev/null; then
-    dkp-pacman -R --noconfirm -q libctru citro2d 3ds-examples 3dslink tex3ds 3ds-libvorbisidec 3dstools
+    dkp-pacman -R --noconfirm -q libctru citro2d 3ds-examples 3dslink tex3ds 3ds-libvorbisidec 3dstools picasso
   fi
   if [ -d /opt/devkitpro ]; then
     rm -rf /opt/devkitpro
